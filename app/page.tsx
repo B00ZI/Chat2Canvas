@@ -1,6 +1,7 @@
 import TopBar from "@/components/Topbar"
 import EmptyState from "@/components/EmptyState"
 import Column from "@/components/Column"
+import AIToolsModal from "@/components/AIToolsModal"
 import Card from "@/components/Card"
 
 export default function Home() {

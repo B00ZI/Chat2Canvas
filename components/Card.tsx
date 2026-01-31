@@ -14,7 +14,7 @@ export default function Card({ number, title, color, tasks }: CardProps) {
       <div className="flex items-start gap-3 mb-3">
         {/* Number Badge */}
         <div 
-          className="w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0"
+          className="w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-sm shrink-0"
           style={{ backgroundColor: color }}
         >
           {number}

@@ -1,4 +1,4 @@
-import { Button } from "./ui/button"
+
 import Card from "./Card"
 
 interface ColumnProps {
@@ -9,7 +9,7 @@ interface ColumnProps {
 
 export default function Column({ title, color, cardCount }: ColumnProps) {
     return (
-        <div className="bg-white rounded-lg p-4 w-80 flex-shrink-0 shadow-sm border border-gray-200">
+        <div className="bg-white rounded-lg p-4 w-80 shrink-0 shadow-sm border border-gray-200">
             {/* Column Header */}
             <div className="mb-4">
                 <div className="h-1 rounded-t-lg mb-3" style={{ backgroundColor: color }} />
@@ -28,7 +28,17 @@ export default function Column({ title, color, cardCount }: ColumnProps) {
                 <Card
                     number={1}
                     title="Setup Database"
-                    color="#4F46E5"
+                    color= {color}
+                    tasks={[
+                        { text: "Create schema", done: true },
+                        { text: "Setup migrations", done: false },
+                        { text: "Add seed data", done: false }
+                    ]}
+                />
+                <Card
+                    number={1}
+                    title="Setup Database"
+                    color= {color}
                     tasks={[
                         { text: "Create schema", done: true },
                         { text: "Setup migrations", done: false },
