@@ -84,10 +84,11 @@ Return ONLY the JSON, no markdown or explanations.`
     // TODO: Get current project state and format it
     const currentPlan = `Here is my current project progress:
 
-[Current project JSON will go here]
+    [Current project JSON will go here]
 
-Please review this and suggest improvements or next steps. When you're ready to provide the updated plan, return it as Canvas Code (JSON) in the same format.`
-    
+    Please review this and suggest improvements or next steps. When you're ready to provide the updated plan,
+     return it as Canvas Code (JSON) in the same format.`
+
     handleCopy(currentPlan)
   }
 
@@ -176,9 +177,9 @@ Please review this and suggest improvements or next steps. When you're ready to 
               <p className="text-sm text-gray-600 mb-3">
                 If your AI forgot the format after a long chat, click this button and paste it to the AI to get your code.
               </p>
-              <Button 
-                onClick={() => handleCopy(formatReminder)} 
-                variant="outline" 
+              <Button
+                onClick={() => handleCopy(formatReminder)}
+                variant="outline"
                 className="w-full"
               >
                 Copy Format Reminder
