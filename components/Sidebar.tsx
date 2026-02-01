@@ -1,8 +1,13 @@
 'use client'
-
+import { useState } from "react"
 import { useProjectStore } from "@/store/projectStore"
+import { NewProjectDialog } from "./NewProjectDialog"
 
 export default function Sidebar() {
+     
+      const [isModalOpen, setIsModalOpen] = useState(false)
+    
+
 
     const projects = useProjectStore((state) => state.projects)
     const addProject = useProjectStore((state) => state.addProject)
@@ -30,11 +35,11 @@ export default function Sidebar() {
                     <div onClick={()=>setActiveProject(project.id)} key={project.id} className={`text-sm font-semibold px-3 py-2 rounded cursor-pointer ${activeProjectId === project.id ? 'bg-blue-100' : "hover:bg-gray-100" } `}>{project.name}</div>
                 ))}
 
-                <div onClick={addNewProject} className="text-sm font-semibold bg-gray-400 px-3 py-2  rounded cursor-pointer">+ New Project</div>
+                <div onClick={()=>setIsModalOpen(true)} className="text-sm font-semibold bg-gray-400 px-3 py-2  rounded cursor-pointer">+ New Project</div>
 
             </div>
 
-
+        <NewProjectDialog open={isModalOpen} onClose={()=>setIsModalOpen(false)} />
         </div>
     )
 }
