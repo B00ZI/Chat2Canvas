@@ -28,9 +28,11 @@ export const useProjectStore = create<ProjectStore>((set) => ({
     }
 
     set((state) => ({
-       projects : [ ...state.projects , newProject ]
+       projects : [ ...state.projects , newProject ],
+       activeProjectId: newProject.id
     }))
-
+    
+   
   },
   
   deleteProject: (id) => {

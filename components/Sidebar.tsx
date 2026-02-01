@@ -6,6 +6,9 @@ export default function Sidebar() {
 
     const projects = useProjectStore((state) => state.projects)
     const addProject = useProjectStore((state) => state.addProject)
+    
+    const activeProjectId = useProjectStore((state) => state.activeProjectId)
+    const setActiveProject = useProjectStore((state) => state.setActiveProject)
 
     function addNewProject() {
         let name = prompt("project name: ")
@@ -24,7 +27,7 @@ export default function Sidebar() {
 
             <div className="space-y-2 p-4">
                 {projects.map((project) => (
-                    <div key={project.id} className="text-sm font-semibold hover:bg-gray-100 px-3 py-2 rounded cursor-pointer">{project.name}</div>
+                    <div onClick={()=>setActiveProject(project.id)} key={project.id} className={`text-sm font-semibold px-3 py-2 rounded cursor-pointer ${activeProjectId === project.id ? 'bg-blue-100' : "hover:bg-gray-100" } `}>{project.name}</div>
                 ))}
 
                 <div onClick={addNewProject} className="text-sm font-semibold bg-gray-400 px-3 py-2  rounded cursor-pointer">+ New Project</div>
