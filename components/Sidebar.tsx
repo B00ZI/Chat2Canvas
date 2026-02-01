@@ -10,11 +10,11 @@ export default function Sidebar() {
 
 
             <div className="space-y-2 p-4">
-                <div className="text-sm font-semibold hover:bg-gray-100 p-2 rounded cursor-pointer">Testing</div>
-                <div className="text-sm font-semibold hover:bg-gray-100 p-2 rounded cursor-pointer">Testing</div>
-                <div className="text-sm font-semibold hover:bg-gray-100 p-2 rounded cursor-pointer">Work</div>
-                <div className="text-sm font-semibold hover:bg-gray-100 p-2 rounded cursor-pointer">Travling</div>
-                <div className="text-sm font-semibold bg-gray-400 p-2 rounded cursor-pointer">+ New Project</div>
+                <div className="text-sm font-semibold hover:bg-gray-100 px-3 py-2 rounded cursor-pointer">Testing</div>
+                <div className="text-sm font-semibold hover:bg-gray-100 px-3 py-2 rounded cursor-pointer">Testing</div>
+                <div className="text-sm font-semibold hover:bg-gray-100 px-3 py-2 rounded cursor-pointer">Work</div>
+                <div className="text-sm font-semibold hover:bg-gray-100 px-3 py-2 rounded cursor-pointer">Travling</div>
+                <div className="text-sm font-semibold bg-gray-400 px-3 py-2  rounded cursor-pointer">+ New Project</div>
 
             </div>
 
