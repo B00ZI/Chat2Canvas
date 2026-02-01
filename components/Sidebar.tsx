@@ -1,6 +1,19 @@
-import { Button } from "./ui/button"
+'use client'
+
+import { useProjectStore } from "@/store/projectStore"
 
 export default function Sidebar() {
+
+    const projects = useProjectStore((state) => state.projects)
+    const addProject = useProjectStore((state) => state.addProject)
+
+    function addNewProject() {
+        let name = prompt("project name: ")
+        if (name) {
+            addProject(name)
+        }
+    }
+
 
     return (
         <div className="bg-white w-60 h-screen pb-4 flex flex-col space-y-4 border-r border-gray-200">
@@ -10,11 +23,11 @@ export default function Sidebar() {
 
 
             <div className="space-y-2 p-4">
-                <div className="text-sm font-semibold hover:bg-gray-100 px-3 py-2 rounded cursor-pointer">Testing</div>
-                <div className="text-sm font-semibold hover:bg-gray-100 px-3 py-2 rounded cursor-pointer">Testing</div>
-                <div className="text-sm font-semibold hover:bg-gray-100 px-3 py-2 rounded cursor-pointer">Work</div>
-                <div className="text-sm font-semibold hover:bg-gray-100 px-3 py-2 rounded cursor-pointer">Travling</div>
-                <div className="text-sm font-semibold bg-gray-400 px-3 py-2  rounded cursor-pointer">+ New Project</div>
+                {projects.map((project) => (
+                    <div key={project.id} className="text-sm font-semibold hover:bg-gray-100 px-3 py-2 rounded cursor-pointer">{project.name}</div>
+                ))}
+
+                <div onClick={addNewProject} className="text-sm font-semibold bg-gray-400 px-3 py-2  rounded cursor-pointer">+ New Project</div>
 
             </div>
 
