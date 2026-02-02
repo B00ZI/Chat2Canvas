@@ -22,13 +22,13 @@ export function NewProjectDialog({ open, onClose }: NewProjectDialog) {
     const addProject = useProjectStore((state) => state.addProject)
    
 
-
-    function addNewProject() {
-        let name = inputRef.current?.value
-        if (name) {
-            addProject(name)
+ function handleSubmit(e: React.FormEvent) {
+        e.preventDefault(); // Prevents the page from reloading
+        let name = inputRef.current?.value;
+        if (name && name.trim()) {
+            addProject(name);
+            onClose();
         }
-        onClose()
     }
 
     return (
@@ -42,9 +42,10 @@ export function NewProjectDialog({ open, onClose }: NewProjectDialog) {
                         provide your
                     </DialogDescription>
                 </DialogHeader>
-
+                <form className="space-y-4" onSubmit={handleSubmit}>
                 <Input  type="text"  ref={inputRef}/>
-                <Button onClick={addNewProject}>Create</Button>
+                <Button type="submit">Create</Button>
+                </form>
             </DialogContent>
         </Dialog>
     )
