@@ -43,7 +43,7 @@ export function NewProjectDialog({ open, onClose }: NewProjectDialog) {
                     </DialogDescription>
                 </DialogHeader>
                 <form className="space-y-4" onSubmit={handleSubmit}>
-                <Input  type="text"  ref={inputRef}/>
+                <Input   placeholder="e.g., My Awesome App"  type="text"  ref={inputRef}/>
                 <Button type="submit">Create</Button>
                 </form>
             </DialogContent>
