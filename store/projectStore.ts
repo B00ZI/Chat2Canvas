@@ -1,5 +1,3 @@
-import Column from "@/components/Column";
-import { stat } from "fs";
 import { create } from "zustand";
 
 interface Task {
