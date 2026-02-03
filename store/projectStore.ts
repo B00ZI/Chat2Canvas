@@ -1,9 +1,31 @@
 import { create } from "zustand";
 
-interface Project {
-  id: string;
-  name: string;
+interface Task {
+  text: string
+  done: boolean
 }
+
+interface Card {
+  id: string
+  number: number
+  title: string
+  color: string
+  tasks: Task[]
+}
+
+interface Column {
+  id: string
+  title: string
+  color: string
+  cards: Card[]
+}
+
+interface Project {
+  id: string
+  name: string
+  columns: Column[]  
+}
+
 
 interface ProjectStore {
   projects: Project[];
@@ -25,6 +47,7 @@ export const useProjectStore = create<ProjectStore>((set) => ({
     const newProject = {
       id: String(Date.now()),
       name: name,
+      columns:[]
     };
 
     set((state) => ({
