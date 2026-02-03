@@ -1,31 +1,32 @@
+import Column from "@/components/Column";
+import { stat } from "fs";
 import { create } from "zustand";
 
 interface Task {
-  text: string
-  done: boolean
+  text: string;
+  done: boolean;
 }
 
 interface Card {
-  id: string
-  number: number
-  title: string
-  color: string
-  tasks: Task[]
+  id: string;
+  number: number;
+  title: string;
+  color: string;
+  tasks: Task[];
 }
 
 interface Column {
-  id: string
-  title: string
-  color: string
-  cards: Card[]
+  id: string;
+  title: string;
+  color: string;
+  cards: Card[];
 }
 
 interface Project {
-  id: string
-  name: string
-  columns: Column[]  
+  id: string;
+  name: string;
+  columns: Column[];
 }
-
 
 interface ProjectStore {
   projects: Project[];
@@ -35,6 +36,7 @@ interface ProjectStore {
   editProject: (id: string, newName: string) => void;
   deleteProject: (id: string) => void;
   setActiveProject: (id: string) => void;
+  addColumn: (projectId: string, title: string, color: string) => void;
 }
 
 export const useProjectStore = create<ProjectStore>((set) => ({
@@ -47,7 +49,7 @@ export const useProjectStore = create<ProjectStore>((set) => ({
     const newProject = {
       id: String(Date.now()),
       name: name,
-      columns:[]
+      columns: [],
     };
 
     set((state) => ({
@@ -71,7 +73,7 @@ export const useProjectStore = create<ProjectStore>((set) => ({
         projects: newProjects,
         activeProjectId:
           state.activeProjectId === id
-            ? newProjects[0]?.id || null 
+            ? newProjects[0]?.id || null
             : state.activeProjectId,
       };
     });
@@ -79,5 +81,22 @@ export const useProjectStore = create<ProjectStore>((set) => ({
 
   setActiveProject: (id) => {
     set({ activeProjectId: id });
+  },
+
+  addColumn: (projectId, title, color) => {
+    const newColumn = {
+      id: String(Date.now()),
+      title: title,
+      color: color,
+      cards: [],
+    };
+
+    set((state) => ({
+      projects: state.projects.map((project) =>
+        project.id === projectId
+          ? { ...project, columns: [...project.columns, newColumn] }
+          : project,
+      ),
+    }));
   },
 }));
