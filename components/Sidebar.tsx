@@ -6,23 +6,16 @@ import { EditProjectDialog } from "./EditProjectDialog"
 export default function Sidebar() {
 
     const [isModalOpen, setIsModalOpen] = useState(false)
-    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+    const [editingProjectId, setEditingProjectId] = useState<string | null>(null)
 
 
 
     const projects = useProjectStore((state) => state.projects)
-    const addProject = useProjectStore((state) => state.addProject)
 
     const activeProjectId = useProjectStore((state) => state.activeProjectId)
     const setActiveProject = useProjectStore((state) => state.setActiveProject)
 
-    function addNewProject() {
-        let name = prompt("project name: ")
-        if (name) {
-            addProject(name)
-        }
-    }
-
+    const editingProject = projects.find(p => p.id === editingProjectId)
 
     return (
         <div className="bg-white w-60 h-screen pb-4 flex flex-col space-y-4 border-r border-gray-200">
@@ -35,15 +28,20 @@ export default function Sidebar() {
                 {projects.map((project) => (
                     <div onClick={() => setActiveProject(project.id)} key={project.id} className={`flex flex-row justify-between text-sm font-semibold px-3 py-2 rounded cursor-pointer ${activeProjectId === project.id ? 'bg-blue-100' : "hover:bg-gray-100"} `}>
                         {project.name}
-                        <button className=" w-5 h-5  text-black font-extrabold hover:bg-gray-200 rounded-2xl" onClick={()=> setIsEditDialogOpen(true)} > ⋮ </button>
-                        <EditProjectDialog open={isEditDialogOpen} onClose={()=> setIsEditDialogOpen(false)} projectId={project.id} projectName={project.name}  /> 
+                        <button className=" w-5 h-5  text-black font-extrabold hover:bg-gray-200 rounded-2xl" onClick={(e) => {
+                            e.stopPropagation()
+                            setEditingProjectId(project.id)
+                        }}  > ⋮ </button>
+
                     </div>
                 ))}
 
                 <div onClick={() => setIsModalOpen(true)} className="text-sm font-semibold bg-gray-400 px-3 py-2  rounded cursor-pointer">+ New Project</div>
 
             </div>
-
+            {editingProject && (
+                <EditProjectDialog open={true} onClose={() => setEditingProjectId(null)} projectId={editingProject.id} projectName={editingProject.name} />
+            )}
             <NewProjectDialog open={isModalOpen} onClose={() => setIsModalOpen(false)} />
         </div>
     )
