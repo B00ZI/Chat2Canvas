@@ -38,7 +38,11 @@ interface ProjectStore {
   setActiveProject: (id: string) => void;
   addColumn: (projectId: string, title: string, color: string) => void;
   deleteColumn: (projectId: string, columnId: string) => void;
-  editColumn: (projectId: string , columnId:string , newColumnTitle: string) => void;
+  editColumn: (
+    projectId: string,
+    columnId: string,
+    newColumnTitle: string,
+  ) => void;
 }
 
 export const useProjectStore = create<ProjectStore>((set) => ({
@@ -102,21 +106,29 @@ export const useProjectStore = create<ProjectStore>((set) => ({
     }));
   },
 
-  deleteColumn: (projectId , columnId)=>{
- 
+  deleteColumn: (projectId, columnId) => {
     set((state) => ({
       projects: state.projects.map((project) =>
         project.id === projectId
-          ? { ...project, columns: project.columns.filter((col)=>col.id !== columnId) }
+          ? {
+              ...project,
+              columns: project.columns.filter((col) => col.id !== columnId),
+            }
           : project,
       ),
     }));
-     
   },
-   editColumn: (id, newName) => {
+  editColumn: (projectId, columnId, newColumnTitle) => {
     set((state) => ({
       projects: state.projects.map((project) =>
-        project.id === id ? { ...project, name: newName } : project,
+        project.id === projectId
+          ? {
+              ...project,
+              columns: project.columns.map((col) =>
+                col.id === columnId ? { ...col, title: newColumnTitle } : col,
+              ),
+            }
+          : project,
       ),
     }));
   },
