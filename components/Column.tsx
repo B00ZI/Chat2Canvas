@@ -7,16 +7,36 @@ interface ColumnProps {
     cardCount: number
 }
 
-export default function Column({ title, color, cardCount }: ColumnProps) {
+interface Task {
+  text: string;
+  done: boolean;
+}
+
+interface Card {
+  id: string;
+  number: number;
+  title: string;
+  color: string;
+  tasks: Task[];
+}
+
+interface Column {
+  id: string;
+  title: string;
+  color: string;
+  cards: Card[];
+}
+
+export default function Column( {col}: {col : Column}) {
     return (
         <div className="bg-white rounded-lg p-4 w-80 shrink-0 shadow-sm border border-gray-200">
             {/* Column Header */}
             <div className="mb-4">
-                <div className="h-1 rounded-t-lg mb-3" style={{ backgroundColor: color }} />
+                <div className="h-1 rounded-t-lg mb-3" style={{ backgroundColor: col.color }} />
                 <div className="flex items-center justify-between">
                     <div>
-                        <h3 className="font-semibold text-lg">{title}</h3>
-                        <p className="text-sm text-gray-500">{cardCount} tasks</p>
+                        <h3 className="font-semibold text-lg">{col.title}</h3>
+                        {/* <p className="text-sm text-gray-500">{cardCoun} tasks</p> */}
                     </div>
                     <button className="text-gray-400 hover:text-gray-600">⋮</button>
                 </div>
@@ -28,17 +48,7 @@ export default function Column({ title, color, cardCount }: ColumnProps) {
                 <Card
                     number={1}
                     title="Setup Database"
-                    color= {color}
-                    tasks={[
-                        { text: "Create schema", done: true },
-                        { text: "Setup migrations", done: false },
-                        { text: "Add seed data", done: false }
-                    ]}
-                />
-                <Card
-                    number={1}
-                    title="Setup Database"
-                    color= {color}
+                    color= {col.color}
                     tasks={[
                         { text: "Create schema", done: true },
                         { text: "Setup migrations", done: false },
