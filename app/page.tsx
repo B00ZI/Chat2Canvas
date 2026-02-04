@@ -1,25 +1,37 @@
+'use client'
 import TopBar from "@/components/Topbar"
-import EmptyState from "@/components/EmptyState"
+import EmptyState from "@/components/WorkeSpaceEmpty"
 import Column from "@/components/Column"
+import { useProjectStore } from "@/store/projectStore"
 import AIToolsModal from "@/components/AIToolsModal"
 import Card from "@/components/Card"
 
+
 export default function Home() {
-  // Later this will come from state, for now hardcoded to see the UI
-  const showEmpty = false // Change to true to see empty state
+  
+const projects = useProjectStore((state) => state.projects)  
+const activeProjectId = useProjectStore((state)=> state.activeProjectId)
+
+const activeProject = projects.find(p => p.id === activeProjectId)
 
   return (
     <div className="flex-1 bg-gray-50">
       <TopBar />
       
-      {showEmpty ? (
+      {!activeProject ? (
         <EmptyState />
       ) : (
         <div className="p-6 overflow-x-auto">
           <div className="flex gap-4">
-            {/* Example columns - later from state */}
-            <Column title="Frontend" color="#4F46E5" cardCount={3} />
-            <Column title="Backend" color="#10B981" cardCount={2} />
+            {activeProject.columns.map((col)=> 
+
+            <Column title={activeProject.name} color="#4F46E5" cardCount={3} />
+
+            )}
+           
+            <div>
+              {}
+            </div>
           </div>
         </div>
       )}
