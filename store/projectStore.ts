@@ -53,7 +53,26 @@ export const useProjectStore = create<ProjectStore>((set) => ({
     const newProject = {
       id: String(Date.now()),
       name: name,
-      columns: [],
+      columns: [
+        {
+          id: `col-todo-${Date.now()}`,
+          title: "To Do",
+          color: "#f1f5f9", // Light Slate
+          cards: [],
+        },
+        {
+          id: `col-progress-${Date.now()}`,
+          title: "In Progress",
+          color: "#e0f2fe", // Light Blue
+          cards: [],
+        },
+        {
+          id: `col-done-${Date.now()}`,
+          title: "Done",
+          color: "#dcfce7", // Light Green
+          cards: [],
+        },
+      ],
     };
 
     set((state) => ({
