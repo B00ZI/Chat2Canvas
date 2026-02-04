@@ -3,35 +3,40 @@ import TopBar from "@/components/Topbar"
 import EmptyState from "@/components/WorkeSpaceEmpty"
 import Column from "@/components/Column"
 import { useProjectStore } from "@/store/projectStore"
-import AIToolsModal from "@/components/AIToolsModal"
-import Card from "@/components/Card"
-
+import { Button } from "@/components/ui/button"
+import { NewColumnDialog } from "@/components/NewColumnDialog "
+import { useState } from "react"
 
 export default function Home() {
-  
-const projects = useProjectStore((state) => state.projects)  
-const activeProjectId = useProjectStore((state)=> state.activeProjectId)
+ 
+  const [isNewColumnDialogOpen , setIsNewColumnDialogOpen ] = useState<boolean>(false)
+  const projects = useProjectStore((state) => state.projects)
+  const activeProjectId = useProjectStore((state) => state.activeProjectId)
 
-const activeProject = projects.find(p => p.id === activeProjectId)
+  const activeProject = projects.find(p => p.id === activeProjectId)
 
   return (
     <div className="flex-1 bg-gray-50">
       <TopBar />
-      
+
       {!activeProject ? (
         <EmptyState />
       ) : (
         <div className="p-6 overflow-x-auto">
           <div className="flex gap-4">
-            {activeProject.columns.map((col)=> 
+            {activeProject.columns.map((col) =>
 
-            <Column title={activeProject.name} color="#4F46E5" cardCount={3} />
+              <Column key={col.id} col={col} />
 
             )}
-           
-            <div>
-              {}
+
+            <div className=" bg-white rounded-lg p-4 w-80 shrink-0 shadow-sm border border-gray-200">
+              <Button  onClick={()=>setIsNewColumnDialogOpen(true)} className="h-full w-full">
+                + Add Colomn
+              </Button>
+              <NewColumnDialog  open={isNewColumnDialogOpen} onClose={()=>setIsNewColumnDialogOpen(false)} projectId={activeProject.id} />
             </div>
+
           </div>
         </div>
       )}
