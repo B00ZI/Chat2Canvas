@@ -34,7 +34,7 @@ interface ColumnProps {
   projectId: string; // Add this!
 }
 
-export default function Column( {col , projectId} : ColumnProps) {
+export default function Column( {col , projectId} : {col:ColumnProps}) {
 
 const [isEditColumnDialogOpen , setIsEditColumnDialogOpen] = useState(false)
     return (
