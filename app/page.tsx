@@ -26,7 +26,7 @@ export default function Home() {
           <div className="flex gap-4">
             {activeProject.columns.map((col) =>
 
-              <Column key={col.id} col={col} />
+              <Column key={col.id} col={col} projectId={activeProject.id} />
 
             )}
 

@@ -1,5 +1,7 @@
 
+import { useState } from "react"
 import Card from "./Card"
+import { EditColumnDialog } from "./EditColumnDialog"
 
 interface ColumnProps {
     title: string
@@ -27,7 +29,14 @@ interface Column {
   cards: Card[];
 }
 
-export default function Column( {col}: {col : Column}) {
+interface ColumnProps {
+  col: Column;
+  projectId: string; // Add this!
+}
+
+export default function Column( {col , projectId} : ColumnProps) {
+
+const [isEditColumnDialogOpen , setIsEditColumnDialogOpen] = useState(false)
     return (
         <div className="bg-white rounded-lg p-4 w-80 shrink-0 shadow-sm border border-gray-200">
             {/* Column Header */}
@@ -38,10 +47,11 @@ export default function Column( {col}: {col : Column}) {
                         <h3 className="font-semibold text-lg">{col.title}</h3>
                         {/* <p className="text-sm text-gray-500">{cardCoun} tasks</p> */}
                     </div>
-                    <button className="text-gray-400 hover:text-gray-600">⋮</button>
+                    <button onClick={} className="text-gray-400 hover:text-gray-600">⋮</button>
+                    <EditColumnDialog open={isEditColumnDialogOpen} onClose={() => setIsEditColumnDialogOpen(false)} projectId={} colId={col.id} />
                 </div>
             </div>
-
+           
             {/* Cards go here - empty for now */}
 
             <div className="space-y-3 mb-3">
