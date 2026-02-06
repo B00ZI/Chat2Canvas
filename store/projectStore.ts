@@ -34,6 +34,7 @@ interface ProjectStore {
   editProject: (id: string, newName: string) => void;
   deleteProject: (id: string) => void;
   setActiveProject: (id: string) => void;
+
   addColumn: (projectId: string, title: string, color: string) => void;
   deleteColumn: (projectId: string, columnId: string) => void;
   editColumn: (
@@ -41,6 +42,13 @@ interface ProjectStore {
     columnId: string,
     updates: Partial<Column>,
   ) => void;
+
+  addCard: (projectId: string, colId: string, cardData: Omit<Card, "id" | "number" | "tasks">) => void;
+
+  //   addCard(projectId, columnId, cardData)
+  // editCard(projectId, columnId, cardId, updates)
+  // deleteCard(projectId, columnId, cardId)
+  // toggleTask(projectId, columnId, cardId, taskIndex)
 }
 
 export const useProjectStore = create<ProjectStore>((set) => ({
@@ -143,6 +151,29 @@ export const useProjectStore = create<ProjectStore>((set) => ({
               ...project,
               columns: project.columns.map((col) =>
                 col.id === columnId ? { ...col, ...updates } : col,
+              ),
+            }
+          : project,
+      ),
+    }));
+  },
+
+  addCard: (projectId, colId, cardData) => {
+    const newCard = {
+      id: String(Date.now()),
+      number: 5,
+      tasks: [],
+      ...cardData,
+    };
+    set((state) => ({
+      projects: state.projects.map((project) =>
+        project.id === projectId
+          ? {
+              ...project,
+              columns: project.columns.map((col) =>
+                col.id === colId
+                  ? { ...col, cards: [...col.cards, { ...newCard , number: col.cards.length + 1}] }
+                  : col,
               ),
             }
           : project,
