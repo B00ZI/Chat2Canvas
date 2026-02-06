@@ -29,7 +29,7 @@ interface EditProjectDialog {
 }
 
 export function EditColumnDialog({ open, onClose, projectId, colId }: EditProjectDialog) {
-   
+
 
 
   const titleInputRef = useRef<HTMLInputElement>(null)
@@ -52,7 +52,7 @@ export function EditColumnDialog({ open, onClose, projectId, colId }: EditProjec
     let newColor = colorInputRef.current?.value.trim()
 
 
-    if (newTitle && newColor) {
+    if (newTitle) {
       editColumn(projectId, colId, newTitle)
       if (titleInputRef.current) {
         titleInputRef.current.value = ""
@@ -65,7 +65,7 @@ export function EditColumnDialog({ open, onClose, projectId, colId }: EditProjec
   }
 
   function handleDelete() {
-    deleteColumn(projectId ,colId)
+    deleteColumn(projectId, colId)
     onClose()
   }
 
@@ -78,11 +78,18 @@ export function EditColumnDialog({ open, onClose, projectId, colId }: EditProjec
 
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium  ">Project Name</label>
+            <label className="text-sm font-medium  ">Column Title</label>
             <Input
               type="text"
               ref={titleInputRef}
               defaultValue={col?.title}
+              autoFocus
+            />
+            <label className="text-sm font-medium  ">Column Color</label>
+            <Input
+              type="color"
+              ref={colorInputRef}
+              defaultValue={col?.color}
               autoFocus
             />
           </div>
