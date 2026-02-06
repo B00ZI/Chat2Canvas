@@ -46,7 +46,7 @@ interface ProjectStore {
   addCard: (
     projectId: string,
     colId: string,
-    cardData: Omit<Card, "id" | "number" | "tasks">,
+    cardData: Omit<Card, "id" | "number" >,
   ) => void;
 
   editCard: (
@@ -189,7 +189,6 @@ export const useProjectStore = create<ProjectStore>((set) => ({
                         {
                           ...cardData,
                           id: String(Date.now()),
-                          tasks: [],
                           number: col.cards.length + 1,
                         },
                       ],
