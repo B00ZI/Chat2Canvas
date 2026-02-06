@@ -56,8 +56,14 @@ interface ProjectStore {
     updates: Partial<Card>,
   ) => void;
 
-  // editCard(projectId, columnId, cardId, updates)
-  // deleteCard(projectId, columnId, cardId)
+  deleteCard: (projectId: string, columnId: string, cardId: string) => void;
+  toggleTask: (
+    projectId: string,
+    columnId: string,
+    cardId: string,
+    taskIndex: number,
+  ) => void;
+
   // toggleTask(projectId, columnId, cardId, taskIndex)
 }
 
@@ -207,6 +213,56 @@ export const useProjectStore = create<ProjectStore>((set) => ({
                       ...col,
                       cards: col.cards.map((card) =>
                         card.id === cardId ? { ...card, ...updates } : card,
+                      ),
+                    }
+                  : col,
+              ),
+            }
+          : project,
+      ),
+    }));
+  },
+  deleteCard(projectId, columnId, cardId) {
+    set((state) => ({
+      projects: state.projects.map((project) =>
+        project.id === projectId
+          ? {
+              ...project,
+              columns: project.columns.map((col) =>
+                col.id === columnId
+                  ? {
+                      ...col,
+                      cards: col.cards.filter((card) => card.id !== cardId),
+                    }
+                  : col,
+              ),
+            }
+          : project,
+      ),
+    }));
+  },
+
+  toggleTask(projectId, columnId, cardId, taskIndex) {
+    set((state) => ({
+      projects: state.projects.map((project) =>
+        project.id === projectId
+          ? {
+              ...project,
+              columns: project.columns.map((col) =>
+                col.id === columnId
+                  ? {
+                      ...col,
+                      cards: col.cards.map((card) =>
+                        card.id === cardId
+                          ? {
+                              ...card,
+                              tasks: card.tasks.map((task, index) =>
+                                index === taskIndex
+                                  ? { ...task, done: !task.done }
+                                  : task,
+                              ),
+                            }
+                          : card,
                       ),
                     }
                   : col,
