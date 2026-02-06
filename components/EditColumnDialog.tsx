@@ -21,26 +21,40 @@ import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { useProjectStore } from "@/store/projectStore"
 
+interface Task {
+  text: string;
+  done: boolean;
+}
+
+interface Card {
+  id: string;
+  number: number;
+  title: string;
+  color: string;
+  tasks: Task[];
+}
+
+interface Column {
+  id: string;
+  title: string;
+  color: string;
+  cards: Card[];
+}
+
+
 interface EditProjectDialog {
   open: boolean
   onClose: () => void
   projectId: string,
-  colId: string
+  col: Column
 }
 
-export function EditColumnDialog({ open, onClose, projectId, colId }: EditProjectDialog) {
+export function EditColumnDialog({ open, onClose, projectId, col }: EditProjectDialog) {
 
 
 
   const titleInputRef = useRef<HTMLInputElement>(null)
   const colorInputRef = useRef<HTMLInputElement>(null)
-
-  const projects = useProjectStore((state) => state.projects)
-
-
-  const project = projects.find(p => p.id === projectId)
-  const col = project?.columns.find(col => col.id === colId)
-
 
   const editColumn = useProjectStore((state) => state.editColumn)
   const deleteColumn = useProjectStore((state) => state.deleteColumn)
@@ -52,8 +66,8 @@ export function EditColumnDialog({ open, onClose, projectId, colId }: EditProjec
     let newColor = colorInputRef.current?.value.trim()
 
 
-    if (newTitle) {
-      editColumn(projectId, colId, newTitle)
+    if (newTitle && newColor ) {
+      editColumn(projectId, col.id, {title: newTitle , color: newColor})
       if (titleInputRef.current) {
         titleInputRef.current.value = ""
       }
@@ -65,7 +79,7 @@ export function EditColumnDialog({ open, onClose, projectId, colId }: EditProjec
   }
 
   function handleDelete() {
-    deleteColumn(projectId, colId)
+    deleteColumn(projectId, col.id)
     onClose()
   }
 
@@ -90,7 +104,7 @@ export function EditColumnDialog({ open, onClose, projectId, colId }: EditProjec
               type="color"
               ref={colorInputRef}
               defaultValue={col?.color}
-              autoFocus
+              
             />
           </div>
 
