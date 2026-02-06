@@ -49,7 +49,13 @@ interface ProjectStore {
     cardData: Omit<Card, "id" | "number" | "tasks">,
   ) => void;
 
-  //   addCard(projectId, columnId, cardData)
+  editCard: (
+    projectId: string,
+    columnId: string,
+    cardId: string,
+    updates: Partial<Card>,
+  ) => void;
+
   // editCard(projectId, columnId, cardId, updates)
   // deleteCard(projectId, columnId, cardId)
   // toggleTask(projectId, columnId, cardId, taskIndex)
@@ -163,7 +169,6 @@ export const useProjectStore = create<ProjectStore>((set) => ({
   },
 
   addCard: (projectId, colId, cardData) => {
-    
     set((state) => ({
       projects: state.projects.map((project) =>
         project.id === projectId
@@ -182,6 +187,27 @@ export const useProjectStore = create<ProjectStore>((set) => ({
                           number: col.cards.length + 1,
                         },
                       ],
+                    }
+                  : col,
+              ),
+            }
+          : project,
+      ),
+    }));
+  },
+  editCard(projectId, columnId, cardId, updates) {
+    set((state) => ({
+      projects: state.projects.map((project) =>
+        project.id === projectId
+          ? {
+              ...project,
+              columns: project.columns.map((col) =>
+                col.id === columnId
+                  ? {
+                      ...col,
+                      cards: col.cards.map((card) =>
+                        card.id === cardId ? { ...card, ...updates } : card,
+                      ),
                     }
                   : col,
               ),
