@@ -48,7 +48,7 @@ const [isEditColumnDialogOpen , setIsEditColumnDialogOpen] = useState(false)
                         {/* <p className="text-sm text-gray-500">{cardCoun} tasks</p> */}
                     </div>
                     <button onClick={()=>setIsEditColumnDialogOpen(true)} className="text-gray-400 hover:text-gray-600">⋮</button>
-                    <EditColumnDialog open={isEditColumnDialogOpen} onClose={() => setIsEditColumnDialogOpen(false)} projectId={projectId} colId={col.id} />
+                    <EditColumnDialog open={isEditColumnDialogOpen} onClose={() => setIsEditColumnDialogOpen(false)} projectId={projectId} col={col} />
                 </div>
             </div>
            
