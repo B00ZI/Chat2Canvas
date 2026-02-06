@@ -34,7 +34,7 @@ interface ColumnProps {
   projectId: string; // Add this!
 }
 
-export default function Column( {col , projectId} : {col:ColumnProps}) {
+export default function Column( {col , projectId} : ColumnProps) {
 
 const [isEditColumnDialogOpen , setIsEditColumnDialogOpen] = useState(false)
     return (
@@ -47,8 +47,8 @@ const [isEditColumnDialogOpen , setIsEditColumnDialogOpen] = useState(false)
                         <h3 className="font-semibold text-lg">{col.title}</h3>
                         {/* <p className="text-sm text-gray-500">{cardCoun} tasks</p> */}
                     </div>
-                    <button onClick={} className="text-gray-400 hover:text-gray-600">⋮</button>
-                    <EditColumnDialog open={isEditColumnDialogOpen} onClose={() => setIsEditColumnDialogOpen(false)} projectId={} colId={col.id} />
+                    <button onClick={()=>setIsEditColumnDialogOpen(true)} className="text-gray-400 hover:text-gray-600">⋮</button>
+                    <EditColumnDialog open={isEditColumnDialogOpen} onClose={() => setIsEditColumnDialogOpen(false)} projectId={projectId} colId={col.id} />
                 </div>
             </div>
            
