@@ -39,7 +39,7 @@ interface ProjectStore {
   editColumn: (
     projectId: string,
     columnId: string,
-    newColumnTitle: string,
+    updates: Partial<Column>,
   ) => void;
 }
 
@@ -135,14 +135,14 @@ export const useProjectStore = create<ProjectStore>((set) => ({
       ),
     }));
   },
-  editColumn: (projectId, columnId, newColumnTitle) => {
+  editColumn: (projectId, columnId, updates) => {
     set((state) => ({
       projects: state.projects.map((project) =>
         project.id === projectId
           ? {
               ...project,
               columns: project.columns.map((col) =>
-                col.id === columnId ? { ...col, title: newColumnTitle } : col,
+                col.id === columnId ? { ...col, ...updates } : col,
               ),
             }
           : project,
