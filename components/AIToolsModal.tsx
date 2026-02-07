@@ -12,7 +12,9 @@ interface AIToolsModalProps {
 
 export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
 
-  const importProject = useProjectStore((state)=> state.importProject)
+  const activeProjectId = useProjectStore((state) => state.activeProjectId);
+  const projects = useProjectStore((state) => state.projects);
+  const importProject = useProjectStore((state) => state.importProject)
   const [importText, setImportText] = useState("")
 
   // System prompt for creating plans
@@ -91,23 +93,20 @@ You can copy the code below to Chat2Canvas:
 }`
 
   // Format reminder for when AI forgets
-  const formatReminder = `Please return the updated project plan as a JSON object in this format:
+  const formatReminder = `As the Chat2Canvas Planning Engine, please return the updated project plan in this exact JSON format:
 
 {
-  "projectName": "Project Title",
+  "name": "Project Name",
   "columns": [
     {
-      "id": "col-1",
-      "title": "Column Name", 
-      "color": "#4F46E5",
+      "title": "Phase Name",
+      "color": "#e0f2fe",
       "cards": [
         {
-          "id": "card-1",
-          "number": 1,
-          "title": "Task Title",
-          "color": "#4F46E5",
+          "title": "Task Name",
+          "color": "#dcfce7",
           "tasks": [
-            {"text": "Subtask 1", "done": false}
+            { "text": "Subtask description", "done": false }
           ]
         }
       ]
@@ -115,7 +114,11 @@ You can copy the code below to Chat2Canvas:
   ]
 }
 
-                     Return ONLY the JSON, no markdown or explanations.`
+Strict Rules for Chat2Canvas Compatibility:
+1. Return ONLY the raw JSON object. 
+2. No introductory text, no markdown code blocks (no \`\`\`json), and no closing remarks.
+3. Do NOT include "id" or "number" fields; our system generates these automatically.
+4. Use ONLY these hex colors: #f8fafc, #e0f2fe, #dcfce7, #fef3c7, #fee2e2.`;
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text)
@@ -124,27 +127,46 @@ You can copy the code below to Chat2Canvas:
 
   const handleImport = () => {
 
-    const cleanJson = importText.match(/\{[\s\S]*\}/)
+    try {
 
-    if (cleanJson) {
-      const parsedJson = JSON.parse(cleanJson[0])
-      importProject(parsedJson)
+      const jsonMatch = importText.match(/\{[\s\S]*\}/)
+
+      if (!jsonMatch) {
+        alert("No Canvas Code found. Make sure you copied the entire code.")
+        return
+      }
+
+      const data = JSON.parse(jsonMatch[0])
+
+      if (!data.name || !Array.isArray(data.columns)) {
+        alert("Invalid Canvas Code. Missing 'name' or 'columns'.")
+        return
+      }
+
+      importProject(data)
+      setImportText("")
       onClose()
 
+    } catch (error) {
+
+      alert("Failed to import. Make sure the Canvas Code is valid." + error)
+
     }
-   
+
   }
 
   const handleCopyProgress = () => {
-    // TODO: Get current project state and format it
-    const currentPlan = `Here is my current project progress:
+    const currentProject = projects.find(p => p.id === activeProjectId);
+    if (!currentProject) {
+      alert("No active project to sync!");
+      return;
+    }
 
-    [Current project JSON will go here]
+    const projectJson = JSON.stringify(currentProject, null, 2);
+    const syncMessage = `Here is my current project progress for "${currentProject.name}":\n\n${projectJson}\n\n Review this and suggest updates.`;
 
-    Please review this and suggest improvements or next steps. When you're ready to provide the updated plan,
-     return it as Canvas Code (JSON) in the same format.`
 
-    handleCopy(currentPlan)
+    handleCopy(syncMessage)
   }
 
   return (
