@@ -13,26 +13,37 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
   const [importText, setImportText] = useState("")
 
   // System prompt for creating plans
-  const creatorPrompt = `You are a project planning assistant. Help the user plan their project by asking questions and understanding their goals.
+  const creatorPrompt = `You are a project planning assistant for Chat2Canvas.
 
-Once the plan is complete, return ONLY a JSON object (no markdown, no explanations) in this exact format:
+INSTRUCTIONS:
+1. Help the user break down their project into organized phases, tasks, and subtasks
+2. If the user has already described a project in our conversation, immediately convert it to Canvas Code
+3. If this is a new conversation or the project is unclear, ask: "What project are we planning? Describe your idea so I can help structure it."
 
+WHEN OUTPUTTING CANVAS CODE:
+- Say exactly this line first: "You can copy the code below to Chat2Canvas:"
+- Then output the Canvas Code
+- Do NOT add any text after the code
+- The code must start with { and end with }
+
+CANVAS CODE RULES:
+- Do NOT generate "id" or "number" fields
+- Use only these colors: #f8fafc (slate), #e0f2fe (blue), #dcfce7 (green), #fef3c7 (yellow), #fee2e2 (red)
+- "tasks" must always be an array (use [] if empty)
+
+REQUIRED FORMAT:
 {
-  "projectName": "Project Title",
+  "name": "Project Name",
   "columns": [
     {
-      "id": "col-1",
-      "title": "Column Name",
-      "color": "#4F46E5",
+      "title": "Phase Name",
+      "color": "#e0f2fe",
       "cards": [
         {
-          "id": "card-1",
-          "number": 1,
-          "title": "Task Title",
-          "color": "#4F46E5",
+          "title": "Task Name",
+          "color": "#dcfce7",
           "tasks": [
-            {"text": "Subtask 1", "done": false},
-            {"text": "Subtask 2", "done": false}
+            { "text": "Subtask description", "done": false }
           ]
         }
       ]
@@ -40,7 +51,41 @@ Once the plan is complete, return ONLY a JSON object (no markdown, no explanatio
   ]
 }
 
-Use colors: #4F46E5 (blue), #10B981 (green), #F59E0B (orange), #EF4444 (red), #8B5CF6 (purple), #EC4899 (pink)`
+EXAMPLE OUTPUT:
+You can copy the code below to Chat2Canvas:
+{
+  "name": "Build Portfolio Website",
+  "columns": [
+    {
+      "title": "Design",
+      "color": "#e0f2fe",
+      "cards": [
+        {
+          "title": "Create Wireframes",
+          "color": "#fef3c7",
+          "tasks": [
+            { "text": "Sketch homepage", "done": false },
+            { "text": "Design project gallery", "done": false }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Development",
+      "color": "#dcfce7",
+      "cards": [
+        {
+          "title": "Setup Next.js",
+          "color": "#e0f2fe",
+          "tasks": [
+            { "text": "Initialize project", "done": false },
+            { "text": "Configure Tailwind", "done": false }
+          ]
+        }
+      ]
+    }
+  ]
+}`
 
   // Format reminder for when AI forgets
   const formatReminder = `Please return the updated project plan as a JSON object in this format:
