@@ -26,9 +26,24 @@ interface Project {
   columns: Column[];
 }
 
+interface ImportData {
+  name: string;
+  columns: {
+    title: string;
+    color: string;
+    cards: {
+      title: string;
+      color: string;
+      tasks: { text: string; done: boolean }[];
+    }[];
+  }[];
+}
+
 interface ProjectStore {
   projects: Project[];
   activeProjectId: string | null;
+
+  importProject: (projectData: ImportData) => void;
 
   addProject: (name: string) => void;
   editProject: (id: string, newName: string) => void;
@@ -46,7 +61,7 @@ interface ProjectStore {
   addCard: (
     projectId: string,
     colId: string,
-    cardData: Omit<Card, "id" | "number" >,
+    cardData: Omit<Card, "id" | "number">,
   ) => void;
 
   editCard: (
@@ -71,6 +86,34 @@ export const useProjectStore = create<ProjectStore>((set) => ({
   // Initial data values
   projects: [],
   activeProjectId: null,
+
+  importProject: (projectData) => {
+    function genId(type: string , idx: string) {
+      return `${type} - ${idx} - ${String(Date.now())}`;
+    }
+
+    const newProject = {
+      id: genId('project' ,  projectData.name),
+      name: projectData.name,
+      columns: projectData.columns.map((col , ColIdx) => ({
+        id: genId('col' , String(ColIdx)),
+        title: col.title,
+        color: col.color,
+        cards: col.cards.map((card, cardIdx) => ({
+          id: genId('card' , String(cardIdx)),
+          number: cardIdx + 1,
+          title: card.title,
+          color: card.color,
+          tasks: card.tasks,
+        })),
+      })),
+    }
+
+    set((state) => ({
+      projects : [...state.projects , newProject],
+      activeProjectId: newProject.id
+    }))
+  },
 
   // Functions (actions)
   addProject: (name) => {
