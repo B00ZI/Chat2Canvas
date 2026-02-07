@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
+import { useProjectStore } from "@/store/projectStore"
 
 interface AIToolsModalProps {
   open: boolean
@@ -10,6 +11,8 @@ interface AIToolsModalProps {
 }
 
 export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
+
+  const importProject = useProjectStore((state)=> state.importProject)
   const [importText, setImportText] = useState("")
 
   // System prompt for creating plans
@@ -112,7 +115,7 @@ You can copy the code below to Chat2Canvas:
   ]
 }
 
-Return ONLY the JSON, no markdown or explanations.`
+                     Return ONLY the JSON, no markdown or explanations.`
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text)
@@ -120,9 +123,16 @@ Return ONLY the JSON, no markdown or explanations.`
   }
 
   const handleImport = () => {
-    // TODO: Parse JSON and update state
-    console.log("Importing:", importText)
-    onClose()
+
+    const cleanJson = importText.match(/\{[\s\S]*\}/)
+
+    if (cleanJson) {
+      const parsedJson = JSON.parse(cleanJson[0])
+      importProject(parsedJson)
+      onClose()
+
+    }
+   
   }
 
   const handleCopyProgress = () => {
