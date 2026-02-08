@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Copy, FileJson, RefreshCw, Zap } from "lucide-react"
-import { INSTRUCTIONS_PROMPTS , INSTRUCTIONS_PROMPT_REMINDER } from "@/lib/prompts"
+import { INSTRUCTIONS_PROMPTS, INSTRUCTIONS_PROMPT_REMINDER } from "@/lib/prompts"
 
 import { useState } from "react"
 import { useProjectStore } from "@/store/projectStore"
@@ -22,13 +22,13 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
   const [importText, setImportText] = useState("")
 
   // System prompt for creating plans
-  const creatorPrompt = INSTRUCTIONS_PROMPTS 
+  const creatorPrompt = INSTRUCTIONS_PROMPTS
   // Format reminder for when AI forgets
   const formatReminder = INSTRUCTIONS_PROMPT_REMINDER
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text)
-    
+
   }
 
   const handleImport = () => {
@@ -62,17 +62,31 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
   }
 
   const handleCopyProgress = () => {
+    
     const currentProject = projects.find(p => p.id === activeProjectId);
     if (!currentProject) {
       alert("No active project to sync!");
       return;
     }
 
-    const projectJson = JSON.stringify(currentProject, null, 2);
-    const syncMessage = `Here is my current project progress for "${currentProject.name}":\n\n${projectJson}\n\n Review this and suggest updates.`;
+    
+    const cleanData = {
+      name: currentProject.name,
+      columns: currentProject.columns.map(col => ({
+        title: col.title,
+        color: col.color,
+        cards: col.cards.map(card => ({
+          title: card.title,
+          color: card.color,
+          tasks: card.tasks
+        }))
+      }))
+    };
 
+    const projectJson = JSON.stringify(cleanData, null, 2);
+    const syncMessage = `Here is my current project progress for "${currentProject.name}":\n\n${projectJson}\n\nReview this and suggest improvements. Return updated Canvas Code in the same format.`;
 
-    handleCopy(syncMessage)
+    handleCopy(syncMessage);
   }
 
   return (
