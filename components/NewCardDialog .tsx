@@ -87,7 +87,7 @@ export function NewCardDialog({ open, onClose, projectId, colId }: NewCardDialog
                         <label className="text-sm font-medium  ">Card Tasks</label>
                         <div className="flex gap-3">
 
-                            <Input className="flex-3" type="text" ref={taskInputRef} />
+                            <Input onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTask())} className="flex-3" type="text" ref={taskInputRef} />
 
                             <button onClick={handleAddTask} type="button" className="w-full  flex flex-1 items-center justify-center gap-2 cursor-pointer border  border-gray-200 rounded-lg text-sm font-medium text-gray-500 transition-colors hover:bg-gray-50 hover:border-gray-300! hover:text-gray-700">
                                 <span className="text-lg">+</span>
@@ -95,7 +95,7 @@ export function NewCardDialog({ open, onClose, projectId, colId }: NewCardDialog
                             </button>
                         </div>
                         <div className="flex flex-col gap-2 overflow-y-auto max-h-70 ">
-                            {tasks.map((task, taskIndex) =>
+                            {[...tasks].reverse().map((task, taskIndex) =>
 
                                 <div key={`${task.text}-${taskIndex}`} className="w-full flex  cursor-pointer border  py-2 px-3 border-gray-200 rounded-lg text-sm font-medium text-gray-500 transition-colors hover:bg-gray-50 hover:border-gray-300! hover:text-gray-700">
 
