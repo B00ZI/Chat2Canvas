@@ -3,7 +3,7 @@ import { useState } from "react"
 import Card from "./Card"
 import { EditColumnDialog } from "./EditColumnDialog"
 import { NewCardDialog } from "./NewCardDialog "
-
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 
 
 interface Task {
@@ -33,6 +33,7 @@ interface ColumnProps {
 
 export default function Column({ col, projectId }: ColumnProps) {
 
+    const cardIds = col.cards.map(c => c.id)
 
     const [isEditColumnDialogOpen, setIsEditColumnDialogOpen] = useState(false)
     const [isNewCardDialogOpen, setisNewCardDialogOpen] = useState(false)
@@ -51,21 +52,21 @@ export default function Column({ col, projectId }: ColumnProps) {
                 </div>
             </div>
 
-            {/* Cards go here - empty for now */}
-            <div className="space-y-3 mb-3">
-                {col.cards.map((card, x) =>
+            <SortableContext items={cardIds} strategy={verticalListSortingStrategy}>
+                <div className="space-y-3 mb-3">
+                    {col.cards.map((card, x) =>
 
 
-                    <Card
-                        key={card.id}
-                        card={card}
-                        projectId={projectId}
-                        colId={col.id}
-                    />
+                        <Card
+                            key={card.id}
+                            card={card}
+                            projectId={projectId}
+                            colId={col.id}
+                        />
 
-                )}
-            </div>
-
+                    )}
+                </div>
+            </SortableContext>
 
             {/* Add Card Button */}
             <button onClick={() => setisNewCardDialogOpen(true)} className="w-full flex items-center justify-center gap-2 cursor-pointer border-2 border-dashed border-gray-200 rounded-lg p-3 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-50 hover:border-gray-300! hover:text-gray-700">
