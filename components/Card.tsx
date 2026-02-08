@@ -1,7 +1,9 @@
 import { useProjectStore } from "@/store/projectStore";
+import { EditCardDialog } from "./EditCardDialog";
+import { useState } from "react";
 
 interface card {
-  id: string 
+  id: string
   number: number
   title: string
   color: string
@@ -9,15 +11,16 @@ interface card {
 }
 
 interface CardPrps {
-  
-  card: card ,
+
+  card: card,
   projectId: string,
   colId: string,
- 
+
 }
 
-export default function Card({ card , projectId , colId }: CardPrps) {
+export default function Card({ card, projectId, colId }: CardPrps) {
 
+  const [isEditCardDialogOpen, setIsEditCardDialogOpen] = useState(false)
   const toggleTask = useProjectStore((state) => state.toggleTask)
   const completedTasks = card.tasks.filter(t => t.done).length
 
@@ -26,27 +29,29 @@ export default function Card({ card , projectId , colId }: CardPrps) {
       {/* Card Header */}
       <div className="flex items-start gap-3 mb-3">
         {/* Number Badge */}
-        <div 
+        <div
           className="w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-sm shrink-0"
           style={{ backgroundColor: card.color }}
         >
           {card.number}
         </div>
-        
+
         {/* Title */}
         <h4 className="font-semibold text-gray-900 flex-1">{card.title}</h4>
+        <button onClick={() => setIsEditCardDialogOpen(true)} className="text-gray-400 hover:text-gray-600">⋮</button>
+        <EditCardDialog open={isEditCardDialogOpen} onClose={() => setIsEditCardDialogOpen(false)} projectId={projectId} colId={colId} card={card}  />
       </div>
 
       {/* Tasks Preview */}
       <div className="space-y-2">
         {card.tasks.slice(0, 3).map((task, idx) => (
           <div key={idx} className="flex items-center gap-2 text-sm">
-            <input 
-              onChange={()=> toggleTask(projectId , colId , card.id ,  idx)}
-              type="checkbox" 
+            <input
+              onChange={() => toggleTask(projectId, colId, card.id, idx)}
+              type="checkbox"
               checked={task.done}
               className="rounded"
-              
+
             />
             <span className={task.done ? "line-through text-gray-400" : "text-gray-700"}>
               {task.text}
