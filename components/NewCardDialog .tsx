@@ -95,19 +95,27 @@ export function NewCardDialog({ open, onClose, projectId, colId }: NewCardDialog
                             </button>
                         </div>
                         <div className="flex flex-col gap-2 overflow-y-auto max-h-70 ">
-                            {[...tasks].reverse().map((task, taskIndex) =>
-
-                                <div key={`${task.text}-${taskIndex}`} className="w-full flex  cursor-pointer border  py-2 px-3 border-gray-200 rounded-lg text-sm font-medium text-gray-500 transition-colors hover:bg-gray-50 hover:border-gray-300! hover:text-gray-700">
+                            {[...tasks].reverse().map((task, reversedIndex) => {
+                                  
+                              const actualIndex = tasks.length - 1 - reversedIndex;
+                            
+                                 return(
+                                 <div key={`${task.text}-${actualIndex}`} className="w-full flex  cursor-pointer border  py-2 px-3 border-gray-200 rounded-lg text-sm font-medium text-gray-500 transition-colors hover:bg-gray-50 hover:border-gray-300! hover:text-gray-700">
 
                                     <div className="flex-4">
                                         {task.text}
 
                                     </div>
-                                    <button onClick={() => handleDeleteTask(taskIndex)} type="button" className="w-full flex-1  cursor-pointer border  border-red-200 rounded-lg text-sm font-medium text-red-500 transition-colors hover:bg-red-50 hover:border-red-300! hover:text-red-700">
+                                    <button onClick={() => handleDeleteTask(actualIndex)} type="button" className="w-full flex-1  cursor-pointer border  border-red-200 rounded-lg text-sm font-medium text-red-500 transition-colors hover:bg-red-50 hover:border-red-300! hover:text-red-700">
 
                                         delete
                                     </button>
                                 </div>
+                              )
+                            }
+                              
+                             
+                               
 
                             )}
 
