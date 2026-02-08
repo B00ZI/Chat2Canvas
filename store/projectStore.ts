@@ -1,5 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { arrayMove } from "@dnd-kit/sortable";
+
 
 interface Task {
   text: string;
@@ -80,7 +82,12 @@ interface ProjectStore {
     taskIndex: number,
   ) => void;
 
-  // toggleTask(projectId, columnId, cardId, taskIndex)
+  reorderCards: (
+    projectId: string,
+    columnId: string,
+    oldIndex: number,
+    newIndex: number,
+  ) => void;
 }
 
 export const useProjectStore = create<ProjectStore>()(
@@ -90,6 +97,30 @@ export const useProjectStore = create<ProjectStore>()(
       projects: [],
       activeProjectId: null,
 
+      reorderCards: (projectId, columnId, oldIndex, newIndex) => {
+        set((state) => ({
+          projects: state.projects.map((project) =>
+            project.id === projectId
+              ? {
+                  ...project,
+                  columns: project.columns.map((col) =>
+                    col.id === columnId
+                      ? {
+                          ...col,
+                          cards: arrayMove(col.cards, oldIndex, newIndex).map(
+                            (card, idx) => ({
+                              ...card,
+                              number: idx + 1, 
+                            }),
+                          ),
+                        }
+                      : col,
+                  ),
+                }
+              : project,
+          ),
+        }));
+      },
       importProject: (projectData) => {
         function genId(type: string, idx: string) {
           return `${type} - ${idx} - ${String(Date.now())}`;
