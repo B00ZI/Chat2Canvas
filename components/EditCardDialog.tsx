@@ -133,28 +133,37 @@ export function EditCardDialog({ open, onClose, projectId, colId, card }: EditCa
                             </button>
                         </div>
                         <div className="flex flex-col gap-2 overflow-y-auto max-h-70">
-                            {[...tasks].reverse().map((task, taskIndex) => (
-                                <div key={taskIndex} className="flex gap-2 items-center border p-2 rounded-lg bg-white group">
-                                    {/* Dynamic Task Input */}
-                                    <Input
-                                        value={task.text}
-                                        onChange={(e) => {
-                                            setTasks(prev => prev.map((task, i) =>
-                                                i === taskIndex ? { ...task, text: e.target.value } : task
-                                            ));
-                                        }}
-                                        className="flex-1 border-none bg-transparent focus-visible:ring-0 shadow-none p-0 h-auto font-medium text-gray-600"
-                                    />
+                            {[...tasks].reverse().map((task, reversedIndex) => {
+                                const actualIndex = tasks.length - 1 - reversedIndex;
+                                return (
 
-                                    <button
-                                        onClick={() => handleDeleteTask(taskIndex)}
-                                        type="button"
-                                        className="opacity-0 group-hover:opacity-100 text-xs text-red-500 hover:text-red-700 transition-all p-1"
-                                    >
-                                        Remove
-                                    </button>
-                                </div>
-                            ))}
+                                    <div key={actualIndex} className="flex gap-2 items-center border p-2 rounded-lg bg-white group">
+
+                                        <Input
+                                            value={task.text}
+                                            onChange={(e) => {
+                                                setTasks(prev => prev.map((task, i) =>
+                                                    i === actualIndex ? { ...task, text: e.target.value } : task
+                                                ));
+                                            }}
+                                            className="flex-1 border-none bg-transparent focus-visible:ring-0 shadow-none p-0 h-auto font-medium text-gray-600"
+                                        />
+
+                                        <button
+                                            onClick={() => handleDeleteTask(actualIndex)}
+                                            type="button"
+                                            className="opacity-0 group-hover:opacity-100 text-xs text-red-500 hover:text-red-700 transition-all p-1"
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
+                                )
+
+
+                            }
+
+
+                            )}
                         </div>
 
                     </div>
