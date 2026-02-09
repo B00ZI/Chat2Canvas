@@ -1,7 +1,7 @@
 'use client'
 
-import { DndContext, DragEndEvent } from '@dnd-kit/core'
-import { closestCenter } from '@dnd-kit/core'
+import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, closestCenter } from '@dnd-kit/core'
+
 
 import TopBar from "@/components/Topbar"
 import EmptyState from "@/components/WorkeSpaceEmpty"
@@ -10,20 +10,41 @@ import { useProjectStore } from "@/store/projectStore"
 import { Button } from "@/components/ui/button"
 import { NewColumnDialog } from "@/components/NewColumnDialog "
 import { useState } from "react"
+import Card from "@/components/Card"
 
 export default function Home() {
+
+
+  const [activeCardData, setActiveCardData] = useState<{
+    card: any,
+    colId: string
+  } | null>(null);
 
   const [isNewColumnDialogOpen, setIsNewColumnDialogOpen] = useState<boolean>(false)
   const projects = useProjectStore((state) => state.projects)
   const activeProjectId = useProjectStore((state) => state.activeProjectId)
   const reorderCards = useProjectStore((state) => state.reorderCards)
 
+
   const activeProject = projects.find(p => p.id === activeProjectId)
 
 
+  function handleDragStart(event: DragStartEvent) {
+    const { active } = event
+    const column = activeProject?.columns.find(col =>
+      col.cards.some(card => card.id === active.id)
+    );
+
+    const card = column?.cards.find(c => c.id === active.id);
+
+    if (card && column) {
+      setActiveCardData({ card, colId: column.id });
+    }
+  }
+
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
-
+    setActiveCardData(null)
     if (!over || active.id === over.id) return
 
     // Find which column contains the dragged card
@@ -48,7 +69,7 @@ export default function Home() {
       {!activeProject ? (
         <EmptyState />
       ) : (
-        <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <DndContext collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           <div className="p-6 overflow-x-auto">
             <div className="flex gap-4">
               {activeProject.columns.map((col) =>
@@ -66,6 +87,15 @@ export default function Home() {
 
             </div>
           </div>
+          <DragOverlay>
+            {activeCardData ? (
+              <div className="opacity-100 shadow-2xl">
+                <Card card={activeCardData.card}
+                  projectId={activeProject!.id}
+                  colId={activeCardData.colId} />
+              </div>
+            ) : null}
+          </DragOverlay>
         </DndContext>
       )}
     </div>
