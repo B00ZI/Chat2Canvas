@@ -2,7 +2,6 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { arrayMove } from "@dnd-kit/sortable";
 
-
 interface Task {
   text: string;
   done: boolean;
@@ -110,7 +109,7 @@ export const useProjectStore = create<ProjectStore>()(
                           cards: arrayMove(col.cards, oldIndex, newIndex).map(
                             (card, idx) => ({
                               ...card,
-                              number: idx + 1, 
+                              number: idx + 1,
                             }),
                           ),
                         }
@@ -122,19 +121,22 @@ export const useProjectStore = create<ProjectStore>()(
         }));
       },
       importProject: (projectData) => {
-        function genId(type: string, idx: string) {
-          return `${type} - ${idx} - ${String(Date.now())}`;
+        
+        function genId(type:string, idx:string) {
+          const randomStr = Math.random().toString(36).substring(2, 7);
+          return `${type}-${idx}-${Date.now()}-${randomStr}`;
         }
 
         const newProject = {
-          id: genId("project", projectData.name),
+          id: genId("project", "main"),
           name: projectData.name,
-          columns: projectData.columns.map((col, ColIdx) => ({
-            id: genId("col", String(ColIdx)),
+          columns: projectData.columns.map((col, colIdx) => ({
+            id: genId("col", String(colIdx)),
             title: col.title,
             color: col.color,
             cards: col.cards.map((card, cardIdx) => ({
-              id: genId("card", String(cardIdx)),
+            
+              id: genId("card", `${colIdx}-${cardIdx}`),
               number: cardIdx + 1,
               title: card.title,
               color: card.color,
@@ -151,8 +153,10 @@ export const useProjectStore = create<ProjectStore>()(
 
       // Functions (actions)
       addProject: (name) => {
+        const randomStr = Math.random().toString(36).substring(2, 7);
         const newProject = {
-          id: String(Date.now()),
+          
+          id: `${Date.now()}-${randomStr}` ,
           name: name,
           columns: [
             {
@@ -210,8 +214,9 @@ export const useProjectStore = create<ProjectStore>()(
       },
 
       addColumn: (projectId, title, color) => {
+        const randomStr = Math.random().toString(36).substring(2, 7);
         const newColumn = {
-          id: String(Date.now()),
+          id: `${title}-${Date.now()}-${randomStr}`,
           title: title,
           color: color,
           cards: [],
@@ -254,6 +259,7 @@ export const useProjectStore = create<ProjectStore>()(
       },
 
       addCard: (projectId, colId, cardData) => {
+        const randomStr = Math.random().toString(36).substring(2, 7);
         set((state) => ({
           projects: state.projects.map((project) =>
             project.id === projectId
@@ -267,7 +273,7 @@ export const useProjectStore = create<ProjectStore>()(
                             ...col.cards,
                             {
                               ...cardData,
-                              id: String(Date.now()),
+                              id: `${cardData.title}-${Date.now()}-${randomStr}`,
                               number: col.cards.length + 1,
                             },
                           ],
