@@ -4,8 +4,7 @@ import Card from "./Card"
 import { EditColumnDialog } from "./EditColumnDialog"
 import { NewCardDialog } from "./NewCardDialog "
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
-
-
+import SortableCard from "./SortableCard"
 interface Task {
     text: string;
     done: boolean;
@@ -57,7 +56,7 @@ export default function Column({ col, projectId }: ColumnProps) {
                     {col.cards.map((card, x) =>
 
 
-                        <Card
+                        <SortableCard
                             key={card.id}
                             card={card}
                             projectId={projectId}
