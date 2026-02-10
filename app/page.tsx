@@ -24,10 +24,13 @@ export default function Home() {
   const projects = useProjectStore((state) => state.projects)
   const activeProjectId = useProjectStore((state) => state.activeProjectId)
   const reorderCards = useProjectStore((state) => state.reorderCards)
+  const moveCardBetweenColumns = useProjectStore((state) => state.moveCardBetweenColumns)
 
 
   const activeProject = projects.find(p => p.id === activeProjectId)
+  
 
+  
 
   function handleDragStart(event: DragStartEvent) {
     const { active } = event
@@ -53,6 +56,23 @@ export default function Home() {
     )
 
     if (!column) return
+
+    const isOverColumn = activeProject?.columns.some(col => col.id === over.id)
+    const targetColumnId = isOverColumn
+      ? over.id as string
+      : activeProject?.columns.find(col =>
+        col.cards.some(card => card.id === over.id)
+      )?.id
+
+    if (!targetColumnId) return
+
+    const sourceColumnId = column.id
+    const cardId = active.id  as string
+
+    if (sourceColumnId !== targetColumnId && activeProject) {
+      moveCardBetweenColumns(activeProject.id, cardId, sourceColumnId, targetColumnId)
+      return
+    }
 
     const oldIndex = column.cards.findIndex(c => c.id === active.id)
     const newIndex = column.cards.findIndex(c => c.id === over.id)
