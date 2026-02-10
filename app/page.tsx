@@ -1,6 +1,6 @@
 'use client'
 
-import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, closestCenter } from '@dnd-kit/core'
+import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, pointerWithin } from '@dnd-kit/core'
 
 
 import TopBar from "@/components/Topbar"
@@ -89,7 +89,7 @@ export default function Home() {
       {!activeProject ? (
         <EmptyState />
       ) : (
-        <DndContext collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <DndContext collisionDetection={pointerWithin} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           <div className="p-6 overflow-x-auto">
             <div className="flex gap-4">
               {activeProject.columns.map((col) =>

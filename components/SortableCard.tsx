@@ -27,6 +27,7 @@ export default function SortableCard({ card, projectId, colId }: SortableCardPro
           height: height ? `${height}px` : '150px',
           backgroundColor: card.color,
           borderColor: 'rgba(0,0,0,0.3)',
+          pointerEvents: 'none', 
          
         }}
        className="w-full rounded-lg border-2 opacity-50 shadow-inner"
