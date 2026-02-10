@@ -4,6 +4,7 @@ import Card from "./Card"
 import { EditColumnDialog } from "./EditColumnDialog"
 import { NewCardDialog } from "./NewCardDialog "
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { useDroppable } from '@dnd-kit/core'
 import SortableCard from "./SortableCard"
 interface Task {
     text: string;
@@ -33,11 +34,21 @@ interface ColumnProps {
 export default function Column({ col, projectId }: ColumnProps) {
 
     const cardIds = col.cards.map(c => c.id)
-
+    const { setNodeRef, isOver } = useDroppable({
+        id: col.id,
+    })
     const [isEditColumnDialogOpen, setIsEditColumnDialogOpen] = useState(false)
     const [isNewCardDialogOpen, setisNewCardDialogOpen] = useState(false)
     return (
-        <div className="bg-white rounded-lg p-4 w-80 shrink-0 shadow-sm border border-gray-200">
+        <div
+            ref={setNodeRef}
+            className={`bg-white rounded-lg p-4 w-80 shrink-0 transition-all ${isOver ? 'shadow-lg' : ''
+                }`}
+            style={{
+                // This creates a 2px "ring" using your dynamic col.color
+                boxShadow: isOver ? `0 0 0 2px ${col.color}` : 'none'
+            }}
+        >
             {/* Column Header */}
             <div className="mb-4">
                 <div className="h-1 rounded-t-lg mb-3" style={{ backgroundColor: col.color }} />
@@ -52,18 +63,15 @@ export default function Column({ col, projectId }: ColumnProps) {
             </div>
 
             <SortableContext items={cardIds} strategy={verticalListSortingStrategy}>
-                <div className="space-y-3 mb-3">
-                    {col.cards.map((card, x) =>
-
-
+                <div className="space-y-3 mb-3 min-h-25">
+                    {col.cards.map((card) => (
                         <SortableCard
                             key={card.id}
                             card={card}
                             projectId={projectId}
                             colId={col.id}
                         />
-
-                    )}
+                    ))}
                 </div>
             </SortableContext>
 
@@ -77,3 +85,4 @@ export default function Column({ col, projectId }: ColumnProps) {
         </div>
     )
 }
+
