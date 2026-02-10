@@ -87,6 +87,13 @@ interface ProjectStore {
     oldIndex: number,
     newIndex: number,
   ) => void;
+
+  moveCardBetweenColumns: (
+    projectId: string,
+    cardId: string,
+    fromColumnId: string,
+    toColumnId: string,
+  ) => void;
 }
 
 export const useProjectStore = create<ProjectStore>()(
@@ -120,9 +127,58 @@ export const useProjectStore = create<ProjectStore>()(
           ),
         }));
       },
+
+      moveCardBetweenColumns: (projectId, cardId, fromColumnId, toColumnId) => {
+        set((state) => {
+          const project = state.projects.find((p) => p.id === projectId);
+          if (!project) return state;
+
+          const sourceCol = project.columns.find((c) => c.id === fromColumnId);
+          const targetCol = project.columns.find((c) => c.id === toColumnId);
+
+          if (!sourceCol || !targetCol) return state;
+
+          const cardToMove = sourceCol.cards.find((c) => c.id === cardId);
+          if (!cardToMove) return state;
+
+          return {
+            projects: state.projects.map((proj) =>
+              proj.id === projectId
+                ? {
+                    ...proj,
+                    columns: proj.columns.map((col) => {
+                      // Remove from source column
+                      if (col.id === fromColumnId) {
+                        return {
+                          ...col,
+                          cards: col.cards
+                            .filter((c) => c.id !== cardId)
+                            .map((card, idx) => ({ ...card, number: idx + 1 })),
+                        };
+                      }
+                      // Add to target column
+                      if (col.id === toColumnId) {
+                        return {
+                          ...col,
+                          cards: [...col.cards, cardToMove].map(
+                            (card, idx) => ({
+                              ...card,
+                              number: idx + 1,
+                            }),
+                          ),
+                        };
+                      }
+                      return col;
+                    }),
+                  }
+                : proj,
+            ),
+          };
+        });
+      },
+
       importProject: (projectData) => {
-        
-        function genId(type:string, idx:string) {
+        function genId(type: string, idx: string) {
           const randomStr = Math.random().toString(36).substring(2, 7);
           return `${type}-${idx}-${Date.now()}-${randomStr}`;
         }
@@ -135,7 +191,6 @@ export const useProjectStore = create<ProjectStore>()(
             title: col.title,
             color: col.color,
             cards: col.cards.map((card, cardIdx) => ({
-            
               id: genId("card", `${colIdx}-${cardIdx}`),
               number: cardIdx + 1,
               title: card.title,
@@ -155,8 +210,7 @@ export const useProjectStore = create<ProjectStore>()(
       addProject: (name) => {
         const randomStr = Math.random().toString(36).substring(2, 7);
         const newProject = {
-          
-          id: `${Date.now()}-${randomStr}` ,
+          id: `${Date.now()}-${randomStr}`,
           name: name,
           columns: [
             {
