@@ -1,4 +1,4 @@
-import { memo, useState } from "react";
+import { memo, useState , useCallback } from "react";
 import { useProjectStore } from "@/store/projectStore";
 import { EditCardDialog } from "./EditCardDialog";
 
@@ -19,7 +19,7 @@ interface CardProps {
 
 function Card({ card, projectId, colId, dragHandleProps }: CardProps) {
   const [isEditCardDialogOpen, setIsEditCardDialogOpen] = useState(false)
-  const toggleTask = useProjectStore((state) => state.toggleTask)
+  const toggleTask = useProjectStore(useCallback((state) => state.toggleTask, []))
   
   const tasks = card?.tasks || [];
   const completedTasks = tasks.filter(t => t?.done).length || 0;
@@ -37,7 +37,7 @@ function Card({ card, projectId, colId, dragHandleProps }: CardProps) {
         {/* Number Badge */}
         <div
           className="w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-sm shrink-0 shadow-sm pointer-events-none"
-          style={{ backgroundColor: card.color }}
+          style={{ backgroundColor: card.color , willChange: 'transform' , }}
         >
           {card.number}
         </div>
