@@ -1,8 +1,7 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 import { arrayMove } from "@dnd-kit/sortable";
 
-// --- Types ---
 interface Task {
   text: string;
   done: boolean;
@@ -45,8 +44,7 @@ interface ImportData {
 interface ProjectStore {
   projects: Project[];
   activeProjectId: string | null;
-
-  // Actions
+  syncProjectNumbers: (projectId: string) => void;
   importProject: (projectData: ImportData) => void;
   addProject: (name: string) => void;
   editProject: (id: string, newName: string) => void;
@@ -55,27 +53,58 @@ interface ProjectStore {
 
   addColumn: (projectId: string, title: string, color: string) => void;
   deleteColumn: (projectId: string, columnId: string) => void;
-  editColumn: (projectId: string, columnId: string, updates: Partial<Column>) => void;
+  editColumn: (
+    projectId: string,
+    columnId: string,
+    updates: Partial<Column>,
+  ) => void;
 
-  addCard: (projectId: string, colId: string, cardData: Omit<Card, "id" | "number">) => void;
-  editCard: (projectId: string, columnId: string, cardId: string, updates: Partial<Card>) => void;
+  addCard: (
+    projectId: string,
+    colId: string,
+    cardData: Omit<Card, "id" | "number">,
+  ) => void;
+
+  editCard: (
+    projectId: string,
+    columnId: string,
+    cardId: string,
+    updates: Partial<Card>,
+  ) => void;
+
   deleteCard: (projectId: string, columnId: string, cardId: string) => void;
-  
-  toggleTask: (projectId: string, columnId: string, cardId: string, taskIndex: number) => void;
 
-  reorderCards: (projectId: string, columnId: string, oldIndex: number, newIndex: number) => void;
+  toggleTask: (
+    projectId: string,
+    columnId: string,
+    cardId: string,
+    taskIndex: number,
+  ) => void;
 
-  // NEW: Action to reorder columns
-  reorderColumns: (projectId: string, oldIndex: number, newIndex: number) => void;
+  reorderCards: (
+    projectId: string,
+    columnId: string,
+    oldIndex: number,
+    newIndex: number,
+  ) => void;
+
+  reorderColumns: (
+    projectId: string,
+    oldIndex: number,
+    newIndex: number,
+  ) => void;
 
   moveCardBetweenColumns: (
     projectId: string,
     cardId: string,
     fromColumnId: string,
     toColumnId: string,
-    insertIndex?: number 
+    insertIndex?: number,
   ) => void;
 }
+
+// 1️⃣ Define the debounce timer outside the store
+let saveTimeout: ReturnType<typeof setTimeout> | undefined;
 
 export const useProjectStore = create<ProjectStore>()(
   persist(
@@ -83,294 +112,336 @@ export const useProjectStore = create<ProjectStore>()(
       projects: [],
       activeProjectId: null,
 
-      // --- NEW IMPLEMENTATION ---
-      reorderColumns: (projectId, oldIndex, newIndex) => {
+      syncProjectNumbers: (pId) => {
         set((state) => ({
-          projects: state.projects.map((project) =>
-            project.id === projectId
+          projects: state.projects.map((p) =>
+            p.id === pId
               ? {
-                  ...project,
-                  columns: arrayMove(project.columns, oldIndex, newIndex),
+                  ...p,
+                  columns: p.columns.map((col) => ({
+                    ...col,
+                    cards: col.cards.map((c, i) => ({ ...c, number: i + 1 })),
+                  })),
                 }
-              : project
+              : p,
           ),
         }));
       },
-      // --------------------------
 
-      reorderCards: (projectId, columnId, oldIndex, newIndex) => {
+      reorderColumns: (projectId, oldIndex, newIndex) => {
         set((state) => ({
-          projects: state.projects.map((project) => {
-            if (project.id !== projectId) return project;
-
-            return {
-              ...project,
-              columns: project.columns.map((col) => {
-                if (col.id !== columnId) return col;
-
-                const newCards = arrayMove(col.cards, oldIndex, newIndex).map(
-                  (card, idx) => ({ ...card, number: idx + 1 })
-                );
-
-                return { ...col, cards: newCards };
-              }),
-            };
-          }),
+          projects: state.projects.map((p) =>
+            p.id === projectId
+              ? { ...p, columns: arrayMove(p.columns, oldIndex, newIndex) }
+              : p,
+          ),
         }));
       },
 
-      moveCardBetweenColumns: (projectId, cardId, fromColumnId, toColumnId, insertIndex) => {
+      reorderCards: (projectId, columnId, oldIndex, newIndex) => {
         set((state) => {
-          const project = state.projects.find((p) => p.id === projectId);
-          if (!project) return state;
+          const pIdx = state.projects.findIndex((p) => p.id === projectId);
+          if (pIdx === -1) return state;
+          const newProjects = [...state.projects];
 
-          const sourceCol = project.columns.find((c) => c.id === fromColumnId);
-          const targetCol = project.columns.find((c) => c.id === toColumnId);
-          const cardToMove = sourceCol?.cards.find((c) => c.id === cardId);
-
-          if (!sourceCol || !targetCol || !cardToMove) return state;
-
-          return {
-            projects: state.projects.map((proj) => {
-              if (proj.id !== projectId) return proj;
-
-              return {
-                ...proj,
-                columns: proj.columns.map((col) => {
-                  if (col.id === fromColumnId) {
-                    return {
-                      ...col,
-                      cards: col.cards
-                        .filter((c) => c.id !== cardId)
-                        .map((c, i) => ({ ...c, number: i + 1 })), 
-                    };
+          newProjects[pIdx] = {
+            ...newProjects[pIdx],
+            columns: newProjects[pIdx].columns.map((col) =>
+              col.id === columnId
+                ? {
+                    ...col,
+                    cards: arrayMove(col.cards, oldIndex, newIndex).map(
+                      (c, i) => ({ ...c, number: i + 1 }),
+                    ),
                   }
-
-                  if (col.id === toColumnId) {
-                    let newCards = [...col.cards];
-                    if (typeof insertIndex === 'number' && insertIndex >= 0 && insertIndex <= newCards.length) {
-                       newCards.splice(insertIndex, 0, cardToMove);
-                    } else {
-                       newCards.push(cardToMove);
-                    }
-                    return {
-                      ...col,
-                      cards: newCards.map((c, i) => ({ ...c, number: i + 1 })), 
-                    };
-                  }
-                  return col;
-                }),
-              };
-            }),
+                : col,
+            ),
           };
+
+          return { projects: newProjects };
         });
       },
 
-      importProject: (projectData) => {
-        const genId = (prefix: string) => 
-          `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+      moveCardBetweenColumns: (projectId, cardId, fromId, toId, idx) => {
+        set((state) => {
+          const pIdx = state.projects.findIndex((p) => p.id === projectId);
+          if (pIdx === -1) return state;
 
-        const newProject: Project = {
+          const proj = state.projects[pIdx];
+          const sCol = proj.columns.find((c) => c.id === fromId);
+          const tCol = proj.columns.find((c) => c.id === toId);
+          const card = sCol?.cards.find((c) => c.id === cardId);
+          if (!sCol || !tCol || !card) return state;
+
+          const newCols = proj.columns.map((col) => {
+            if (col.id === fromId)
+              return {
+                ...col,
+                cards: col.cards.filter((c) => c.id !== cardId),
+              };
+            if (col.id === toId) {
+              const newCards = [...col.cards];
+              newCards.splice(
+                typeof idx === "number" && idx >= 0 ? idx : newCards.length,
+                0,
+                card,
+              );
+              return { ...col, cards: newCards };
+            }
+            return col;
+          });
+
+          const newProjects = [...state.projects];
+          newProjects[pIdx] = { ...proj, columns: newCols };
+          return { projects: newProjects };
+        });
+      },
+
+      importProject: (data) => {
+        const genId = (p: string) =>
+          `${p}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+        const newP: Project = {
           id: genId("proj"),
-          name: projectData.name,
-          columns: projectData.columns.map((col) => ({
+          name: data.name,
+          columns: data.columns.map((col) => ({
             id: genId("col"),
             title: col.title,
             color: col.color,
-            cards: col.cards.map((card, idx) => ({
+            cards: col.cards.map((c, i) => ({
               id: genId("card"),
-              number: idx + 1,
-              title: card.title,
-              color: card.color,
-              tasks: card.tasks,
+              number: i + 1,
+              title: c.title,
+              color: c.color,
+              tasks: c.tasks,
             })),
           })),
         };
 
         set((state) => ({
-          projects: [...state.projects, newProject],
-          activeProjectId: newProject.id,
+          projects: [...state.projects, newP],
+          activeProjectId: newP.id,
         }));
       },
 
       addProject: (name) => {
-        const genId = (prefix: string) => `${prefix}-${Date.now()}`;
-        
-        const newProject: Project = {
+        const genId = (p: string) => `${p}-${Date.now()}`;
+        const newP: Project = {
           id: genId("proj"),
-          name: name,
+          name,
           columns: [
-            { id: genId("col-todo"), title: "To Do", color: "#f1f5f9", cards: [] },
-            { id: genId("col-prog"), title: "In Progress", color: "#e0f2fe", cards: [] },
-            { id: genId("col-done"), title: "Done", color: "#dcfce7", cards: [] },
+            {
+              id: genId("col-todo"),
+              title: "To Do",
+              color: "#f1f5f9",
+              cards: [],
+            },
+            {
+              id: genId("col-prog"),
+              title: "In Progress",
+              color: "#e0f2fe",
+              cards: [],
+            },
+            {
+              id: genId("col-done"),
+              title: "Done",
+              color: "#dcfce7",
+              cards: [],
+            },
           ],
         };
 
         set((state) => ({
-          projects: [...state.projects, newProject],
-          activeProjectId: newProject.id,
+          projects: [...state.projects, newP],
+          activeProjectId: newP.id,
         }));
       },
 
       editProject: (id, newName) => {
         set((state) => ({
           projects: state.projects.map((p) =>
-            p.id === id ? { ...p, name: newName } : p
+            p.id === id ? { ...p, name: newName } : p,
           ),
         }));
       },
 
       deleteProject: (id) => {
         set((state) => {
-          const newProjects = state.projects.filter((p) => p.id !== id);
+          const nP = state.projects.filter((p) => p.id !== id);
           return {
-            projects: newProjects,
-            activeProjectId: state.activeProjectId === id 
-              ? (newProjects[0]?.id || null) 
-              : state.activeProjectId,
+            projects: nP,
+            activeProjectId:
+              state.activeProjectId === id
+                ? nP[0]?.id || null
+                : state.activeProjectId,
           };
         });
       },
 
       setActiveProject: (id) => set({ activeProjectId: id }),
 
-      addColumn: (projectId, title, color) => {
-        set((state) => ({
-          projects: state.projects.map((p) => {
-            if (p.id !== projectId) return p;
-            return {
-              ...p,
-              columns: [
-                ...p.columns,
-                {
-                  id: `col-${Date.now()}-${Math.random().toString(36).substr(2,5)}`,
-                  title,
-                  color,
-                  cards: [],
-                },
-              ],
-            };
-          }),
-        }));
-      },
-
-      deleteColumn: (projectId, columnId) => {
+      addColumn: (pId, title, color) => {
         set((state) => ({
           projects: state.projects.map((p) =>
-            p.id === projectId
-              ? { ...p, columns: p.columns.filter((c) => c.id !== columnId) }
-              : p
+            p.id === pId
+              ? {
+                  ...p,
+                  columns: [
+                    ...p.columns,
+                    {
+                      id: `col-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+                      title,
+                      color,
+                      cards: [],
+                    },
+                  ],
+                }
+              : p,
           ),
         }));
       },
 
-      editColumn: (projectId, columnId, updates) => {
+      deleteColumn: (pId, cId) => {
         set((state) => ({
           projects: state.projects.map((p) =>
-            p.id === projectId
+            p.id === pId
+              ? { ...p, columns: p.columns.filter((c) => c.id !== cId) }
+              : p,
+          ),
+        }));
+      },
+
+      editColumn: (pId, cId, upd) => {
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === pId
+              ? {
+                  ...p,
+                  columns: p.columns.map((c) =>
+                    c.id === cId ? { ...c, ...upd } : c,
+                  ),
+                }
+              : p,
+          ),
+        }));
+      },
+
+      addCard: (pId, cId, data) => {
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === pId
               ? {
                   ...p,
                   columns: p.columns.map((col) =>
-                    col.id === columnId ? { ...col, ...updates } : col
+                    col.id === cId
+                      ? {
+                          ...col,
+                          cards: [
+                            ...col.cards,
+                            {
+                              ...data,
+                              id: `card-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+                              number: col.cards.length + 1,
+                            },
+                          ],
+                        }
+                      : col,
                   ),
                 }
-              : p
+              : p,
           ),
         }));
       },
 
-      addCard: (projectId, colId, cardData) => {
+      editCard: (pId, cId, cardId, upd) => {
         set((state) => ({
-          projects: state.projects.map((p) => {
-            if (p.id !== projectId) return p;
-            return {
-              ...p,
-              columns: p.columns.map((col) => {
-                if (col.id !== colId) return col;
-                return {
-                  ...col,
-                  cards: [
-                    ...col.cards,
-                    {
-                      ...cardData,
-                      id: `card-${Date.now()}-${Math.random().toString(36).substr(2,5)}`,
-                      number: col.cards.length + 1,
-                    },
-                  ],
-                };
-              }),
-            };
-          }),
+          projects: state.projects.map((p) =>
+            p.id === pId
+              ? {
+                  ...p,
+                  columns: p.columns.map((col) =>
+                    col.id === cId
+                      ? {
+                          ...col,
+                          cards: col.cards.map((c) =>
+                            c.id === cardId ? { ...c, ...upd } : c,
+                          ),
+                        }
+                      : col,
+                  ),
+                }
+              : p,
+          ),
         }));
       },
 
-      editCard: (projectId, columnId, cardId, updates) => {
+      deleteCard: (pId, cId, cardId) => {
         set((state) => ({
-          projects: state.projects.map((p) => {
-            if (p.id !== projectId) return p;
-            return {
-              ...p,
-              columns: p.columns.map((col) =>
-                col.id === columnId
-                  ? {
-                      ...col,
-                      cards: col.cards.map((c) =>
-                        c.id === cardId ? { ...c, ...updates } : c
-                      ),
-                    }
-                  : col
-              ),
-            };
-          }),
+          projects: state.projects.map((p) =>
+            p.id === pId
+              ? {
+                  ...p,
+                  columns: p.columns.map((col) =>
+                    col.id === cId
+                      ? {
+                          ...col,
+                          cards: col.cards
+                            .filter((c) => c.id !== cardId)
+                            .map((c, i) => ({ ...c, number: i + 1 })),
+                        }
+                      : col,
+                  ),
+                }
+              : p,
+          ),
         }));
       },
 
-      deleteCard: (projectId, columnId, cardId) => {
+      toggleTask: (pId, cId, cardId, tIdx) => {
         set((state) => ({
-          projects: state.projects.map((p) => {
-            if (p.id !== projectId) return p;
-            return {
-              ...p,
-              columns: p.columns.map((col) =>
-                col.id === columnId
-                  ? { ...col, cards: col.cards.filter((c) => c.id !== cardId) }
-                  : col
-              ),
-            };
-          }),
-        }));
-      },
-
-      toggleTask: (projectId, columnId, cardId, taskIndex) => {
-        set((state) => ({
-          projects: state.projects.map((p) => {
-            if (p.id !== projectId) return p;
-            return {
-              ...p,
-              columns: p.columns.map((col) => {
-                if (col.id !== columnId) return col;
-                return {
-                  ...col,
-                  cards: col.cards.map((c) => {
-                    if (c.id !== cardId) return c;
-                    const newTasks = [...c.tasks];
-                    if (newTasks[taskIndex]) {
-                        newTasks[taskIndex] = { 
-                            ...newTasks[taskIndex], 
-                            done: !newTasks[taskIndex].done 
-                        };
-                    }
-                    return { ...c, tasks: newTasks };
-                  }),
-                };
-              }),
-            };
-          }),
+          projects: state.projects.map((p) =>
+            p.id === pId
+              ? {
+                  ...p,
+                  columns: p.columns.map((col) =>
+                    col.id === cId
+                      ? {
+                          ...col,
+                          cards: col.cards.map((c) => {
+                            if (c.id !== cardId) return c;
+                            const nT = [...c.tasks];
+                            if (nT[tIdx])
+                              nT[tIdx] = { ...nT[tIdx], done: !nT[tIdx].done };
+                            return { ...c, tasks: nT };
+                          }),
+                        }
+                      : col,
+                  ),
+                }
+              : p,
+          ),
         }));
       },
     }),
     {
       name: "chat2canvas-storage",
-    }
-  )
+      storage: createJSONStorage(() => {
+        let saveTimeout: ReturnType<typeof setTimeout> | undefined;
+
+        return {
+          getItem: (name) => localStorage.getItem(name),
+          setItem: (name, value) => {
+            if (saveTimeout) clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+              localStorage.setItem(name, value);
+            }, 500);
+          },
+          removeItem: (name) => localStorage.removeItem(name),
+        };
+      }),
+      partialize: (state) => ({
+        projects: state.projects,
+        activeProjectId: state.activeProjectId,
+      }),
+    },
+  ),
 );
