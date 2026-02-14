@@ -144,6 +144,7 @@ export default function Home() {
           }
         }}
       >
+        
         <div className="p-6 flex-1 overflow-x-auto overflow-y-hidden">
           <div className="flex gap-4 h-full items-start">
             <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
