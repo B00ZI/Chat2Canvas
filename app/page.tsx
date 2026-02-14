@@ -159,7 +159,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Added pointer-events-none to prevent overlay from interfering with collision detection */}
+        
         <DragOverlay 
           className="pointer-events-none" 
           dropAnimation={{
