@@ -19,18 +19,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${oxanium.variable} ${merriweather.variable} ${firaCode.variable}`}>
-      <body
-        className="font-sans antialiased">
-
-        <div className="flex">
-
+      <body className="bg-background text-foreground font-sans antialiased">
+        <div className="flex min-h-screen">
           <Sidebar />
-          <main className="flex-1 bg-gray-50">
+          <main className="flex-1">
             {children}
           </main>
-
         </div>
-
       </body>
     </html>
   );
