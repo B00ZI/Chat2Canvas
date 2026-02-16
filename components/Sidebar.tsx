@@ -5,6 +5,7 @@ import { useProjectStore } from "@/store/projectStore"
 import { NewProjectDialog } from "./NewProjectDialog"
 import { EditProjectDialog } from "./EditProjectDialog"
 import { Button } from "@/components/ui/button"
+import { Switch } from "./ui/switch"
 
 export default function Sidebar() {
 
@@ -126,7 +127,8 @@ export default function Sidebar() {
                 <div className="px-4 pb-2">
                     <div
                         className="flex items-center gap-3 rounded-md px-3 py-2
-               text-sm  text-red-900 hover:bg-red-900 hover:text-red-200"
+               text-sm  text-destructive
+               hover:bg-destructive hover:text-destructive-foreground"
                     >
                         <LogOut className="h-4 w-4 shrink-0 " />
                         <span>Log out</span>
@@ -134,7 +136,7 @@ export default function Sidebar() {
                 </div>
 
                 {/* Theme toggle row */}
-                <div className="px-4 pb-4">
+                <div className="px-4 pb-1">
                     <div
                         role="button"
                         tabIndex={0}
@@ -150,9 +152,9 @@ export default function Sidebar() {
                             <span>Appearance</span>
                         </div>
 
-                        <span className="text-xs opacity-70">
-                            Dark
-                        </span>
+
+                        <Switch />
+
                     </div>
                 </div>
 
