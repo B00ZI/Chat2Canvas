@@ -30,30 +30,47 @@ export default function Sidebar() {
             {/* Projects Section */}
             <div className="flex-1 flex flex-col overflow-y-auto">
 
-                {/* Project List */}
-                <div className="p-4 border-t border-sidebar-border">
-                    <input
-                        type="text"
-                        placeholder="Search projects..."
-                        className="w-full px-3 py-2 rounded  text-sidebar-foreground placeholder-sidebar-muted focus:outline-none  ring-2 ring-sidebar-border    focus:ring-sidebar-primary"
-                    />
+                <div className="space-y-2 p-4  ">
+
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`w-full justify-start px-3 py-1    ${isModalOpen ? "bg-sidebar-primary text-sidebar-primary-foreground" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"}`}
+                        onClick={() => setIsModalOpen(true)}
+                    >
+                        Search Projects
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`w-full justify-start px-3 py-1    ${isModalOpen ? "bg-sidebar-primary text-sidebar-primary-foreground" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"}`}
+                        onClick={() => setIsModalOpen(true)}
+                    >
+                        + New Project
+                    </Button>
+
                 </div>
-                <div className="space-y-2 p-4 flex-1">
+                <div className="space-y-2 flex-1 p-4  border-t border-sidebar-border">
+                    <h2 className="text-sidebar-foreground/70 text-sm  mb-3">Projects</h2>
                     {projects.map((project) => (
                         <div
+                            role="button"
                             key={project.id}
+                            tabIndex={0}
                             onClick={() => setActiveProject(project.id)}
-                            className={`flex items-center justify-between px-3 py-2 rounded cursor-pointer 
-            ${activeProjectId === project.id ? "bg-sidebar-primary text-sidebar-primary-foreground" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"}`}
+                            className={`flex items-center justify-between px-3 py-1 rounded-md  cursor-pointer 
+                                ${activeProjectId === project.id ? "bg-sidebar-primary text-sidebar-primary-foreground" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"}`}
                         >
-                            <span className="flex-1 truncate max-w-[140px]">{project.name.split(" ")
-                                .map(word => word.charAt(0)
-                                .toUpperCase() + word.slice(1))
-                                .join(" ")}}</span>
+                            <span className="flex-1 truncate max-w-[140px]">
+                                {project.name
+                                    .split(" ")
+                                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                                    .join(" ")}
+                            </span>
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="w-6 h-6 p-0  transform rotate-90"
+                                className="w-5 h-5 p-0  transform rotate-90"
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     setEditingProjectId(project.id);
@@ -64,18 +81,11 @@ export default function Sidebar() {
                         </div>
                     ))}
 
-                    {/* New Project */}
-                    <Button
-                        variant="secondary"
-                        size="sm"
-                        className="w-full justify-start mt-2"
-                        onClick={() => setIsModalOpen(true)}
-                    >
-                        + New Project
-                    </Button>
-                </div>
 
-                {/* Bottom Project Search */}
+
+                    {/* New Project */}
+
+                </div>
 
             </div>
 
