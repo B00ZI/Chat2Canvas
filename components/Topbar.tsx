@@ -4,7 +4,7 @@ import { Button } from "./ui/button"
 import { useState } from "react"
 import AIToolsModal from "./AIToolsModal"
 import { useProjectStore } from "@/store/projectStore"
-import { LayoutTemplate    } from "lucide-react"
+import { LayoutTemplate } from "lucide-react"
 
 export default function TopBar() {
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -33,22 +33,29 @@ export default function TopBar() {
           </h1>
 
           <p className="text-sm text-sidebar-foreground/70 flex items-center gap-2 mt-1">
-            {allTasks.length === 0
-              ? "No tasks yet"
-              : `${doneTasks} of ${allTasks.length} tasks completed`}
+            {allTasks.length === 0 ? (
+              "No tasks yet"
+            ) : (
+              <>
+                <span className="px-2 py-0.5 mr-2 rounded-md bg-accent text-accent-foreground text-xs">
+                  {Math.round((doneTasks / allTasks.length) * 100)}%
+                </span>
+                <span>{doneTasks} of {allTasks.length} tasks completed</span>
+              </>
+            )}
           </p>
         </div>
 
         {/* Right - Buttons */}
         <div className="flex gap-2">
           <Button
-          className="flex gap-2"
+            className="flex items-center gap-2"
             variant="default"
             size="sm"
             onClick={() => setIsModalOpen(true)}
-          > 
-            <LayoutTemplate   />
-            AI Tools
+          >
+            <LayoutTemplate />
+            Canvas Tools
           </Button>
         </div>
       </div>
