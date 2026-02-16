@@ -1,5 +1,5 @@
 'use client'
-import { Search, Plus } from "lucide-react"
+import { Search, Plus, Shapes, SunMoon, LogOut } from "lucide-react"
 import { useState } from "react"
 import { useProjectStore } from "@/store/projectStore"
 import { NewProjectDialog } from "./NewProjectDialog"
@@ -23,9 +23,19 @@ export default function Sidebar() {
 
 
             {/* Header */}
-            <div className="h-20 flex justify-center items-center border-b border-sidebar-border">
-                <h2 className="text-2xl font-bold text-sidebar-foreground">Chat2Canvas</h2>
+            <div className="h-20 flex items-center gap-3 px-4 border-b border-sidebar-border">
+                <div
+                    className="h-8 w-8 flex items-center justify-center rounded-md
+               text-sidebar-accent"
+                >
+                    <Shapes className="h-6 w-6" />
+                </div>
+
+                <h2 className="text-xl font-semibold tracking-tight text-sidebar-foreground leading-none">
+                    Chat2Canvas
+                </h2>
             </div>
+
 
             {/* Projects Section */}
             <div className="flex-1 flex flex-col overflow-y-auto">
@@ -35,7 +45,7 @@ export default function Sidebar() {
                     <Button
                         variant="ghost"
                         size="sm"
-                         className="w-full justify-start px-3 py-1 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                        className="w-full justify-start px-3 py-1 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                         onClick={() => setIsModalOpen(true)}
                     >
                         <Search className="shrink-0" />
@@ -92,23 +102,61 @@ export default function Sidebar() {
 
             </div>
 
-            {/* Dark/Light Toggle */}
-            <div className="p-4 border-t border-sidebar-border">
-                <Button variant="outline" size="sm" className="w-full">
-                    Toggle Dark / Light
-                </Button>
-            </div>
+            <div className="mt-auto border-t border-sidebar-border">
 
-            {/* Profile Section */}
-            <div className="p-4 border-t border-sidebar-border flex items-center space-x-3">
-                {/* Placeholder avatar */}
-                <div className="w-10 h-10 rounded-full bg-gray-400 flex items-center justify-center text-white font-bold">
-                    A
+                {/* Profile */}
+                <div className="p-4 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-sidebar-accent text-sidebar-accent-foreground
+                    flex items-center justify-center text-sm font-semibold">
+                        A
+                    </div>
+
+                    <div className="min-w-0">
+                        <div className="text-sm font-medium text-sidebar-foreground leading-tight truncate">
+                            Alex
+                        </div>
+                        <div className="text-xs text-sidebar-foreground/60 truncate">
+                            alex@example.com
+                        </div>
+                    </div>
                 </div>
-                <div className="flex flex-col">
-                    <span className="text-sidebar-foreground font-semibold">Alex Email</span>
-                    <span className="text-sidebar-muted text-sm">alex@example.com</span>
+
+
+                {/* Logout */}
+                <div className="px-4 pb-2">
+                    <div
+                        className="flex items-center gap-3 rounded-md px-3 py-2
+               text-sm  text-red-900 hover:bg-red-900 hover:text-red-200"
+                    >
+                        <LogOut className="h-4 w-4 shrink-0 " />
+                        <span>Log out</span>
+                    </div>
                 </div>
+
+                {/* Theme toggle row */}
+                <div className="px-4 pb-4">
+                    <div
+                        role="button"
+                        tabIndex={0}
+
+                        className="flex items-center justify-between rounded-md px-3 py-2
+               text-sm text-sidebar-foreground/80
+               hover:bg-sidebar-accent hover:text-sidebar-accent-foreground
+               focus-visible:outline-none focus-visible:ring-1
+               focus-visible:ring-sidebar-ring"
+                    >
+                        <div className="flex items-center gap-3">
+                            <SunMoon className="h-4 w-4 shrink-0" />
+                            <span>Appearance</span>
+                        </div>
+
+                        <span className="text-xs opacity-70">
+                            Dark
+                        </span>
+                    </div>
+                </div>
+
+
             </div>
 
             {/* Dialogs */}
