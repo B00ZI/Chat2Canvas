@@ -35,10 +35,7 @@ export default function Sidebar() {
                     <Button
                         variant="ghost"
                         size="sm"
-                        className={`w-full justify-start px-3 py-1 ${isModalOpen
-                                ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                                : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                            }`}
+                         className="w-full justify-start px-3 py-1 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                         onClick={() => setIsModalOpen(true)}
                     >
                         <Search className="shrink-0" />
@@ -48,10 +45,7 @@ export default function Sidebar() {
                     <Button
                         variant="ghost"
                         size="sm"
-                        className={`w-full justify-start px-3 py-1 ${isModalOpen
-                                ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                                : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                            }`}
+                        className="w-full justify-start px-3 py-1 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                         onClick={() => setIsModalOpen(true)}
                     >
                         <Plus className="shrink-0" />
@@ -67,7 +61,7 @@ export default function Sidebar() {
                             key={project.id}
                             tabIndex={0}
                             onClick={() => setActiveProject(project.id)}
-                            className={`flex items-center justify-between px-3 py-1 rounded-md  cursor-pointer 
+                            className={`flex items-center justify-between px-3 py-1 rounded-md  cursor-pointer  focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sidebar-ring
                                 ${activeProjectId === project.id ? "bg-sidebar-primary text-sidebar-primary-foreground" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"}`}
                         >
                             <span className="flex-1 truncate max-w-[140px]">
