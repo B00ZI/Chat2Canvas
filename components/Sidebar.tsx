@@ -46,7 +46,7 @@ export default function Sidebar() {
                     <Button
                         variant="ghost"
                         size="sm"
-                        className="w-full justify-start px-3 py-1 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                        className="w-full justify-start px-3 py-2 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                         onClick={() => setIsModalOpen(true)}
                     >
                         <Search className="shrink-0" />
@@ -56,7 +56,7 @@ export default function Sidebar() {
                     <Button
                         variant="ghost"
                         size="sm"
-                        className="w-full justify-start px-3 py-1 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                        className="w-full justify-start px-3 py-2 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                         onClick={() => setIsModalOpen(true)}
                     >
                         <Plus className="shrink-0" />
@@ -126,9 +126,11 @@ export default function Sidebar() {
                 {/* Logout */}
                 <div className="px-4 pb-2">
                     <div
-                        className="flex items-center gap-3 rounded-md px-3 py-2
-               text-sm  text-destructive
-               hover:bg-destructive hover:text-destructive-foreground"
+                        className="flex items-center gap-3 rounded-md px-3 py-2 cursor-pointer
+              text-destructive
+             hover:bg-destructive hover:text-destructive-foreground
+             focus-visible:outline-none focus-visible:ring-1
+             focus-visible:ring-sidebar-ring"
                     >
                         <LogOut className="h-4 w-4 shrink-0 " />
                         <span>Log out</span>
@@ -142,7 +144,7 @@ export default function Sidebar() {
                         tabIndex={0}
 
                         className="flex items-center justify-between rounded-md px-3 py-2
-               text-sm text-sidebar-foreground/80
+               text-sm text-sidebar-foreground/80 cursor-pointer
                hover:bg-sidebar-accent hover:text-sidebar-accent-foreground
                focus-visible:outline-none focus-visible:ring-1
                focus-visible:ring-sidebar-ring"
@@ -153,7 +155,7 @@ export default function Sidebar() {
                         </div>
 
 
-                        <Switch />
+                        <Switch onClick={(e) => e.stopPropagation()} />
 
                     </div>
                 </div>
