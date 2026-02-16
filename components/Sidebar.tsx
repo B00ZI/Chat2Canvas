@@ -1,5 +1,5 @@
 'use client'
-
+import { Search, Plus } from "lucide-react"
 import { useState } from "react"
 import { useProjectStore } from "@/store/projectStore"
 import { NewProjectDialog } from "./NewProjectDialog"
@@ -35,23 +35,32 @@ export default function Sidebar() {
                     <Button
                         variant="ghost"
                         size="sm"
-                        className={`w-full justify-start px-3 py-1    ${isModalOpen ? "bg-sidebar-primary text-sidebar-primary-foreground" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"}`}
+                        className={`w-full justify-start px-3 py-1 ${isModalOpen
+                                ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                                : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                            }`}
                         onClick={() => setIsModalOpen(true)}
                     >
-                        Search Projects
+                        <Search className="shrink-0" />
+                        <span>Search Projects</span>
                     </Button>
+
                     <Button
                         variant="ghost"
                         size="sm"
-                        className={`w-full justify-start px-3 py-1    ${isModalOpen ? "bg-sidebar-primary text-sidebar-primary-foreground" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"}`}
+                        className={`w-full justify-start px-3 py-1 ${isModalOpen
+                                ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                                : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                            }`}
                         onClick={() => setIsModalOpen(true)}
                     >
-                        + New Project
+                        <Plus className="shrink-0" />
+                        <span>New Project</span>
                     </Button>
 
                 </div>
                 <div className="space-y-2 flex-1 p-4  border-t border-sidebar-border">
-                    <h2 className="text-sidebar-foreground/70 text-sm  mb-3">Projects</h2>
+                    <h2 className="text-sidebar-foreground/70 text-sm  mb-4">Projects</h2>
                     {projects.map((project) => (
                         <div
                             role="button"
