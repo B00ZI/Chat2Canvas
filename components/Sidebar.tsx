@@ -1,5 +1,6 @@
 'use client'
-import { Search, Plus, Shapes, SunMoon, LogOut } from "lucide-react"
+
+import { Search, Plus, Shapes, SunMoon, LogOut, MoreVertical } from "lucide-react"
 import { useState } from "react"
 import { useProjectStore } from "@/store/projectStore"
 import { NewProjectDialog } from "./NewProjectDialog"
@@ -72,7 +73,7 @@ export default function Sidebar() {
                             key={project.id}
                             tabIndex={0}
                             onClick={() => setActiveProject(project.id)}
-                            className={`flex items-center justify-between px-3 py-1 rounded-md  cursor-pointer  focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sidebar-ring
+                            className={` group  flex items-center justify-between px-3 py-1 rounded-md  cursor-pointer  focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sidebar-ring
                                 ${activeProjectId === project.id ? "bg-sidebar-primary text-sidebar-primary-foreground" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"}`}
                         >
                             <span className="flex-1 truncate max-w-[140px]">
@@ -84,10 +85,10 @@ export default function Sidebar() {
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="w-5 h-5 p-0  transform rotate-90"
+                                className=" h-5 w-5 p-0 rotate-90 opacity-0 text-secondary group-hover:opacity-100 group-focus-within:opacity-100 hover:bg-transparent hover:text-white  transition-opacity   "
                                 onClick={(e) => {
-                                    e.stopPropagation();
-                                    setEditingProjectId(project.id);
+                                    e.stopPropagation()
+                                    setEditingProjectId(project.id)
                                 }}
                             >
                                 ⋮
