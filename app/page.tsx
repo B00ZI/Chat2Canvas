@@ -77,7 +77,7 @@ export default function Home() {
 
     // Use findIndex or cached data if possible, but keep logic surgical
     const activeCol = activeProject.columns.find(c => c.cards.some(card => card.id === activeId));
-    
+
     // Optimization: Check if 'over' is a column directly first
     const overCol = over.data.current?.type === "Column"
       ? activeProject.columns.find(c => c.id === overId)
@@ -129,52 +129,91 @@ export default function Home() {
   if (!activeProject) return <EmptyState />;
 
   return (
-    <div className="flex-1 bg-gray-50 h-screen flex flex-col overflow-hidden">
+    <div className="flex-1 bg-background flex flex-col overflow-hidden">
       <TopBar />
+
       <DndContext
         sensors={sensors}
-        collisionDetection={rectIntersection} // Changed: Faster geometric calculation
+        collisionDetection={rectIntersection}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
         measuring={{
           droppable: {
-            // Optimization: Only measure containers when dragging starts
-            strategy: MeasuringStrategy.WhileDragging, 
-          }
+            strategy: MeasuringStrategy.WhileDragging,
+          },
         }}
       >
-        
+        {/* Board scroll area */}
         <div className="p-6 flex-1 overflow-x-auto overflow-y-hidden">
           <div className="flex gap-4 h-full items-start">
-            <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
+            <SortableContext
+              items={columnIds}
+              strategy={horizontalListSortingStrategy}
+            >
               {activeProject.columns.map((col) => (
-                <Column key={col.id} col={col} projectId={activeProject.id} />
+                <Column
+                  key={col.id}
+                  col={col}
+                  projectId={activeProject.id}
+                />
               ))}
             </SortableContext>
 
-            <div className="bg-white rounded-lg p-4 w-80 shrink-0 shadow-sm border border-gray-200">
-              <Button onClick={() => setIsNewColumnDialogOpen(true)} className="w-full">+ Add Column</Button>
-              <NewColumnDialog open={isNewColumnDialogOpen} onClose={() => setIsNewColumnDialogOpen(false)} projectId={activeProject.id} />
+            {/* Add column panel */}
+            <div
+              className="bg-card border shadow-xs rounded-lg
+                       p-4 w-80 shrink-0"
+            >
+              <Button
+                onClick={() => setIsNewColumnDialogOpen(true)}
+                className="w-full"
+                variant="secondary"
+              >
+                + Add Column
+              </Button>
+
+              <NewColumnDialog
+                open={isNewColumnDialogOpen}
+                onClose={() => setIsNewColumnDialogOpen(false)}
+                projectId={activeProject.id}
+              />
             </div>
           </div>
         </div>
 
-        
-        <DragOverlay 
-          className="pointer-events-none" 
+        <DragOverlay
+          adjustScale={false}
+          className="pointer-events-none"
           dropAnimation={{
-            sideEffects: defaultDropAnimationSideEffects({ styles: { active: { opacity: '0.5' } } })
+            sideEffects: defaultDropAnimationSideEffects({
+              styles: { active: { opacity: "0.6" } },
+            }),
           }}
         >
-          {activeColumn ? <Column col={activeColumn} projectId={activeProject.id} /> : null}
+          {activeColumn ? (
+            <Column
+              col={activeColumn}
+              projectId={activeProject.id}
+            />
+          ) : null}
+
           {activeCard ? (
-            <div className="cursor-grabbing shadow-2xl rounded-lg bg-white border border-gray-200">
-              <Card card={activeCard} projectId={activeProject.id} colId="" />
+            <div
+              className="cursor-grabbing
+                       bg-popover border
+                       shadow-md rounded-md"
+            >
+              <Card
+                card={activeCard}
+                projectId={activeProject.id}
+                colId=""
+              />
             </div>
           ) : null}
         </DragOverlay>
       </DndContext>
     </div>
   )
+
 }
