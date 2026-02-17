@@ -26,7 +26,7 @@ function Card({ card, projectId, colId, dragHandleProps }: CardProps) {
 
   return (
     // "group" class used for hover effects on the edit button
-    <div className="bg-white h-full w-full border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow relative group">
+    <div className="card bg-white h-full w-full border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow relative group">
       
       {/* --- CARD HEADER (DRAGGABLE AREA) --- */}
       {/* We apply dragHandleProps HERE only */}

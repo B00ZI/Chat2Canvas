@@ -59,7 +59,7 @@ const Column = memo(function Column({ col, projectId }: ColumnProps) {
         <div
             ref={setNodeRef}
             style={style}
-            className="bg-card rounded-lg p-4 w-80 shrink-0 flex flex-col max-h-[80vh] shadow-xs border"
+            className="column bg-card rounded-lg p-4 w-80 shrink-0 flex flex-col max-h-[80vh] shadow-xs border"
         >
             {/* Column header */}
             <div className="mb-4">
