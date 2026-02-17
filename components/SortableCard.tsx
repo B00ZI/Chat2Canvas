@@ -1,9 +1,9 @@
 'use client'
 
-import { memo } from "react" // 1. Added memo
-import { useSortable } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
-import Card from './Card'
+import { memo } from "react";
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import Card from './Card';
 
 interface SortableCardProps {
   card: any;
@@ -11,7 +11,6 @@ interface SortableCardProps {
   colId: string;
 }
 
-// 2. Wrap the component function in memo
 const SortableCard = memo(function SortableCard({ card, projectId, colId }: SortableCardProps) {
   const {
     setNodeRef,
@@ -28,33 +27,31 @@ const SortableCard = memo(function SortableCard({ card, projectId, colId }: Sort
     }
   });
 
-  // 3. Keep this as a plain object (no useMemo needed here)
+  // Style applied to the card wrapper
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    zIndex: isDragging ? 50 : undefined,
+    boxShadow: isDragging ? '0 4px 12px rgba(0,0,0,0.12)' : undefined,
   };
 
-  // --- PLACEHOLDER ---
+  // Placeholder while dragging
   if (isDragging) {
     return (
       <div
         ref={setNodeRef}
-        style={{
-          ...style,
-          height: 96,
-          backgroundColor: '#fff',
-        }}
-        className="w-full relative rounded-lg border border-gray-400
-                 min-h-0 overflow-hidden flex items-center justify-center opacity-50"
+        style={{ ...style, height: 96 }}
+        className="w-full relative rounded-lg min-h-[96px] flex items-center justify-center bg-card/50 border border-border"
       >
+        {/* Subtle color overlay from theme */}
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 rounded-lg"
           style={{
-            backgroundColor: card.color || '#ccc',
+            backgroundColor: card.color || 'var(--accent)',
             opacity: 0.12,
           }}
         />
-        <span className="relative text-gray-500 text-sm font-medium">
+        <span className="relative text-muted-foreground text-sm font-medium">
           Drop here
         </span>
       </div>
@@ -65,7 +62,7 @@ const SortableCard = memo(function SortableCard({ card, projectId, colId }: Sort
     <div
       ref={setNodeRef}
       style={style}
-      className="touch-none" 
+      className="touch-none"
     >
       <Card
         card={card}

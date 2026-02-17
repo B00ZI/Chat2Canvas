@@ -22,7 +22,7 @@ export default function RootLayout({
       lang="en"
       className={`${oxanium.variable} ${merriweather.variable} ${firaCode.variable}`}
     >
-      <body className="bg-background text-foreground font-sans antialiased">
+      <body className=" bg-background text-foreground font-sans antialiased">
         <div className="flex min-h-screen">
           <Sidebar />
 
