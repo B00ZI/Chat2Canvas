@@ -43,8 +43,8 @@ export default function TopBar() {
             <>
               <span
                 className="px-2 py-0.5 rounded-sm
-                           bg-sidebar-accent/40
-                           text-sidebar-accent-foreground
+                           bg-sidebar-accent-foreground
+                           text-sidebar-primary
                            text-xs font-medium"
               >
                 {Math.round((doneTasks / allTasks.length) * 100)}%
