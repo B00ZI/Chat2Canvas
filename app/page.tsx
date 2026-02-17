@@ -129,7 +129,7 @@ export default function Home() {
   if (!activeProject) return <EmptyState />;
 
   return (
-    <div className="flex-1 bg-background flex flex-col overflow-hidden">
+    <div className="flex-1 bg-background flex flex-col overflow-hidden ">
       <TopBar />
 
       <DndContext
@@ -145,7 +145,12 @@ export default function Home() {
         }}
       >
         {/* Board scroll area */}
-        <div className="p-6 flex-1 overflow-x-auto overflow-y-hidden">
+        <div className="p-6 flex-1 overflow-x-auto overflow-y-hidden
+  [&::-webkit-scrollbar]:h-2
+  [&::-webkit-scrollbar-track]:bg-accent 
+  [&::-webkit-scrollbar-thumb]:bg-sidebar-accent
+  [&::-webkit-scrollbar-thumb:hover]:bg-primary
+">
           <div className="flex gap-4 h-full items-start">
             <SortableContext
               items={columnIds}
