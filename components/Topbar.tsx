@@ -21,50 +21,66 @@ export default function TopBar() {
   const doneTasks = allTasks.filter(t => t.done).length
 
   return (
-    <>
-      <div className="h-20 bg-sidebar border-b border-sidebar-foreground px-6 flex items-center justify-between">
-        {/* Left - Project Name */}
-        <div>
-          <h1 className="text-xl font-semibold text-sidebar-foreground">
-            {activeProject.name
-              .split(" ")
-              .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-              .join(" ")}
-          </h1>
+  <>
+    <div
+      className="h-20 bg-sidebar text-sidebar-foreground
+                 border-b border-sidebar-border
+                 px-6 flex items-center justify-between"
+    >
+      {/* Left - Project Name */}
+      <div className="flex flex-col">
+        <h1 className="text-xl font-semibold">
+          {activeProject.name
+            .split(" ")
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" ")}
+        </h1>
 
-          <p className="text-sm text-sidebar-foreground/70 flex items-center gap-2 mt-1">
-            {allTasks.length === 0 ? (
-              "No tasks yet"
-            ) : (
-              <>
-                <span className="px-2 py-0.5 mr-2 rounded-md bg-accent text-accent-foreground text-xs">
-                  {Math.round((doneTasks / allTasks.length) * 100)}%
-                </span>
-                <span>{doneTasks} of {allTasks.length} tasks completed</span>
-              </>
-            )}
-          </p>
-        </div>
+        <p className="text-xs text-sidebar-foreground/70 flex items-center gap-2 mt-1">
+          {allTasks.length === 0 ? (
+            "No tasks yet"
+          ) : (
+            <>
+              <span
+                className="px-2 py-0.5 rounded-sm
+                           bg-sidebar-accent/40
+                           text-sidebar-accent-foreground
+                           text-xs font-medium"
+              >
+                {Math.round((doneTasks / allTasks.length) * 100)}%
+              </span>
 
-        {/* Right - Buttons */}
-        <div className="flex gap-2">
-          <Button
-            className="flex items-center gap-2"
-            variant="default"
-            size="sm"
-            onClick={() => setIsModalOpen(true)}
-          >
-            <LayoutTemplate />
-            Canvas Tools
-          </Button>
-        </div>
+              <span>
+                {doneTasks} of {allTasks.length} tasks completed
+              </span>
+            </>
+          )}
+        </p>
       </div>
 
-      {/* Modal */}
-      <AIToolsModal
-        open={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      />
-    </>
-  )
+      {/* Right - Buttons */}
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          onClick={() => setIsModalOpen(true)}
+          className="flex items-center gap-2
+                     bg-sidebar-primary
+                     text-sidebar-primary-foreground
+                     shadow-xs
+                     hover:opacity-90"
+        >
+          <LayoutTemplate className="h-4 w-4" />
+          Canvas Tools
+        </Button>
+      </div>
+    </div>
+
+    {/* Modal */}
+    <AIToolsModal
+      open={isModalOpen}
+      onClose={() => setIsModalOpen(false)}
+    />
+  </>
+)
+
 }

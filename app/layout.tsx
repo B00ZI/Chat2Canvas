@@ -18,15 +18,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${oxanium.variable} ${merriweather.variable} ${firaCode.variable}`}>
+    <html
+      lang="en"
+      className={`${oxanium.variable} ${merriweather.variable} ${firaCode.variable}`}
+    >
       <body className="bg-background text-foreground font-sans antialiased">
         <div className="flex min-h-screen">
           <Sidebar />
-          <main className="flex-1">
+
+          <main
+            className="flex-1 bg-background
+                     flex flex-col
+                     overflow-hidden"
+          >
             {children}
           </main>
         </div>
       </body>
     </html>
-  );
+  )
+
 }
