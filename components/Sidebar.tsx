@@ -8,7 +8,7 @@ import { EditProjectDialog } from "./EditProjectDialog"
 import { Button } from "@/components/ui/button"
 import { Switch } from "./ui/switch"
 
-export default function Sidebar() {
+export default function Sidebar({onToggleDark}:any) {
 
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [editingProjectId, setEditingProjectId] = useState<string | null>(null)
@@ -144,7 +144,7 @@ export default function Sidebar() {
                     <div
                         role="button"
                         tabIndex={0}
-
+                      
                         className="flex items-center justify-between rounded-md px-3 py-2
                text-sm text-sidebar-foreground/80 cursor-pointer
                hover:bg-sidebar-accent hover:text-sidebar-accent-foreground
@@ -157,7 +157,7 @@ export default function Sidebar() {
                         </div>
 
 
-                        <Switch onClick={(e) => e.stopPropagation()} />
+                        <Switch onClick={onToggleDark} />
 
                     </div>
                 </div>
