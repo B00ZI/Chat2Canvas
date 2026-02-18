@@ -5,24 +5,34 @@ import { useState } from "react"
 import { useProjectStore } from "@/store/projectStore"
 import { NewProjectDialog } from "./NewProjectDialog"
 import { EditProjectDialog } from "./EditProjectDialog"
+import { DeleteProjecDIalog } from "./DeleteProjectDialog"
 import { Button } from "@/components/ui/button"
 import { Switch } from "./ui/switch"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuGroup,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { PencilIcon, ShareIcon, TrashIcon } from "lucide-react"
 
 export default function Sidebar({ dark, setDark }: any) {
 
     const [isModalOpen, setIsModalOpen] = useState(false)
-    const [editingProjectId, setEditingProjectId] = useState<string | null>(null)
+    const [editProjectId, setEditProjectId] = useState<string | null>(null)
+    const [DeleteProjectId, setDeleteProjectId] = useState<string | null>(null)
 
     const projects = useProjectStore((state) => state.projects)
     const activeProjectId = useProjectStore((state) => state.activeProjectId)
     const setActiveProject = useProjectStore((state) => state.setActiveProject)
 
-    const editingProject = projects.find(p => p.id === editingProjectId)
+    const editProject = projects.find(p => p.id === editProjectId)
+    const deleteProject = projects.find(p => p.id === DeleteProjectId)
 
     return (
         <div className="bg-sidebar w-60 h-screen pb-4 flex flex-col border-r border-sidebar-border">
-
-
 
             {/* Header */}
             <div className="h-20 flex items-center gap-3 px-4 border-b border-sidebar-border">
@@ -83,17 +93,41 @@ export default function Sidebar({ dark, setDark }: any) {
                                     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
                                     .join(" ")}
                             </span>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className=" h-5 w-5 p-1 rotate-90 opacity-0 text-secondary group-hover:opacity-100 group-focus-within:opacity-100 hover:bg-transparent hover:hover:text-white  transition-opacity   "
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    setEditingProjectId(project.id)
-                                }}
-                            >
-                                ⋮
-                            </Button>
+
+
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className=" h-5 w-5 p-1 rotate-90 opacity-0 text-secondary group-hover:opacity-100 group-focus-within:opacity-100 hover:bg-transparent hover:hover:text-white    transition-opacity   "
+
+                                    >
+                                        ⋮
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                    align="start"
+                                    className="bg-popover text-popover-foreground border border-border shadow-md rounded-md"
+                                >
+                                    <DropdownMenuGroup>
+                                        <DropdownMenuItem onClick={(e) => {
+                                            e.stopPropagation()
+                                            setEditProjectId(project.id)
+                                        }}>
+                                            <PencilIcon />
+                                            Rename
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={(e) => {
+                                            e.stopPropagation()
+                                            setDeleteProjectId(project.id)
+                                        }} variant="destructive">
+                                            <TrashIcon />
+                                            Delete
+                                        </DropdownMenuItem>
+                                    </DropdownMenuGroup>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                     ))}
 
@@ -166,14 +200,23 @@ export default function Sidebar({ dark, setDark }: any) {
             </div>
 
             {/* Dialogs */}
-            {editingProject && (
+            {editProject && (
                 <EditProjectDialog
                     open={true}
-                    onClose={() => setEditingProjectId(null)}
-                    projectId={editingProject.id}
-                    projectName={editingProject.name}
+                    onClose={() => setEditProjectId(null)}
+                    projectId={editProject.id}
+                    projectName={editProject.name}
                 />
             )}
+            {deleteProject && (
+                <DeleteProjecDIalog
+                    open={true}
+                    onClose={() => setDeleteProjectId(null)}
+                    projectId={deleteProject.id}
+                    projectName={deleteProject.name}
+                />
+            )}
+
             <NewProjectDialog open={isModalOpen} onClose={() => setIsModalOpen(false)} />
         </div>
 
