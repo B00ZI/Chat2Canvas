@@ -56,7 +56,7 @@ export function NewProjectDialog({ open, onClose }: NewProjectDialog) {
           ref={inputRef}
           type="text"
           placeholder="e.g., My Awesome App"
-          className="bg-background"
+          className="focus-visible:ring-offset-0  focus-visible:ring-2  bg-background"
         />
 
         <Button type="submit">
