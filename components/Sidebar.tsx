@@ -8,7 +8,7 @@ import { EditProjectDialog } from "./EditProjectDialog"
 import { Button } from "@/components/ui/button"
 import { Switch } from "./ui/switch"
 
-export default function Sidebar({ onToggleDark }: any) {
+export default function Sidebar({ dark, setDark }: any) {
 
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [editingProjectId, setEditingProjectId] = useState<string | null>(null)
@@ -156,7 +156,8 @@ export default function Sidebar({ onToggleDark }: any) {
                         </div>
 
 
-                        <Switch onClick={onToggleDark} />
+                        <Switch checked={dark}
+                            onCheckedChange={setDark} />
 
                     </div>
                 </div>

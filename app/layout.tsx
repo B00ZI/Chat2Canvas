@@ -25,7 +25,7 @@ export default function RootLayout({
     >
       <body className="bg-background text-foreground font-sans antialiased">
         <div className="flex min-h-screen">
-          <Sidebar onToggleDark={() => setDark(d => !d)} />
+          <Sidebar dark={dark} setDark={setDark} />
 
           <main
             className="flex-1 bg-background
