@@ -1,16 +1,6 @@
 'use client'
 import { useRef } from "react"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+
 import {
   Dialog,
   DialogContent,
@@ -31,7 +21,6 @@ interface EditProjectDialog {
 export function EditProjectDialog({ open, onClose, projectName, projectId }: EditProjectDialog) {
   const inputRef = useRef<HTMLInputElement>(null)
   const editProject = useProjectStore((state) => state.editProject)
-  const deleteProject = useProjectStore((state) => state.deleteProject)
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -45,58 +34,52 @@ export function EditProjectDialog({ open, onClose, projectName, projectId }: Edi
     }
   }
 
-  function handleDelete() {
-    deleteProject(projectId)
-    onClose()
-  }
+
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Edit Project</DialogTitle>
-        </DialogHeader>
-        
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium  ">Project Name</label>
-            <Input 
-              type="text" 
-              ref={inputRef} 
-              defaultValue={projectName}
-              autoFocus
-            />
-          </div>
+  <Dialog open={open} onOpenChange={onClose}>
+    <DialogContent
+      className="
+        bg-card text-card-foreground
+        border border-border
+        shadow-lg
+        rounded-lg
+      "
+    >
+      <DialogHeader>
+        <DialogTitle className="tracking-tight">
+          Rename Project
+        </DialogTitle>
+      </DialogHeader>
+
+      <form className="space-y-4" onSubmit={handleSubmit}>
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium text-foreground">
+            Project Name
+          </label>
+
+          <Input
+            type="text"
+            ref={inputRef}
+            defaultValue={projectName}
+            autoFocus
+            className=" focus-visible:ring-offset-0  focus-visible:ring-2   bg-background"
+          />
+        </div>
+
+        <div className="flex justify-end gap-2">
+           <Button variant={'outline'} onClick={()=>onClose()} type="button" className="" >
+            Cancel
+          </Button>
+
+          <Button type="submit" className="">
+            Save Changes 
+          </Button>
           
-          <div className="flex gap-2">
-            <Button type="submit" className="flex-1">
-              Save Changes
-            </Button>
-            
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" type="button" className="flex-1">
-                  Delete
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete "{projectName}"?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete your project.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete}>
-                    Delete Project
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
-  )
+        </div>
+      </form>
+    </DialogContent>
+  </Dialog>
+);
+
 }
