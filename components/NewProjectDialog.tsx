@@ -31,22 +31,40 @@ export function NewProjectDialog({ open, onClose }: NewProjectDialog) {
         }
     }
 
-    return (
+   return (
+  <Dialog open={open} onOpenChange={onClose}>
+    <DialogContent
+      className="
+        bg-card text-card-foreground
+        border border-border
+        shadow-lg
+        rounded-lg
+      "
+    >
+      <DialogHeader>
+        <DialogTitle className="tracking-tight">
+          Create New Project
+        </DialogTitle>
 
-        <Dialog open={open} onOpenChange={onClose}>
+        <DialogDescription className="text-muted-foreground">
+          Provide your project name
+        </DialogDescription>
+      </DialogHeader>
 
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Create New Project</DialogTitle>
-                    <DialogDescription>
-                        provide your
-                    </DialogDescription>
-                </DialogHeader>
-                <form className="space-y-4" onSubmit={handleSubmit}>
-                <Input   placeholder="e.g., My Awesome App"  type="text"  ref={inputRef}/>
-                <Button type="submit">Create</Button>
-                </form>
-            </DialogContent>
-        </Dialog>
-    )
+      <form className="space-y-4" onSubmit={handleSubmit}>
+        <Input
+          ref={inputRef}
+          type="text"
+          placeholder="e.g., My Awesome App"
+          className="bg-background"
+        />
+
+        <Button type="submit">
+          Create
+        </Button>
+      </form>
+    </DialogContent>
+  </Dialog>
+);
+
 }
