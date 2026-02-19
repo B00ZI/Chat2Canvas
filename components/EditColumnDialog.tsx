@@ -59,7 +59,9 @@ export function EditColumnDialog({
 }: EditColumnDialogProps) {
   const titleInputRef = useRef<HTMLInputElement>(null)
 
-  const [selectedColor, setSelectedColor] = useState(col.color)
+ const [selectedColor, setSelectedColor] = useState<string>(
+  col.color
+)
 
   const editColumn = useProjectStore((state) => state.editColumn)
   const deleteColumn = useProjectStore((state) => state.deleteColumn)
