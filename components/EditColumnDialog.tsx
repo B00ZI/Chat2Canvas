@@ -1,4 +1,5 @@
 'use client'
+
 import { useRef } from "react"
 import {
   AlertDialog,
@@ -22,37 +23,38 @@ import { Input } from "./ui/input"
 import { useProjectStore } from "@/store/projectStore"
 
 interface Task {
-  text: string;
-  done: boolean;
+  text: string
+  done: boolean
 }
 
 interface Card {
-  id: string;
-  number: number;
-  title: string;
-  color: string;
-  tasks: Task[];
+  id: string
+  number: number
+  title: string
+  color: string
+  tasks: Task[]
 }
 
 interface Column {
-  id: string;
-  title: string;
-  color: string;
-  cards: Card[];
+  id: string
+  title: string
+  color: string
+  cards: Card[]
 }
 
-
-interface EditProjectDialog {
+interface EditColumnDialogProps {
   open: boolean
   onClose: () => void
-  projectId: string,
+  projectId: string
   col: Column
 }
 
-export function EditColumnDialog({ open, onClose, projectId, col }: EditProjectDialog) {
-
-
-
+export function EditColumnDialog({
+  open,
+  onClose,
+  projectId,
+  col,
+}: EditColumnDialogProps) {
   const titleInputRef = useRef<HTMLInputElement>(null)
   const colorInputRef = useRef<HTMLInputElement>(null)
 
@@ -62,20 +64,17 @@ export function EditColumnDialog({ open, onClose, projectId, col }: EditProjectD
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
-    let newTitle = titleInputRef.current?.value.trim()
-    let newColor = colorInputRef.current?.value.trim()
+    const newTitle = titleInputRef.current?.value.trim()
+    const newColor = colorInputRef.current?.value.trim()
 
+    if (!newTitle || !newColor) return
 
-    if (newTitle && newColor ) {
-      editColumn(projectId, col.id, {title: newTitle , color: newColor})
-      if (titleInputRef.current) {
-        titleInputRef.current.value = ""
-      }
-      if (colorInputRef.current) {
-        colorInputRef.current.value = ""
-      }
-      onClose()
-    }
+    editColumn(projectId, col.id, {
+      title: newTitle,
+      color: newColor,
+    })
+
+    onClose()
   }
 
   function handleDelete() {
@@ -85,51 +84,98 @@ export function EditColumnDialog({ open, onClose, projectId, col }: EditProjectD
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Edit Project</DialogTitle>
+      <DialogContent
+        className="
+          bg-card text-card-foreground
+          shadow-lg
+        "
+      >
+        <DialogHeader className="space-y-1">
+          <DialogTitle className="text-base">
+            Edit column
+          </DialogTitle>
         </DialogHeader>
 
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium  ">Column Title</label>
-            <Input
-              type="text"
-              ref={titleInputRef}
-              defaultValue={col?.title}
-              autoFocus
-            />
-            <label className="text-sm font-medium  ">Column Color</label>
-            <Input
-              type="color"
-              ref={colorInputRef}
-              defaultValue={col?.color}
-              
-            />
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-5"
+        >
+          <div className="space-y-4">
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-foreground">
+                Column title
+              </label>
+              <Input
+                ref={titleInputRef}
+                type="text"
+                defaultValue={col?.title}
+                autoFocus
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-foreground">
+                Column color
+              </label>
+
+              <Input
+                ref={colorInputRef}
+                type="color"
+                defaultValue={col?.color}
+                className="
+                  h-10 p-1
+                  cursor-pointer
+                "
+              />
+            </div>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 pt-2">
             <Button type="submit" className="flex-1">
-              Save Changes
+              Save changes
             </Button>
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" type="button" className="flex-1">
+                <Button
+                  type="button"
+                  variant="destructive"
+                  className="flex-1"
+                >
                   Delete
                 </Button>
               </AlertDialogTrigger>
-              <AlertDialogContent>
+
+              <AlertDialogContent
+                className="
+                  bg-popover text-popover-foreground
+                  shadow-lg
+                "
+              >
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Delete "{col?.title}" column ?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete this Column .
+                  <AlertDialogTitle>
+                    Delete “{col?.title}” column?
+                  </AlertDialogTitle>
+
+                  <AlertDialogDescription className="text-muted-foreground">
+                    This action cannot be undone. This will permanently delete
+                    this column.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
+
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete}>
-                    Delete Column
+                  <AlertDialogCancel>
+                    Cancel
+                  </AlertDialogCancel>
+
+                  <AlertDialogAction
+                    onClick={handleDelete}
+                    className="
+                      bg-destructive text-destructive-foreground
+                      hover:opacity-90
+                    "
+                  >
+                    Delete column
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
