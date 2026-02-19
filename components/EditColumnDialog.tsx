@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from "react"
+import { useRef, useState } from "react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,6 +21,8 @@ import {
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { useProjectStore } from "@/store/projectStore"
+import { COLUMN_COLORS } from "@/lib/column-colors"
+
 
 interface Task {
   text: string
@@ -56,7 +58,8 @@ export function EditColumnDialog({
   col,
 }: EditColumnDialogProps) {
   const titleInputRef = useRef<HTMLInputElement>(null)
-  const colorInputRef = useRef<HTMLInputElement>(null)
+
+  const [selectedColor, setSelectedColor] = useState(col.color)
 
   const editColumn = useProjectStore((state) => state.editColumn)
   const deleteColumn = useProjectStore((state) => state.deleteColumn)
@@ -65,13 +68,12 @@ export function EditColumnDialog({
     e.preventDefault()
 
     const newTitle = titleInputRef.current?.value.trim()
-    const newColor = colorInputRef.current?.value.trim()
 
-    if (!newTitle || !newColor) return
+    if (!newTitle || !selectedColor) return
 
     editColumn(projectId, col.id, {
       title: newTitle,
-      color: newColor,
+      color: selectedColor,
     })
 
     onClose()
@@ -101,32 +103,61 @@ export function EditColumnDialog({
           className="space-y-5"
         >
           <div className="space-y-4">
+            {/* Title */}
             <div className="flex flex-col gap-2">
               <label className="text-sm font-medium text-foreground">
                 Column title
               </label>
+
               <Input
                 ref={titleInputRef}
                 type="text"
-                defaultValue={col?.title}
+                defaultValue={col.title}
                 autoFocus
               />
             </div>
 
+            {/* Color picker */}
             <div className="flex flex-col gap-2">
               <label className="text-sm font-medium text-foreground">
                 Column color
               </label>
 
-              <Input
-                ref={colorInputRef}
-                type="color"
-                defaultValue={col?.color}
-                className="
-                  h-10 p-1
-                  cursor-pointer
-                "
-              />
+              <div className="grid grid-cols-6 gap-1">
+                {COLUMN_COLORS.map((c) => {
+                  const isSelected = selectedColor === c.value
+
+                  return (
+                    <button
+                      key={c.name}
+                      type="button"
+                      onClick={() => setSelectedColor(c.value)}
+                      className="
+                        relative
+                        h-8
+                        rounded-lg
+                        border border-border
+                        ring-offset-accent-foreground
+                        focus-visible:outline-none
+                        focus-visible:ring-1
+                        focus-visible:ring-ring
+                      "
+                      style={{ backgroundColor: c.value }}
+                      aria-label={c.name}
+                    >
+                      {isSelected && (
+                        <span
+                          className="
+                            absolute inset-0
+                            rounded-[5px]
+                            ring-2 ring-ring
+                          "
+                        />
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           </div>
 
@@ -154,7 +185,7 @@ export function EditColumnDialog({
               >
                 <AlertDialogHeader>
                   <AlertDialogTitle>
-                    Delete “{col?.title}” column?
+                    Delete “{col.title}” column?
                   </AlertDialogTitle>
 
                   <AlertDialogDescription className="text-muted-foreground">
