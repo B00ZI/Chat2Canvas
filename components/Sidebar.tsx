@@ -5,7 +5,7 @@ import { useState } from "react"
 import { useProjectStore } from "@/store/projectStore"
 import { NewProjectDialog } from "./NewProjectDialog"
 import { EditProjectDialog } from "./EditProjectDialog"
-import { DeleteProjecDIalog } from "./DeleteProjectDialog"
+import { ConfirmDeleteDialog } from "./ConfirmDeleteDialog"
 import { Button } from "@/components/ui/button"
 import { Switch } from "./ui/switch"
 import {
@@ -19,7 +19,7 @@ import {
 import { PencilIcon, ShareIcon, TrashIcon } from "lucide-react"
 
 export default function Sidebar({ dark, setDark }: any) {
-
+   
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [editProjectId, setEditProjectId] = useState<string | null>(null)
     const [DeleteProjectId, setDeleteProjectId] = useState<string | null>(null)
@@ -27,10 +27,15 @@ export default function Sidebar({ dark, setDark }: any) {
     const projects = useProjectStore((state) => state.projects)
     const activeProjectId = useProjectStore((state) => state.activeProjectId)
     const setActiveProject = useProjectStore((state) => state.setActiveProject)
+    const deleteP = useProjectStore(state=> state.deleteProject)
 
     const editProject = projects.find(p => p.id === editProjectId)
     const deleteProject = projects.find(p => p.id === DeleteProjectId)
-
+    
+    function handleDelete(){
+      if (!DeleteProjectId){return null}
+      deleteP(DeleteProjectId)
+    }
     return (
         <div className="bg-sidebar w-60 h-screen pb-4 flex flex-col border-r border-sidebar-border">
 
@@ -209,11 +214,13 @@ export default function Sidebar({ dark, setDark }: any) {
                 />
             )}
             {deleteProject && (
-                <DeleteProjecDIalog
+                <ConfirmDeleteDialog
                     open={true}
                     onClose={() => setDeleteProjectId(null)}
-                    projectId={deleteProject.id}
-                    projectName={deleteProject.name}
+                    title={`Delete "${deleteProject.name}"?`}
+                    description="This action cannot be undone. This will permanently delete your project."
+                    confirmLabel="Delete project"
+                    onConfirm={handleDelete}
                 />
             )}
 
