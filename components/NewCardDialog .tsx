@@ -1,129 +1,173 @@
-import { useRef, useState } from "react"
+'use client'
+
+import { useRef, useState, useEffect } from "react"
 import {
     Dialog,
     DialogContent,
-    DialogDescription,
     DialogHeader,
     DialogTitle,
-
+    DialogDescription,
 } from "@/components/ui/dialog"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { useProjectStore } from "@/store/projectStore"
-interface NewCardDialog {
+import { COLUMN_COLORS } from "@/lib/column-colors"
+
+interface Task {
+    text: string
+    done: boolean
+}
+
+interface NewCardDialogProps {
     open: boolean
-    onClose: () => void,
-    projectId: string,
+    onClose: () => void
+    projectId: string
     colId: string
 }
 
-interface Task {
-    text: string;
-    done: boolean;
-}
-
-
-export function NewCardDialog({ open, onClose, projectId, colId }: NewCardDialog) {
-
+export function NewCardDialog({ open, onClose, projectId, colId }: NewCardDialogProps) {
     const [tasks, setTasks] = useState<Task[]>([])
+    const [selectedColor, setSelectedColor] = useState<string>(
+        COLUMN_COLORS[0].value
+    )
 
     const titleInputRef = useRef<HTMLInputElement>(null)
-    const colorInputRef = useRef<HTMLInputElement>(null)
     const taskInputRef = useRef<HTMLInputElement>(null)
+
     const addCard = useProjectStore((state) => state.addCard)
 
+    useEffect(() => {
+        if (!open) setTasks([])
+    }, [open])
+
     function handleAddTask() {
-
         const taskText = taskInputRef.current?.value.trim()
-
         if (taskText && taskInputRef.current) {
-            const newTask = { text: taskText, done: false }
-            setTasks((prev) => [...prev, newTask])
+            setTasks((prev) => [...prev, { text: taskText, done: false }])
             taskInputRef.current.value = ""
-
         }
-
-
-
     }
 
-    function handleDeleteTask(taskIndex: number) {
-
-        setTasks((prev) => prev.filter((_, index) => index !== taskIndex))
-
+    function handleDeleteTask(index: number) {
+        setTasks((prev) => prev.filter((_, i) => i !== index))
     }
 
     function handleSubmit(e: React.FormEvent) {
-        e.preventDefault(); // Prevents the page from reloading
-        let title = titleInputRef.current?.value.trim();
-        let color = colorInputRef.current?.value.trim();
-        if (title && color) {
-            addCard(projectId, colId, { title, color, tasks });
-            onClose()
-           setTasks([])
-        }
+        e.preventDefault()
+        const title = titleInputRef.current?.value.trim()
+        if (!title || !selectedColor) return
+
+        addCard(projectId, colId, { title, color: selectedColor, tasks })
+        onClose()
+        setTasks([])
     }
 
     return (
-
         <Dialog open={open} onOpenChange={onClose}>
-
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Create New Card</DialogTitle>
-                    <DialogDescription>
-                        set the Card Title and color and tasks
+            <DialogContent className="bg-card text-card-foreground border border-border shadow-lg rounded-lg">
+                <DialogHeader className="space-y-1">
+                    <DialogTitle className="text-sm font-semibold tracking-tight">
+                        Create New Card
+                    </DialogTitle>
+                    <DialogDescription className="text-sm text-muted-foreground">
+                        Set the card title, color, and tasks.
                     </DialogDescription>
                 </DialogHeader>
-                <form className="space-y-4" onSubmit={handleSubmit}>
-                    <div className="flex flex-col gap-4">
 
-                        <label className="text-sm font-medium  ">Card Title</label>
-                        <Input placeholder="e.g., Frontend" type="text" ref={titleInputRef} />
-
-                        <label className="text-sm font-medium  ">Card Color</label>
-                        <Input type="color" ref={colorInputRef} />
-
-                        <label className="text-sm font-medium  ">Card Tasks</label>
-                        <div className="flex gap-3">
-
-                            <Input onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTask())} className="flex-3" type="text" ref={taskInputRef} />
-
-                            <button onClick={handleAddTask} type="button" className="w-full  flex flex-1 items-center justify-center gap-2 cursor-pointer border  border-gray-200 rounded-lg text-sm font-medium text-gray-500 transition-colors hover:bg-gray-50 hover:border-gray-300! hover:text-gray-700">
-                                <span className="text-lg">+</span>
-                                Add
-                            </button>
-                        </div>
-                        <div className="flex flex-col gap-2 overflow-y-auto max-h-70 ">
-                            {[...tasks].reverse().map((task, reversedIndex) => {
-                                  
-                              const actualIndex = tasks.length - 1 - reversedIndex;
-                            
-                                 return(
-                                 <div key={`${task.text}-${actualIndex}`} className="w-full flex  cursor-pointer border  py-2 px-3 border-gray-200 rounded-lg text-sm font-medium text-gray-500 transition-colors hover:bg-gray-50 hover:border-gray-300! hover:text-gray-700">
-
-                                    <div className="flex-4">
-                                        {task.text}
-
-                                    </div>
-                                    <button onClick={() => handleDeleteTask(actualIndex)} type="button" className="w-full flex-1  cursor-pointer border  border-red-200 rounded-lg text-sm font-medium text-red-500 transition-colors hover:bg-red-50 hover:border-red-300! hover:text-red-700">
-
-                                        delete
-                                    </button>
-                                </div>
-                              )
-                            }
-                              
-                             
-                               
-
-                            )}
-
-
-                        </div>
-
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Title */}
+                    <div className="flex flex-col gap-1.5">
+                        <label className="text-sm font-medium text-foreground">Card Title</label>
+                        <Input
+                            ref={titleInputRef}
+                            placeholder="e.g., Frontend"
+                            autoFocus
+                            className="bg-background focus-visible:ring-1 focus-visible:ring-ring"
+                        />
                     </div>
-                    <Button type="submit">Create</Button>
+
+                    {/* Color picker */}
+                    <div className="flex flex-col gap-2">
+                        <label className="text-sm font-medium text-foreground">Card Color</label>
+                        <div className="grid grid-cols-6 gap-1.5">
+                            {COLUMN_COLORS.map((c) => (
+                                <button
+                                    key={c.name}
+                                    type="button"
+                                    onClick={() => setSelectedColor(c.value)}
+                                    className="relative h-8 rounded-lg border border-border focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    style={{ backgroundColor: c.value }}
+                                    aria-label={c.name}
+                                >
+                                    {selectedColor === c.value && (
+                                        <span className="absolute inset-0 rounded-[5px] ring-2 ring-ring" />
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Tasks */}
+                    <div className="flex flex-col gap-3">
+                        <label className="text-sm font-medium text-foreground">Tasks</label>
+
+                        {/* Add task */}
+                        <div className="flex gap-2">
+                            <Input
+                                ref={taskInputRef}
+                                placeholder="Add a task…"
+                                onKeyDown={(e) =>
+                                    e.key === "Enter" && (e.preventDefault(), handleAddTask())
+                                }
+                                className="bg-background focus-visible:ring-1 focus-visible:ring-ring"
+                            />
+                            <Button type="button" variant="outline" onClick={handleAddTask} className="shrink-0">
+                                Add Task
+                            </Button>
+                        </div>
+
+                        {/* Task list */}
+                        <div className="flex flex-col gap-3 max-h-72 overflow-y-auto pr-1">
+                            {[...tasks].reverse().map((task, reversedIndex) => {
+                                const actualIndex = tasks.length - 1 - reversedIndex
+                                return (
+                                    <div
+                                        key={`${task.text}-${actualIndex}`}
+                                        className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2"
+                                    >
+                                        <Input
+                                            value={task.text}
+                                            onChange={(e) =>
+                                                setTasks((prev) =>
+                                                    prev.map((t, i) =>
+                                                        i === actualIndex ? { ...t, text: e.target.value } : t
+                                                    )
+                                                )
+                                            }
+                                            className="flex-1 h-7 px-2 bg-background border border-border shadow-none focus-visible:ring-1 focus-visible:ring-ring text-sm"
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleDeleteTask(actualIndex)}
+                                            className="h-7 px-2 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                        >
+                                            Remove
+                                        </Button>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="flex justify-end gap-2 pt-1">
+                        <Button variant="outline" type="button" onClick={onClose}>
+                            Cancel
+                        </Button>
+                        <Button type="submit">Create</Button>
+                    </div>
                 </form>
             </DialogContent>
         </Dialog>
