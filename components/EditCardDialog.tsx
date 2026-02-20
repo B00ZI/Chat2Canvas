@@ -55,7 +55,7 @@ export function EditCardDialog({ open, onClose, projectId, colId, card }: EditCa
     const colorInputRef = useRef<HTMLInputElement>(null)
     const taskInputRef = useRef<HTMLInputElement>(null)
     const editCard = useProjectStore((state) => state.editCard)
-    const deleteCard = useProjectStore((state) => state.deleteCard)
+
 
     useEffect(() => {
         if (open) {
@@ -95,12 +95,7 @@ export function EditCardDialog({ open, onClose, projectId, colId, card }: EditCa
         }
     }
 
-    function handleDelete() {
 
-        deleteCard(projectId, colId, card.id)
-        onClose()
-
-    }
 
     return (
 
@@ -168,32 +163,13 @@ export function EditCardDialog({ open, onClose, projectId, colId, card }: EditCa
 
                     </div>
 
-                    <div className="flex gap-2">
-                        <Button type="submit" className="flex-1">
-                            Save Changes
+                    <div className="flex justify-end gap-2">
+                        <Button variant={'outline'} onClick={() => onClose()} type="button" className="" >
+                            Cancel
                         </Button>
-
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button variant="destructive" type="button" className="flex-1">
-                                    Delete
-                                </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>Delete "{card?.title}" Card ?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        This action cannot be undone. This will permanently delete this Card .
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={handleDelete}>
-                                        Delete Card
-                                    </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
+                        <Button type="submit">
+                            Save changes
+                        </Button>
                     </div>
                 </form>
             </DialogContent>
