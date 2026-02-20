@@ -1,4 +1,5 @@
 'use client'
+
 import { useRef } from "react"
 
 import {
@@ -11,75 +12,90 @@ import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { useProjectStore } from "@/store/projectStore"
 
-interface EditProjectDialog {
+interface EditProjectDialogProps {
   open: boolean
   onClose: () => void
   projectName: string
   projectId: string
 }
 
-export function EditProjectDialog({ open, onClose, projectName, projectId }: EditProjectDialog) {
+export function EditProjectDialog({
+  open,
+  onClose,
+  projectName,
+  projectId,
+}: EditProjectDialogProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const editProject = useProjectStore((state) => state.editProject)
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    let name = inputRef.current?.value
-    if (name && name.trim()) {
-      editProject(projectId, name)
-      if (inputRef.current) {
-        inputRef.current.value = ""
-      }
-      onClose()
+
+    const name = inputRef.current?.value?.trim()
+    if (!name) return
+
+    editProject(projectId, name)
+
+    if (inputRef.current) {
+      inputRef.current.value = ""
     }
+
+    onClose()
   }
 
-
-
   return (
-  <Dialog open={open} onOpenChange={onClose}>
-    <DialogContent
-      className="
-        bg-card text-card-foreground
-        border border-border
-        shadow-lg
-        rounded-lg
-      "
-    >
-      <DialogHeader>
-        <DialogTitle className="tracking-tight">
-          Rename Project
-        </DialogTitle>
-      </DialogHeader>
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent
+        className="
+          bg-card text-card-foreground
+          border border-border
+          shadow-lg
+          rounded-lg
+        "
+      >
+        <DialogHeader className="space-y-1">
+          <DialogTitle className="text-sm font-semibold tracking-tight">
+            Rename project
+          </DialogTitle>
+        </DialogHeader>
 
-      <form className="space-y-4" onSubmit={handleSubmit}>
-        <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium text-foreground">
-            Project Name
-          </label>
+        <form
+          className="space-y-5"
+          onSubmit={handleSubmit}
+        >
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-foreground">
+              Project name
+            </label>
 
-          <Input
-            type="text"
-            ref={inputRef}
-            defaultValue={projectName}
-            autoFocus
-            className=" focus-visible:ring-offset-0  focus-visible:ring-2   bg-background"
-          />
-        </div>
+            <Input
+              ref={inputRef}
+              type="text"
+              defaultValue={projectName}
+              autoFocus
+              className="
+                bg-background
+                focus-visible:ring-1
+                focus-visible:ring-ring
+              "
+            />
+          </div>
 
-        <div className="flex justify-end gap-2">
-           <Button variant={'outline'} onClick={()=>onClose()} type="button" className="" >
-            Cancel
-          </Button>
+          <div className="flex justify-end gap-2 pt-1">
+            <Button
+              variant="outline"
+              type="button"
+              onClick={onClose}
+            >
+              Cancel
+            </Button>
 
-          <Button type="submit" className="">
-            Save Changes 
-          </Button>
-          
-        </div>
-      </form>
-    </DialogContent>
-  </Dialog>
-);
-
+            <Button type="submit">
+              Save changes
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
 }

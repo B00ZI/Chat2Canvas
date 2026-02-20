@@ -2,17 +2,6 @@
 
 import { useRef, useState } from "react"
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -22,7 +11,6 @@ import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { useProjectStore } from "@/store/projectStore"
 import { COLUMN_COLORS } from "@/lib/column-colors"
-
 
 interface Task {
   text: string
@@ -59,18 +47,14 @@ export function EditColumnDialog({
 }: EditColumnDialogProps) {
   const titleInputRef = useRef<HTMLInputElement>(null)
 
-  const [selectedColor, setSelectedColor] = useState<string>(
-    col.color
-  )
+  const [selectedColor, setSelectedColor] = useState<string>(col.color)
 
   const editColumn = useProjectStore((state) => state.editColumn)
-
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
     const newTitle = titleInputRef.current?.value.trim()
-
     if (!newTitle || !selectedColor) return
 
     editColumn(projectId, col.id, {
@@ -81,18 +65,18 @@ export function EditColumnDialog({
     onClose()
   }
 
-
-
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent
         className="
           bg-card text-card-foreground
+          border border-border
           shadow-lg
+          rounded-lg
         "
       >
         <DialogHeader className="space-y-1">
-          <DialogTitle className="text-base">
+          <DialogTitle className="text-sm font-semibold tracking-tight">
             Edit column
           </DialogTitle>
         </DialogHeader>
@@ -103,7 +87,7 @@ export function EditColumnDialog({
         >
           <div className="space-y-4">
             {/* Title */}
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-foreground">
                 Column title
               </label>
@@ -113,16 +97,21 @@ export function EditColumnDialog({
                 type="text"
                 defaultValue={col.title}
                 autoFocus
+                className="
+                  bg-background
+                  focus-visible:ring-1
+                  focus-visible:ring-ring
+                "
               />
             </div>
 
             {/* Color picker */}
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-foreground">
                 Column color
               </label>
 
-              <div className="grid grid-cols-6 gap-1">
+              <div className="grid grid-cols-6 gap-2">
                 {COLUMN_COLORS.map((c) => {
                   const isSelected = selectedColor === c.value
 
@@ -132,11 +121,10 @@ export function EditColumnDialog({
                       type="button"
                       onClick={() => setSelectedColor(c.value)}
                       className="
-                        relative
-                        h-8
-                        rounded-lg
+                        relative h-8 rounded-md
                         border border-border
-                        ring-offset-accent-foreground
+                        transition
+                        hover:scale-[1.05]
                         focus-visible:outline-none
                         focus-visible:ring-1
                         focus-visible:ring-ring
@@ -150,6 +138,7 @@ export function EditColumnDialog({
                             absolute inset-0
                             rounded-[5px]
                             ring-2 ring-ring
+                            ring-offset-2 ring-offset-background
                           "
                         />
                       )}
@@ -160,10 +149,15 @@ export function EditColumnDialog({
             </div>
           </div>
 
-          <div className="flex justify-end gap-2">
-            <Button variant={'outline'} onClick={() => onClose()} type="button" className="" >
+          <div className="flex justify-end gap-2 pt-2">
+            <Button
+              variant="outline"
+              onClick={onClose}
+              type="button"
+            >
               Cancel
             </Button>
+
             <Button type="submit">
               Save changes
             </Button>
