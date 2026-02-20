@@ -35,13 +35,8 @@ function Card({ card, projectId, colId, dragHandleProps }: CardProps) {
   const [isEditCardDialogOpen, setIsEditCardDialogOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
 
-  const toggleTask = useProjectStore(
-    useCallback((state) => state.toggleTask, [])
-  )
-
-  const deleteCard = useProjectStore(
-    useCallback((state) => state.deleteCard, [])
-  )
+  const toggleTask = useProjectStore(useCallback((state) => state.toggleTask, []))
+  const deleteCard = useProjectStore(useCallback((state) => state.deleteCard, []))
 
   const tasks = card?.tasks || []
   const completedTasks = tasks.filter(t => t?.done).length || 0
@@ -55,7 +50,7 @@ function Card({ card, projectId, colId, dragHandleProps }: CardProps) {
       <div
         className="
           bg-card text-card-foreground w-full
-          border border-border rounded-lg p-3
+          border border-border rounded-lg p-4
           shadow-xs hover:shadow-md transition
           relative group
         "
@@ -64,7 +59,7 @@ function Card({ card, projectId, colId, dragHandleProps }: CardProps) {
         <div
           {...dragHandleProps}
           className="
-            flex items-start gap-2 mb-2
+            flex items-center gap-3 mb-3
             cursor-grab active:cursor-grabbing
             touch-none select-none
           "
@@ -72,9 +67,9 @@ function Card({ card, projectId, colId, dragHandleProps }: CardProps) {
           {/* Number badge */}
           <div
             className="
-              w-7 h-7 rounded-md
+              w-8 h-8 rounded-full
               flex items-center justify-center
-              text-white text-xs font-semibold
+              text-white text-sm font-semibold
               shrink-0 shadow-xs pointer-events-none
             "
             style={{ backgroundColor: card.color, willChange: 'transform' }}
@@ -83,7 +78,7 @@ function Card({ card, projectId, colId, dragHandleProps }: CardProps) {
           </div>
 
           {/* Title */}
-          <h4 className="font-medium text-sm text-foreground flex-1 leading-snug wrap-break-word pointer-events-none">
+          <h4 className="font-medium text-sm text-foreground flex-1 leading-snug truncate pointer-events-none">
             {card.title}
           </h4>
 
@@ -140,11 +135,11 @@ function Card({ card, projectId, colId, dragHandleProps }: CardProps) {
         </div>
 
         {/* Tasks preview */}
-        <div className="space-y-1.5 cursor-default">
+        <div className="flex flex-col gap-2 cursor-default">
           {tasks.slice(0, 3).map((task, idx) => (
             <div
               key={idx}
-              className="flex items-center gap-2 text-xs"
+              className="flex items-center gap-2 text-sm pl-1"
             >
               <input
                 type="checkbox"
@@ -152,14 +147,14 @@ function Card({ card, projectId, colId, dragHandleProps }: CardProps) {
                 onChange={() => toggleTask(projectId, colId, card.id, idx)}
                 onPointerDown={(e) => e.stopPropagation()}
                 className="
-                  rounded border-border
+                  w-4 h-4 rounded border-border
                   text-primary focus:ring-ring
                   cursor-pointer
                 "
               />
 
               <span
-                className={`truncate ${
+                className={`truncate flex-1 ${
                   task.done
                     ? "line-through text-muted-foreground"
                     : "text-foreground"
@@ -171,22 +166,21 @@ function Card({ card, projectId, colId, dragHandleProps }: CardProps) {
           ))}
 
           {tasks.length > 3 && (
-            <p className="text-[11px] text-muted-foreground pl-5">
+            <p className="text-[11px] text-muted-foreground pl-5 mt-1">
               +{tasks.length - 3} more tasks
             </p>
           )}
         </div>
 
         {/* Footer */}
-        <div className="mt-3 pt-2 border-t border-border flex items-center justify-between cursor-default">
-          <span className="text-[11px] text-muted-foreground font-medium">
+        <div className="mt-3 pt-2 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
+          <span className="font-medium">
             {completedTasks}/{tasks.length} completed
           </span>
         </div>
       </div>
 
       {/* Dialogs */}
-
       <EditCardDialog
         open={isEditCardDialogOpen}
         onClose={() => setIsEditCardDialogOpen(false)}
