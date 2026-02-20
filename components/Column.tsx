@@ -82,7 +82,7 @@ const Column = memo(function Column({ col, projectId }: ColumnProps) {
                     <button
                         onPointerDown={(e) => e.stopPropagation()}
                         onClick={() => setIsEditColumnDialogOpen(true)}
-                        className="text-muted-foreground hover:text-foreground p-1 hover:bg-muted rounded transition-colors"
+                        className="text-muted-foreground hover:text-foreground px-3 py-1 hover:bg-muted rounded transition-colors"
                     >
                         ⋮
                     </button>
