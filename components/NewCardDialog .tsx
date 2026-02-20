@@ -89,7 +89,7 @@ export function NewCardDialog({ open, onClose, projectId, colId }: NewCardDialog
                     {/* Color picker */}
                     <div className="flex flex-col gap-2">
                         <label className="text-sm font-medium text-foreground">Card Color</label>
-                        <div className="grid grid-cols-6 gap-1.5">
+                        <div className="grid grid-cols-4 gap-1.5">
                             {COLUMN_COLORS.map((c) => (
                                 <button
                                     key={c.name}

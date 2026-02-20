@@ -111,7 +111,7 @@ export function EditColumnDialog({
                 Column color
               </label>
 
-              <div className="grid grid-cols-6 gap-2">
+              <div className="grid grid-cols-4 gap-2">
                 {COLUMN_COLORS.map((c) => {
                   const isSelected = selectedColor === c.value
 

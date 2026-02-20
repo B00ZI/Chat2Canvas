@@ -138,7 +138,7 @@ export function EditCardDialog({
                                 Card color
                             </label>
 
-                            <div className="grid grid-cols-6 gap-1.5">
+                            <div className="grid grid-cols-4 gap-1.5">
                                 {COLUMN_COLORS.map((c) => {
                                     const isSelected = selectedColor === c.value
 
