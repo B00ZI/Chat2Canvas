@@ -83,7 +83,7 @@ function Card({ card, projectId, colId, dragHandleProps }: CardProps) {
           </div>
 
           {/* Title */}
-          <h4 className="font-medium text-sm text-foreground flex-1 leading-snug break-words pointer-events-none">
+          <h4 className="font-medium text-sm text-foreground flex-1 leading-snug wrap-break-word pointer-events-none">
             {card.title}
           </h4>
 
