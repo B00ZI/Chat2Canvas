@@ -6,7 +6,7 @@ import { CSS } from '@dnd-kit/utilities'
 import SortableCard from "./SortableCard"
 import { EditColumnDialog } from "./EditColumnDialog"
 import { NewCardDialog } from "./NewCardDialog "
-
+import { useProjectStore } from "@/store/projectStore"
 interface ColumnProps {
     col: {
         id: string;
@@ -21,7 +21,7 @@ interface ColumnProps {
 const Column = memo(function Column({ col, projectId }: ColumnProps) {
     const [isEditColumnDialogOpen, setIsEditColumnDialogOpen] = useState(false)
     const [isNewCardDialogOpen, setisNewCardDialogOpen] = useState(false)
-
+    const deleteColumn = useProjectStore((state) => state.deleteColumn)
     const {
         setNodeRef,
         attributes,
@@ -36,7 +36,7 @@ const Column = memo(function Column({ col, projectId }: ColumnProps) {
             col,
         },
     });
-
+ 
     // 3. Use Transform for better layout stability during multi-axis drags
     const style = {
         transition,
@@ -55,6 +55,10 @@ const Column = memo(function Column({ col, projectId }: ColumnProps) {
             />
         );
     }
+
+    function handleDelete() {
+    deleteColumn(projectId, col.id)
+  }
     return (
         <div
             ref={setNodeRef}

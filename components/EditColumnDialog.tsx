@@ -59,12 +59,12 @@ export function EditColumnDialog({
 }: EditColumnDialogProps) {
   const titleInputRef = useRef<HTMLInputElement>(null)
 
- const [selectedColor, setSelectedColor] = useState<string>(
-  col.color
-)
+  const [selectedColor, setSelectedColor] = useState<string>(
+    col.color
+  )
 
   const editColumn = useProjectStore((state) => state.editColumn)
-  const deleteColumn = useProjectStore((state) => state.deleteColumn)
+
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -81,10 +81,7 @@ export function EditColumnDialog({
     onClose()
   }
 
-  function handleDelete() {
-    deleteColumn(projectId, col.id)
-    onClose()
-  }
+
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -163,56 +160,13 @@ export function EditColumnDialog({
             </div>
           </div>
 
-          <div className="flex gap-2 pt-2">
-            <Button type="submit" className="flex-1">
+          <div className="flex justify-end gap-2">
+            <Button variant={'outline'} onClick={() => onClose()} type="button" className="" >
+              Cancel
+            </Button>
+            <Button type="submit">
               Save changes
             </Button>
-
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  className="flex-1"
-                >
-                  Delete
-                </Button>
-              </AlertDialogTrigger>
-
-              <AlertDialogContent
-                className="
-                  bg-popover text-popover-foreground
-                  shadow-lg
-                "
-              >
-                <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    Delete “{col.title}” column?
-                  </AlertDialogTitle>
-
-                  <AlertDialogDescription className="text-muted-foreground">
-                    This action cannot be undone. This will permanently delete
-                    this column.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-
-                <AlertDialogFooter>
-                  <AlertDialogCancel>
-                    Cancel
-                  </AlertDialogCancel>
-
-                  <AlertDialogAction
-                    onClick={handleDelete}
-                    className="
-                      bg-destructive text-destructive-foreground
-                      hover:opacity-90
-                    "
-                  >
-                    Delete column
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
           </div>
         </form>
       </DialogContent>
