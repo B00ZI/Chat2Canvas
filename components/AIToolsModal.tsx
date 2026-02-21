@@ -97,29 +97,32 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
           w-[960px] max-w-[95vw]
           h-[680px] max-h-[90vh]
           bg-card text-card-foreground
-          border border-border
-          rounded-3xl
+          border-2 border-border
+          rounded-xl
           shadow-xl
           p-0
           flex flex-col
         "
       >
         {/* Header (fixed) */}
-        <div className="px-8 pt-8 pb-6 shrink-0">
+        <div className="px-8 pt-8 pb-4 shrink-0">
           <DialogHeader>
             <div className="flex items-center gap-3 mb-1">
-              <div className="bg-primary text-primary-foreground p-2 rounded-xl shadow-sm">
-                <Zap className="w-5 h-5" />
+              <div className="bg-primary text-primary-foreground p-3 rounded-xl shadow-sm">
+                <Zap className="w-6 h-6" />
+              </div>
+              <div className="flex flex-col ">
+                <DialogTitle className="text-2xl font-bold tracking-tight">
+                  AI Planning Tools
+                </DialogTitle>
+                <DialogDescription className="text-muted-foreground">
+                  Design your project workflow using the power of AI.
+                </DialogDescription>
               </div>
 
-              <DialogTitle className="text-2xl font-bold tracking-tight">
-                AI Planning Tools
-              </DialogTitle>
             </div>
 
-            <DialogDescription className="text-muted-foreground">
-              Design your project workflow using the power of AI.
-            </DialogDescription>
+
           </DialogHeader>
         </div>
 
@@ -143,7 +146,7 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
               <TabsTrigger
                 value="start"
                 className="border-none"
-                >
+              >
                 Start Fresh
               </TabsTrigger>
 
