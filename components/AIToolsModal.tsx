@@ -230,15 +230,15 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
                   <div
                     className="
                       bg-popover text-popover-foreground
-                      rounded-3xl p-5
+                      rounded-lg p-5
                       shadow-lg
                       border border-border
                       relative
                     "
                   >
                     <div className="flex justify-between items-center mb-3">
-                      <Badge
-                        variant="outline"
+                      <p
+                       
                         className="
                           text-[10px]
                           uppercase tracking-widest
@@ -246,7 +246,7 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
                         "
                       >
                         System Prompt
-                      </Badge>
+                      </p>
 
                       <div className="flex gap-1">
                         <div className="w-2 h-2 rounded-full bg-destructive/60" />
@@ -255,11 +255,20 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
                       </div>
                     </div>
 
-                    <div className="max-h-26 overflow-y-auto font-mono text-[11px] text-muted-foreground leading-relaxed">
+                    <div className="pr-2 max-h-26 overflow-y-auto font-mono text-[11px] text-muted-foreground leading-relaxed
+                     [&::-webkit-scrollbar]:w-[4px]
+                     [&::-webkit-scrollbar-track]:bg-accent/70 [&::-webkit-scrollbar-track]:rounded-full
+                     [&::-webkit-scrollbar-thumb]:bg-sidebar-accent [&::-webkit-scrollbar-thumb]:rounded-full
+                     [&::-webkit-scrollbar-thumb:hover]:bg-primary">
                       {creatorPrompt}
                     </div>
 
-                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-linear-to-t from-primary/15 to-transparent rounded-b-3xl" />
+                      {/* [&::-webkit-scrollbar]:w-[4px]
+            [&::-webkit-scrollbar-track]:bg-sidebar [&::-webkit-scrollbar-track]:rounded-full
+            [&::-webkit-scrollbar-thumb]:bg-sidebar-accent [&::-webkit-scrollbar-thumb]:rounded-full
+            [&::-webkit-scrollbar-thumb:hover]:bg-primary */}
+
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-linear-to-t from-primary/15 to-transparent rounded-b-lg" />
                   </div>
 
                   <Button
