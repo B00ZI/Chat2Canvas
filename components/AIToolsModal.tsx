@@ -127,7 +127,7 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
         </div>
 
         {/* Body (scroll area) */}
-        <div className="flex-1 overflow-hidden px-8 pb-8">
+        <div className="flex-1  overflow-hidden  pb-8 ">
           <Tabs
 
             defaultValue="start"
@@ -139,7 +139,7 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
               className="
                 border-b
                 w-full
-                mb-6
+                mb-8
                 
               "
             >
@@ -170,6 +170,8 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
             <TabsContent
               value="start"
               className="
+              
+                px-8
                 flex-1 overflow-y-auto
                 space-y-8
                 focus-visible:outline-none
@@ -177,7 +179,7 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
                 data-[state=active]:fade-in-0
               "
             >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+              <div className="grid grid-cols-1  gap-8 items-start">
                 {/* Left column */}
                 <div className="space-y-8">
                   <div className="space-y-1">
@@ -253,23 +255,17 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
                       </div>
                     </div>
 
-                    <div className="max-h-44 overflow-y-auto font-mono text-[11px] text-muted-foreground leading-relaxed">
+                    <div className="max-h-26 overflow-y-auto font-mono text-[11px] text-muted-foreground leading-relaxed">
                       {creatorPrompt}
                     </div>
 
-                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-linear-to-t from-popover to-transparent rounded-b-3xl" />
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-linear-to-t from-primary/15 to-transparent rounded-b-3xl" />
                   </div>
 
                   <Button
                     onClick={() => handleCopy(creatorPrompt)}
                     className="
-                      w-full
-                      rounded-2xl py-6
-                      shadow-md
-                      transition-transform
-                      hover:scale-[1.02]
-                      active:scale-95
-                    "
+                      w-full "
                   >
                     <Copy className="w-4 h-4 mr-2" />
                     Copy Creator Prompt
@@ -283,6 +279,7 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
             <TabsContent
               value="import"
               className="
+              px-8
                 flex-1 overflow-y-auto
                 space-y-8
                 focus-visible:outline-none
@@ -354,6 +351,7 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
             <TabsContent
               value="sync"
               className="
+              px-8
                 flex-1 overflow-y-auto
                 space-y-8
                 focus-visible:outline-none
