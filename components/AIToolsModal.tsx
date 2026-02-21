@@ -127,7 +127,7 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
         </div>
 
         {/* Body (scroll area) */}
-        <div className="flex-1  overflow-hidden  pb-8 ">
+        <div className="flex-1  overflow-hidden  pb-8 pr-2 ">
           <Tabs
 
             defaultValue="start"
@@ -139,7 +139,8 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
               className="
                 border-b
                 w-full
-                mb-8
+
+                mb-6
                 
               "
             >
@@ -172,16 +173,22 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
               className="
               
                 px-8
+                pr-6
+                
                 flex-1 overflow-y-auto
                 space-y-8
                 focus-visible:outline-none
                 data-[state=active]:animate-in
                 data-[state=active]:fade-in-0
+                [&::-webkit-scrollbar]:w-[4px]
+                     [&::-webkit-scrollbar-track]:bg-accent/70 [&::-webkit-scrollbar-track]:rounded-full
+                     [&::-webkit-scrollbar-thumb]:bg-sidebar-accent [&::-webkit-scrollbar-thumb]:rounded-full
+                     [&::-webkit-scrollbar-thumb:hover]:bg-primary
               "
             >
-              <div className="grid grid-cols-1  gap-8 items-start">
+              <div className="grid grid-cols-1  gap-6 items-start">
                 {/* Left column */}
-                <div className="space-y-8">
+                <div className="space-y-5">
                   <div className="space-y-1">
                     <h3 className="font-bold text-lg">
                       Quick Start Guide
@@ -207,9 +214,9 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
                           className="
                             h-7 w-7 p-0 rounded-full
                             flex items-center justify-center
-                            bg-accent text-accent-foreground
+                            bg-muted  text-accent-foreground
                             border border-border
-                            group-hover:bg-primary
+                            group-hover:bg-background
                             group-hover:text-primary-foreground
                             transition-colors
                           "
@@ -226,11 +233,11 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
                 </div>
 
                 {/* Right column (sticky tool panel) */}
-                <div className="space-y-4 md:sticky md:top-0">
+                <div className="space-y-4 ">
                   <div
                     className="
                       bg-popover text-popover-foreground
-                      rounded-lg p-5
+                      rounded-lg p-4
                       shadow-lg
                       border border-border
                       relative
@@ -249,13 +256,13 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
                       </p>
 
                       <div className="flex gap-1">
-                        <div className="w-2 h-2 rounded-full bg-destructive/60" />
-                        <div className="w-2 h-2 rounded-full bg-secondary" />
-                        <div className="w-2 h-2 rounded-full bg-primary" />
+                        <div className="w-2 h-2 rounded-full bg-muted-foreground" />
+                        <div className="w-2 h-2 rounded-full bg-muted-foreground" />
+                        <div className="w-2 h-2 rounded-full bg-muted-foreground" />
                       </div>
                     </div>
 
-                    <div className="pr-2 max-h-26 overflow-y-auto font-mono text-[11px] text-muted-foreground leading-relaxed
+                    <div className="pr-2 max-h-20 overflow-y-auto font-mono text-[11px] text-muted-foreground leading-relaxed
                      [&::-webkit-scrollbar]:w-[4px]
                      [&::-webkit-scrollbar-track]:bg-accent/70 [&::-webkit-scrollbar-track]:rounded-full
                      [&::-webkit-scrollbar-thumb]:bg-sidebar-accent [&::-webkit-scrollbar-thumb]:rounded-full
@@ -299,7 +306,7 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
               <div className="space-y-4">
                 <div
                   className="
-                    bg-accent text-accent-foreground
+                    bg-muted text-accent-foreground
                     border border-border
                     rounded-2xl
                     p-4
