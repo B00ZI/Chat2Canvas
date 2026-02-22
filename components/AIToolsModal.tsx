@@ -245,7 +245,7 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
                   >
                     <div className="flex justify-between items-center mb-3">
                       <p
-                       
+
                         className="
                           text-[10px]
                           uppercase tracking-widest
@@ -270,7 +270,7 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
                       {creatorPrompt}
                     </div>
 
-                      {/* [&::-webkit-scrollbar]:w-[4px]
+                    {/* [&::-webkit-scrollbar]:w-[4px]
             [&::-webkit-scrollbar-track]:bg-sidebar [&::-webkit-scrollbar-track]:rounded-full
             [&::-webkit-scrollbar-thumb]:bg-sidebar-accent [&::-webkit-scrollbar-thumb]:rounded-full
             [&::-webkit-scrollbar-thumb:hover]:bg-primary */}
@@ -305,20 +305,20 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
             >
               <div className="space-y-5">
 
-                 <div className="space-y-1">
-                    <h3 className="font-bold text-lg">
-                      Paste Canvas Code
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                     Paste the <strong>Canvas Code</strong> provided by the AI.
+                <div className="space-y-1">
+                  <h3 className="font-bold text-lg">
+                    Paste Canvas Code
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Paste the <strong>Canvas Code</strong> provided by the AI.
                     Ensure you include the opening{" "}
                     <code className="bg-muted px-1 ">{"{"}</code>{" "}
                     and closing{" "}
                     <code className="bg-muted px-1 ">{"}"}</code>{" "}
                     braces.
-                    </p>
-                  </div>
-                
+                  </p>
+                </div>
+
 
                 <textarea
                   value={importText}
@@ -341,13 +341,13 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
                 />
 
                 <Button
-                    onClick={() => handleCopy(creatorPrompt)}
-                    className="
+                  onClick={() => handleCopy(creatorPrompt)}
+                  className="
                       w-full "
-                  >
-                    <Copy className="w-4 h-4 mr-2" />
-                    Plan Canvas
-                  </Button>
+                >
+                  <Copy className="w-4 h-4 mr-2" />
+                  Plan Canvas
+                </Button>
               </div>
             </TabsContent>
 
@@ -364,62 +364,46 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
                 data-[state=active]:fade-in-0
               "
             >
-              <div className="space-y-8">
-                <div
-                  className="
-                    bg-accent
-                    border border-border
-                    rounded-3xl
-                    p-6
-                    text-center
-                  "
-                >
-                  <div
-                    className="
-                      bg-card
-                      w-12 h-12
-                      rounded-2xl
-                      shadow-sm
-                      flex items-center justify-center
-                      mx-auto mb-4
-                      border border-border
-                    "
-                  >
-                    <RefreshCw className="w-6 h-6 text-primary" />
-                  </div>
+              <div className="space-y-5 flex flex-col h-full">
 
-                  <h3 className="font-bold mb-2">
-                    Sync with AI
+                <div className="space-y-1">
+                  <h3 className="font-bold text-lg">
+                    Export Current Canvas
                   </h3>
-
-                  <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-6">
+                  <p className="text-sm text-muted-foreground">
                     Send your current progress back to the AI to refine your plan
                     or generate next steps.
                   </p>
-
-                  <Button
-                    onClick={handleCopyProgress}
-                    variant="outline"
-                    className="rounded-xl px-8 shadow-sm"
-                  >
-                    Copy Current State
-                  </Button>
                 </div>
 
-                <div className="pt-6 border-t border-border flex flex-col items-center space-y-3">
+
+
+                <Button
+                  onClick={() => handleCopy(creatorPrompt)}
+                  className="
+                      w-full "
+                >
+                  <Copy className="w-4 h-4 mr-2" />
+                  Export Current Canvas
+                </Button>
+
+                <div className="mt-auto pt-6 border-t border-border flex flex-col items-center space-y-5">
                   <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">
-                    Forgot the format?
+                    If Ai Forgot the format just Coppy the Creator prompt from the  Start frecsh Tab or from the btn bellow
                   </p>
 
                   <Button
-                    onClick={() => handleCopy(formatReminder)}
-                    variant="ghost"
-                    className="rounded-xl w-full py-4 text-xs font-medium"
+                  variant={"outline"}
+                    onClick={() => handleCopy(creatorPrompt)}
+                    className="
+                      w-full "
                   >
-                    Resend Schema Instructions
+                    <Copy className="w-4 h-4 mr-2" />
+                    Copy Creator Prompt
                   </Button>
                 </div>
               </div>
+
             </TabsContent>
           </Tabs>
         </div>
