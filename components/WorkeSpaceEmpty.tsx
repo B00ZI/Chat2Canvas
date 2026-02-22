@@ -7,7 +7,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty"
-import { IconFolderCode } from "@tabler/icons-react"
+import { Folder } from "lucide-react"
 import { ArrowUpRightIcon } from "lucide-react"
 
 export function EmptyDemo() {
@@ -15,7 +15,7 @@ export function EmptyDemo() {
     <Empty>
       <EmptyHeader>
         <EmptyMedia variant="icon">
-          <IconFolderCode />
+          <Folder />
         </EmptyMedia>
         <EmptyTitle>No Projects Yet</EmptyTitle>
         <EmptyDescription>

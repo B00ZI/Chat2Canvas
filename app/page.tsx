@@ -21,7 +21,7 @@ import { useState, useMemo, useRef, useCallback } from "react"
 import { useProjectStore } from "@/store/projectStore"
 
 import TopBar from "@/components/Topbar"
-import EmptyState from "@/components/WorkeSpaceEmpty"
+import {EmptyDemo} from "@/components/WorkeSpaceEmpty"
 import Column from "@/components/Column"
 import Card from "@/components/Card"
 import { Button } from "@/components/ui/button"
@@ -167,7 +167,7 @@ export default function Home() {
     useProjectStore.getState().syncProjectNumbers(activeProject.id);
   }, [activeProject, columnIds, reorderCards, reorderColumns]);
 
-  if (!activeProject) return <EmptyState />;
+  if (!activeProject) return <EmptyDemo />;
 
   return (
     <div className="flex-1 bg-background flex flex-col overflow-hidden ">
