@@ -159,10 +159,10 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
               </TabsTrigger>
 
               <TabsTrigger
-                value="sync"
+                value="Export"
                 className=" border-none"
               >
-                Sync
+                Export
               </TabsTrigger>
             </TabsList>
 
@@ -303,38 +303,31 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
                 data-[state=active]:fade-in-0
               "
             >
-              <div className="space-y-4">
-                <div
-                  className="
-                    bg-muted text-accent-foreground
-                    border border-border
-                    rounded-2xl
-                    p-4
-                    flex gap-4 items-start
-                  "
-                >
-                  <div className="bg-primary text-primary-foreground p-2 rounded-lg">
-                    <FileJson className="w-4 h-4" />
-                  </div>
+              <div className="space-y-5">
 
-                  <p className="text-xs leading-normal">
-                    Paste the <strong>Canvas Code</strong> provided by the AI.
+                 <div className="space-y-1">
+                    <h3 className="font-bold text-lg">
+                      Paste Canvas Code
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                     Paste the <strong>Canvas Code</strong> provided by the AI.
                     Ensure you include the opening{" "}
-                    <code className="bg-muted px-1 rounded">{"{"}</code>{" "}
+                    <code className="bg-muted px-1 ">{"{"}</code>{" "}
                     and closing{" "}
-                    <code className="bg-muted px-1 rounded">{"}"}</code>{" "}
+                    <code className="bg-muted px-1 ">{"}"}</code>{" "}
                     braces.
-                  </p>
-                </div>
+                    </p>
+                  </div>
+                
 
                 <textarea
                   value={importText}
                   onChange={(e) => setImportText(e.target.value)}
                   className="
-                    w-full h-64 p-5
+                    w-full h-70 p-5
                     bg-background
                     border border-input
-                    rounded-2xl
+                    rounded-lg
                     font-mono text-xs
                     resize-none
                     shadow-inner
@@ -348,24 +341,20 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
                 />
 
                 <Button
-                  onClick={handleImport}
-                  className="
-                    w-full
-                    rounded-xl py-6
-                    shadow-md
-                    transition-transform
-                    active:scale-95
-                  "
-                >
-                  🚀 Launch Project Plan
-                </Button>
+                    onClick={() => handleCopy(creatorPrompt)}
+                    className="
+                      w-full "
+                  >
+                    <Copy className="w-4 h-4 mr-2" />
+                    Plan Canvas
+                  </Button>
               </div>
             </TabsContent>
 
             {/* ---------------- Sync ---------------- */}
 
             <TabsContent
-              value="sync"
+              value="Export"
               className="
               px-8
                 flex-1 overflow-y-auto
