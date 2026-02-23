@@ -8,35 +8,34 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 import { Folder } from "lucide-react"
-import { ArrowUpRightIcon } from "lucide-react"
 
 export function EmptyDemo() {
   return (
     <Empty>
       <EmptyHeader>
         <EmptyMedia variant="icon">
-          <Folder />
+          <Folder className="text-muted-foreground" />
         </EmptyMedia>
-        <EmptyTitle>No Projects Yet</EmptyTitle>
+
+        <EmptyTitle>
+          No projects yet
+        </EmptyTitle>
+
         <EmptyDescription>
-          You haven&apos;t created any projects yet. Get started by creating
-          your first project.
+          Start a new project from scratch, or let the Canvas tools guide you
+          to use Ai to create one in seconds.
         </EmptyDescription>
       </EmptyHeader>
+
       <EmptyContent className="flex-row justify-center gap-2">
-        <Button>Create Project</Button>
-        <Button variant="outline">Import Project</Button>
+        <Button>
+          Start with Canvas tools
+        </Button>
+
+        <Button variant="outline">
+          Create project manually
+        </Button>
       </EmptyContent>
-      <Button
-        variant="link"
-        asChild
-        className="text-muted-foreground"
-        size="sm"
-      >
-        <a href="#">
-          Learn More <ArrowUpRightIcon />
-        </a>
-      </Button>
     </Empty>
   )
 }
