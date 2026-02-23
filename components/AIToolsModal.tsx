@@ -10,12 +10,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Copy, Zap } from "lucide-react"
-import {
-  INSTRUCTIONS_PROMPTS,
-  INSTRUCTIONS_PROMPT_REMINDER
-} from "@/lib/prompts"
-
+import { Zap, FileText, ArrowDown, ArrowUp } from "lucide-react"
+import { INSTRUCTIONS_PROMPTS } from "@/lib/prompts"
 import { useState } from "react"
 import { useProjectStore } from "@/store/projectStore"
 
@@ -31,64 +27,69 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
 
   const [importText, setImportText] = useState("")
   const [importError, setImportError] = useState<string | null>(null)
-
   const [copiedCreator, setCopiedCreator] = useState(false)
   const [copiedExport, setCopiedExport] = useState(false)
 
   const creatorPrompt = INSTRUCTIONS_PROMPTS
-  const formatReminder = INSTRUCTIONS_PROMPT_REMINDER
-
   const currentProject = projects.find((p) => p.id === activeProjectId)
 
+  // General copy handler
   const handleCopy = (text: string, type?: "creator" | "export") => {
     navigator.clipboard.writeText(text)
-
     if (type === "creator") {
       setCopiedCreator(true)
       setTimeout(() => setCopiedCreator(false), 1600)
     }
-
     if (type === "export") {
       setCopiedExport(true)
       setTimeout(() => setCopiedExport(false), 1600)
     }
   }
 
+  // Import handler with friendly error messages
   const handleImport = () => {
     try {
       setImportError(null)
 
-      const jsonMatch = importText.match(/\{[\s\S]*\}/)
+      if (!importText.trim()) {
+        setImportError("Please paste the project code before importing.")
+        return
+      }
 
+      const jsonMatch = importText.match(/\{[\s\S]*\}/)
       if (!jsonMatch) {
-        setImportError("No Canvas Code found. Make sure you pasted the full code.")
+        setImportError(
+          "Couldn't find your project data. Make sure you pasted the code correctly."
+        )
         return
       }
 
       const data = JSON.parse(jsonMatch[0])
 
       if (!data.name || !Array.isArray(data.columns)) {
-        setImportError("Invalid Canvas Code. Missing 'name' or 'columns'.")
+        setImportError(
+          "Your project data is incomplete. Make sure it has a project name and columns."
+        )
         return
       }
 
       importProject(data)
       setImportText("")
-      setImportError(null)
       onClose()
-    } catch (error) {
-      setImportError("Failed to import. The pasted Canvas Code is not valid JSON.")
+    } catch {
+      setImportError(
+        "Oops! We couldn't read your project. Make sure the pasted code is valid."
+      )
     }
   }
 
-
+  // Export current project
   const handleCopyProgress = () => {
-    const project = projects.find((p) => p.id === activeProjectId)
-    if (!project) return
+    if (!currentProject) return
 
     const cleanData = {
-      name: project.name,
-      columns: project.columns.map((col) => ({
+      name: currentProject.name,
+      columns: currentProject.columns.map((col) => ({
         title: col.title,
         color: col.color,
         cards: col.cards.map((card) => ({
@@ -101,7 +102,7 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
 
     const projectJson = JSON.stringify(cleanData, null, 2)
 
-    const syncMessage = `Here is my current project progress for "${project.name}":\n\n${projectJson}\n\nReview this and suggest improvements. Return updated Canvas Code in the same format.`
+    const syncMessage = `Here is my current project progress for "${currentProject.name}":\n\n${projectJson}\n\nPlease suggest improvements and return the updated project code.`
 
     handleCopy(syncMessage, "export")
   }
@@ -142,23 +143,23 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
         {/* Body */}
         <div className="flex-1 overflow-hidden pb-8 pr-2">
           <Tabs defaultValue="start" className="h-full flex flex-col">
-            <TabsList
-              variant={"line"}
-              className="border-b w-full mb-4"
-            >
-              <TabsTrigger value="start" className="border-none">
+            {/* Tabs */}
+            <TabsList variant="line" className="border-b w-full mb-4">
+              <TabsTrigger value="start" className="border-none flex items-center gap-2">
+                <FileText className="w-4 h-4" />
                 Start Fresh
               </TabsTrigger>
-              <TabsTrigger value="import" className="border-none">
+              <TabsTrigger value="import" className="border-none flex items-center gap-2">
+                <ArrowDown className="w-4 h-4" />
                 Import
               </TabsTrigger>
-              <TabsTrigger value="Export" className="border-none">
+              <TabsTrigger value="Export" className="border-none flex items-center gap-2">
+                <ArrowUp className="w-4 h-4" />
                 Export
               </TabsTrigger>
             </TabsList>
 
             {/* ---------------- Start ---------------- */}
-
             <TabsContent
               value="start"
               className="
@@ -168,7 +169,6 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
                 focus-visible:outline-none
                 data-[state=active]:animate-in
                 data-[state=active]:fade-in-0
-
                 [&::-webkit-scrollbar]:w-[4px]
                 [&::-webkit-scrollbar-track]:bg-accent/70
                 [&::-webkit-scrollbar-track]:rounded-full
@@ -241,18 +241,13 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
                       </div>
                     </div>
 
-                    <div
-                      className="
-                        pr-2 max-h-20 overflow-y-auto
-                        font-mono text-[11px] text-muted-foreground leading-relaxed
-                        [&::-webkit-scrollbar]:w-[4px]
-                        [&::-webkit-scrollbar-track]:bg-accent/70
-                        [&::-webkit-scrollbar-track]:rounded-full
-                        [&::-webkit-scrollbar-thumb]:bg-sidebar-accent
-                        [&::-webkit-scrollbar-thumb]:rounded-full
-                        [&::-webkit-scrollbar-thumb:hover]:bg-primary
-                      "
-                    >
+                    <div className="pr-2 max-h-20 overflow-y-auto font-mono text-[11px] text-muted-foreground leading-relaxed
+                    [&::-webkit-scrollbar]:w-[4px]
+                    [&::-webkit-scrollbar-track]:bg-accent/70
+                    [&::-webkit-scrollbar-track]:rounded-full
+                    [&::-webkit-scrollbar-thumb]:bg-sidebar-accent
+                    [&::-webkit-scrollbar-thumb]:rounded-full
+                    [&::-webkit-scrollbar-thumb:hover]:bg-primary">
                       {creatorPrompt}
                     </div>
 
@@ -263,7 +258,7 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
                     onClick={() => handleCopy(creatorPrompt, "creator")}
                     className="w-full"
                   >
-                    <Copy className="w-4 h-4 mr-2" />
+                    <Zap className="w-4 h-4 mr-2" />
                     {copiedCreator ? "Copied!" : "Copy Creator Prompt"}
                   </Button>
                 </div>
@@ -271,17 +266,13 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
             </TabsContent>
 
             {/* ---------------- Import ---------------- */}
-
             <TabsContent
               value="import"
               className="
-                px-8
-                flex-1 overflow-y-auto
-                space-y-8
-                focus-visible:outline-none
+                px-8 flex-1 overflow-y-auto
+                space-y-5 focus-visible:outline-none
                 data-[state=active]:animate-in
                 data-[state=active]:fade-in-0
-
                 [&::-webkit-scrollbar]:w-[4px]
                 [&::-webkit-scrollbar-track]:bg-accent/70
                 [&::-webkit-scrollbar-track]:rounded-full
@@ -290,14 +281,11 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
                 [&::-webkit-scrollbar-thumb:hover]:bg-primary
               "
             >
-              <div className="space-y-5">
+              <div className="space-y-3">
                 <div className="space-y-1">
-                  <h3 className="font-bold text-lg">Paste Canvas Code</h3>
+                  <h3 className="font-bold text-lg">Paste Project Code</h3>
                   <p className="text-sm text-muted-foreground">
-                    Paste the <strong>Canvas Code</strong> provided by the AI.
-                    Ensure you include the opening{" "}
-                    <code className="bg-muted px-1">{"{"}</code> and closing{" "}
-                    <code className="bg-muted px-1">{"}"}</code> braces.
+                    Paste the project code generated by the AI below. Make sure it includes the full project.
                   </p>
                 </div>
 
@@ -307,56 +295,37 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
                     setImportText(e.target.value)
                     if (importError) setImportError(null)
                   }}
-                  className={`
-    w-full h-70 p-5
-    bg-background
-    border
-    rounded-lg
-    font-mono text-xs
-    resize-none
-    shadow-inner
-    focus-visible:outline-none
-    focus-visible:ring-2
-    transition
-    placeholder:text-muted-foreground
-
-    ${importError
-                      ? "border-destructive focus-visible:ring-destructive"
-                      : "border-input focus-visible:ring-ring"
-                    }
-  `}
-                  placeholder='{ "name": "Project Title", ... }'
+                  className={`w-full h-64 p-4 bg-background border rounded-lg font-mono text-xs resize-none shadow-inner focus-visible:outline-none focus-visible:ring-2 transition placeholder:text-muted-foreground
+                    ${importError ? "border-destructive focus-visible:ring-destructive" : "border-input focus-visible:ring-ring"}
+                  `}
+                  placeholder="Paste project code here..."
                 />
 
                 {importError && (
-                  <p className="text-sm text-destructive/80 mt-[-20px]">
+                  <p className="text-sm text-destructive/80">
                     {importError}
                   </p>
                 )}
+
                 <Button
                   onClick={handleImport}
                   disabled={!importText.trim()}
-                  className="w-full disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  <Copy className="w-4 h-4 mr-2" />
-                  Import Canvas
+                  <ArrowDown className="w-4 h-4" />
+                  Import Project
                 </Button>
-
               </div>
             </TabsContent>
 
             {/* ---------------- Export ---------------- */}
-
             <TabsContent
               value="Export"
               className="
-                px-8
-                flex-1 overflow-y-auto
-                space-y-8
-                focus-visible:outline-none
+                px-8 flex-1 overflow-y-auto
+                space-y-8 focus-visible:outline-none
                 data-[state=active]:animate-in
                 data-[state=active]:fade-in-0
-
                 [&::-webkit-scrollbar]:w-[4px]
                 [&::-webkit-scrollbar-track]:bg-accent/70
                 [&::-webkit-scrollbar-track]:rounded-full
@@ -367,20 +336,19 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
             >
               <div className="space-y-5 flex flex-col h-full">
                 <div className="space-y-1">
-                  <h3 className="font-bold text-lg">Export Current Canvas</h3>
+                  <h3 className="font-bold text-lg">Export Current Project</h3>
                   <p className="text-sm text-muted-foreground">
-                    Send your current progress back to the AI to refine your plan
-                    or generate next steps.
+                    Send your current progress back to the AI to refine your plan or generate next steps.
                   </p>
                 </div>
 
                 <Button
                   onClick={handleCopyProgress}
                   disabled={!currentProject}
-                  className="w-full disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2 justify-center"
                 >
-                  <Copy className="w-4 h-4 mr-2" />
-                  {copiedExport ? "Copied to clipboard" : "Export Current Canvas"}
+                  <ArrowUp className="w-4 h-4" />
+                  {copiedExport ? "Copied to clipboard" : "Export Project"}
                 </Button>
 
                 {!currentProject && (
@@ -389,18 +357,17 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
                   </p>
                 )}
 
-                <div className="mt-auto pt-6 border-t border-border flex flex-col items-center space-y-5">
+                <div className="mt-auto pt-6 border-t border-border flex flex-col items-center space-y-3">
                   <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider text-center">
-                    If AI forgot the format, copy the Creator Prompt from the
-                    Start Fresh tab or use the button below.
+                    If AI forgot the format, copy the Creator Prompt from the Start Fresh tab.
                   </p>
 
                   <Button
-                    variant={"outline"}
+                    variant="outline"
                     onClick={() => handleCopy(creatorPrompt, "creator")}
-                    className="w-full"
+                    className="w-full flex items-center gap-2 justify-center"
                   >
-                    <Copy className="w-4 h-4 mr-2" />
+                    <Zap className="w-4 h-4" />
                     {copiedCreator ? "Copied!" : "Copy Creator Prompt"}
                   </Button>
                 </div>
