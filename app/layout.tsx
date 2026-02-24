@@ -16,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
 
-  const [dark, setDark] = useState(true);
+  const [dark, setDark] = useState(false);
 
   return (
     <html
