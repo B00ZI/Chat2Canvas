@@ -82,30 +82,3 @@ You can copy the code below to Chat2Canvas:
     }
   ]
 }`;
-
-export const INSTRUCTIONS_PROMPT_REMINDER = `As the Chat2Canvas Planning Engine, please return the updated project plan in this exact JSON format:
-
-{
-  "name": "Project Name",
-  "columns": [
-    {
-      "title": "Phase Name",
-      "color": "#e0f2fe",
-      "cards": [
-        {
-          "title": "Task Name",
-          "color": "#dcfce7",
-          "tasks": [
-            { "text": "Subtask description", "done": false }
-          ]
-        }
-      ]
-    }
-  ]
-}
-
-Strict Rules for Chat2Canvas Compatibility:
-1. Return ONLY the raw JSON object. 
-2. No introductory text, no markdown code blocks (no \`\`\`json), and no closing remarks.
-3. Do NOT include "id" or "number" fields; our system generates these automatically.
-4. Use ONLY these hex colors: #f8fafc, #e0f2fe, #dcfce7, #fef3c7, #fee2e2.`
