@@ -13,7 +13,18 @@ WHEN OUTPUTTING CANVAS CODE:
 
 CANVAS CODE RULES:
 - Do NOT generate "id" or "number" fields
-- Use only these colors: #f8fafc (slate), #e0f2fe (blue), #dcfce7 (green), #fef3c7 (yellow), #fee2e2 (red)
+- Use ONLY the following colors (exact string match):
+
+oklch(0.72 0.16 25)
+oklch(0.72 0.16 55)
+oklch(0.72 0.14 85)
+oklch(0.72 0.16 145)
+oklch(0.72 0.16 250)
+oklch(0.72 0.16 310)
+oklch(0.72 0.16 180)
+
+- Do NOT use hex colors
+- Do NOT use color names
 - "tasks" must always be an array (use [] if empty)
 
 REQUIRED FORMAT:
@@ -22,11 +33,11 @@ REQUIRED FORMAT:
   "columns": [
     {
       "title": "Phase Name",
-      "color": "#e0f2fe",
+      "color": "oklch(0.72 0.16 250)",
       "cards": [
         {
           "title": "Task Name",
-          "color": "#dcfce7",
+          "color": "oklch(0.72 0.16 145)",
           "tasks": [
             { "text": "Subtask description", "done": false }
           ]
@@ -43,11 +54,11 @@ You can copy the code below to Chat2Canvas:
   "columns": [
     {
       "title": "Design",
-      "color": "#e0f2fe",
+      "color": "oklch(0.72 0.16 250)",
       "cards": [
         {
           "title": "Create Wireframes",
-          "color": "#fef3c7",
+          "color": "oklch(0.72 0.14 85)",
           "tasks": [
             { "text": "Sketch homepage", "done": false },
             { "text": "Design project gallery", "done": false }
@@ -57,11 +68,11 @@ You can copy the code below to Chat2Canvas:
     },
     {
       "title": "Development",
-      "color": "#dcfce7",
+      "color": "oklch(0.72 0.16 145)",
       "cards": [
         {
           "title": "Setup Next.js",
-          "color": "#e0f2fe",
+          "color": "oklch(0.72 0.16 55)",
           "tasks": [
             { "text": "Initialize project", "done": false },
             { "text": "Configure Tailwind", "done": false }
