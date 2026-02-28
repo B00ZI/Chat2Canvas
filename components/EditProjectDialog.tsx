@@ -44,7 +44,7 @@ export function EditProjectDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog  open={open} onOpenChange={onClose}>
       <DialogContent
         className="
           bg-card text-card-foreground
