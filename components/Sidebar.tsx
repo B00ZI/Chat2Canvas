@@ -75,41 +75,45 @@ export default function Sidebar({ dark, setDark }: any) {
 
           {/* 🔍 Animated search bar */}
           <div
+            role="button"
+            tabIndex={0}
+            onClick={() => setSearchOpen(true)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault()
+                setSearchOpen(true)
+              }
+            }}
             className="
-              flex items-center gap-2
-              rounded-md
-              px-2 py-1.5
-              text-sidebar-foreground/80
-              hover:bg-sidebar-accent hover:text-sidebar-accent-foreground
-              focus-within:ring-1 focus-within:ring-sidebar-ring
-              transition
-            "
+    flex items-center gap-2
+    rounded-md
+    px-2 py-1.5
+    text-sidebar-foreground/80
+    hover:bg-sidebar-accent hover:text-sidebar-accent-foreground
+    focus-visible:ring-1 focus-visible:ring-sidebar-ring
+    transition
+    cursor-text
+  "
           >
-            <button
-              type="button"
-              onClick={() => setSearchOpen(true)}
-              className="shrink-0"
-            >
-              <Search className="h-4 w-4" />
-            </button>
+            <Search className="h-4 w-4 shrink-0" />
 
             <div
               className={`
-                relative overflow-hidden
-                transition-all duration-300 ease-out
-                ${searchOpen ? "w-full" : "w-[120px]"}
-              `}
+      relative overflow-hidden
+      transition-all duration-300 ease-out
+      ${searchOpen ? "w-full" : "w-[120px]"}
+    `}
             >
               {/* text */}
               <span
                 className={`
-                  absolute left-0 top-1/2 -translate-y-1/2
-                  text-sm whitespace-nowrap
-                  transition-all duration-200
-                  ${searchOpen
+        absolute left-0 top-1/2 -translate-y-1/2
+        text-sm whitespace-nowrap
+        transition-all duration-200
+        ${searchOpen
                     ? "opacity-0 translate-x-2 pointer-events-none"
                     : "opacity-100 translate-x-0"}
-                `}
+      `}
               >
                 Search projects
               </span>
@@ -120,17 +124,20 @@ export default function Sidebar({ dark, setDark }: any) {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onBlur={() => {
-                  if (!search) setSearchOpen(false)
+                  // ✅ close + reset filter when user leaves search
+                  setSearch("")
+                  setSearchOpen(false)
                 }}
+                onClick={(e) => e.stopPropagation()}
                 type="text"
                 placeholder="Search projects…"
                 className={`
-                  w-full bg-transparent text-sm outline-none
-                  transition-all duration-200
-                  ${searchOpen
+        w-full bg-transparent text-sm outline-none
+        transition-all duration-200
+        ${searchOpen
                     ? "opacity-100 translate-x-0"
                     : "opacity-0 -translate-x-2 pointer-events-none"}
-                `}
+      `}
               />
             </div>
           </div>
