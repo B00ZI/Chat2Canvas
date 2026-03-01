@@ -178,10 +178,10 @@ export default function Sidebar({ dark, setDark }: any) {
       </div>
 
       {/* Footer */}
-      <div className="border-t border-sidebar-border">
+      <div className="border-t border-sidebar-border py-4">
 
         {/* Profile */}
-        <div className="p-3 flex items-center gap-3">
+        {/* <div className="p-3 flex items-center gap-3">
           <div
             className="w-9 h-9 rounded-full bg-sidebar-accent/30 text-sidebar-accent-foreground
             flex items-center justify-center text-sm font-semibold shadow-xs"
@@ -197,10 +197,10 @@ export default function Sidebar({ dark, setDark }: any) {
               alex@example.com
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Logout */}
-        <div className="px-3 pb-1">
+        {/* <div className="px-3 pb-1">
           <div
             className="
               flex items-center gap-2 rounded-md px-2.5 py-2
@@ -213,10 +213,10 @@ export default function Sidebar({ dark, setDark }: any) {
             <LogOut className="h-4 w-4 shrink-0" />
             <span>Log out</span>
           </div>
-        </div>
+        </div> */}
 
         {/* Appearance */}
-        <div className="px-3 pb-2">
+        <div className="px-3 ">
           <div
             className="
               flex items-center justify-between rounded-md px-2.5 py-2
