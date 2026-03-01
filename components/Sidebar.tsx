@@ -1,7 +1,7 @@
 'use client'
 
-import { Search, Plus, Shapes, SunMoon, LogOut } from "lucide-react"
-import { useState } from "react"
+import { Search, Plus, Shapes, SunMoon } from "lucide-react"
+import { useState, useRef, useEffect } from "react"
 import { useProjectStore } from "@/store/projectStore"
 import { NewProjectDialog } from "./NewProjectDialog"
 import { EditProjectDialog } from "./EditProjectDialog"
@@ -23,6 +23,19 @@ export default function Sidebar({ dark, setDark }: any) {
   const [editProjectId, setEditProjectId] = useState<string | null>(null)
   const [DeleteProjectId, setDeleteProjectId] = useState<string | null>(null)
 
+  // NEW
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [search, setSearch] = useState("")
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (searchOpen) {
+      requestAnimationFrame(() => {
+        inputRef.current?.focus()
+      })
+    }
+  }, [searchOpen])
+
   const projects = useProjectStore((state) => state.projects)
   const activeProjectId = useProjectStore((state) => state.activeProjectId)
   const setActiveProject = useProjectStore((state) => state.setActiveProject)
@@ -35,6 +48,10 @@ export default function Sidebar({ dark, setDark }: any) {
     if (!DeleteProjectId) return null
     deleteP(DeleteProjectId)
   }
+
+  const filteredProjects = projects.filter(p =>
+    p.name.toLowerCase().includes(search.toLowerCase())
+  )
 
   return (
     <div className="bg-sidebar text-sidebar-foreground w-60 h-screen flex flex-col border-r border-sidebar-border">
@@ -55,25 +72,77 @@ export default function Sidebar({ dark, setDark }: any) {
 
         {/* Top actions */}
         <div className="p-3 space-y-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start gap-2 rounded-md
-              text-sidebar-foreground/80
-              hover:bg-sidebar-accent hover:text-sidebar-accent-foreground
-              focus-visible:ring-1 focus-visible:ring-sidebar-ring"
-            onClick={() => setIsModalOpen(true)}
-          >
-            <Search className="h-4 w-4 shrink-0" />
-            <span className="text-sm">Search projects</span>
-          </Button>
 
+          {/* 🔍 Animated search bar */}
+          <div
+            className="
+              flex items-center gap-2
+              rounded-md
+              px-2 py-1.5
+              text-sidebar-foreground/80
+              hover:bg-sidebar-accent hover:text-sidebar-accent-foreground
+              focus-within:ring-1 focus-within:ring-sidebar-ring
+              transition
+            "
+          >
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              className="shrink-0"
+            >
+              <Search className="h-4 w-4" />
+            </button>
+
+            <div
+              className={`
+                relative overflow-hidden
+                transition-all duration-300 ease-out
+                ${searchOpen ? "w-full" : "w-[120px]"}
+              `}
+            >
+              {/* text */}
+              <span
+                className={`
+                  absolute left-0 top-1/2 -translate-y-1/2
+                  text-sm whitespace-nowrap
+                  transition-all duration-200
+                  ${searchOpen
+                    ? "opacity-0 translate-x-2 pointer-events-none"
+                    : "opacity-100 translate-x-0"}
+                `}
+              >
+                Search projects
+              </span>
+
+              {/* input */}
+              <input
+                ref={inputRef}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onBlur={() => {
+                  if (!search) setSearchOpen(false)
+                }}
+                type="text"
+                placeholder="Search projects…"
+                className={`
+                  w-full bg-transparent text-sm outline-none
+                  transition-all duration-200
+                  ${searchOpen
+                    ? "opacity-100 translate-x-0"
+                    : "opacity-0 -translate-x-2 pointer-events-none"}
+                `}
+              />
+            </div>
+          </div>
+
+          {/* New project */}
           <Button
             variant="ghost"
             size="sm"
             className="w-full justify-start gap-2 rounded-md
+            bg-none
               text-sidebar-foreground/80
-              hover:bg-sidebar-accent hover:text-sidebar-accent-foreground
+              hover:bg-sidebar-primary hover:text-sidebar-accent-foreground
               focus-visible:ring-1 focus-visible:ring-sidebar-ring"
             onClick={() => setIsModalOpen(true)}
           >
@@ -91,7 +160,7 @@ export default function Sidebar({ dark, setDark }: any) {
           </div>
 
           <div className="space-y-1">
-            {projects.map((project) => {
+            {filteredProjects.map((project) => {
               const isActive = activeProjectId === project.id
 
               return (
@@ -111,7 +180,6 @@ export default function Sidebar({ dark, setDark }: any) {
                       : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"}
                   `}
                 >
-                  {/* Active indicator */}
                   {isActive && (
                     <span className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-[2px] rounded-full bg-sidebar-primary-foreground/80" />
                   )}
@@ -180,42 +248,6 @@ export default function Sidebar({ dark, setDark }: any) {
       {/* Footer */}
       <div className="border-t border-sidebar-border py-4">
 
-        {/* Profile */}
-        {/* <div className="p-3 flex items-center gap-3">
-          <div
-            className="w-9 h-9 rounded-full bg-sidebar-accent/30 text-sidebar-accent-foreground
-            flex items-center justify-center text-sm font-semibold shadow-xs"
-          >
-            A
-          </div>
-
-          <div className="min-w-0 leading-tight">
-            <div className="text-sm font-medium truncate">
-              Alex
-            </div>
-            <div className="text-xs text-sidebar-foreground/60 truncate">
-              alex@example.com
-            </div>
-          </div>
-        </div> */}
-
-        {/* Logout */}
-        {/* <div className="px-3 pb-1">
-          <div
-            className="
-              flex items-center gap-2 rounded-md px-2.5 py-2
-              text-sm text-destructive cursor-pointer
-              hover:bg-destructive hover:text-destructive-foreground
-              focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sidebar-ring
-              transition
-            "
-          >
-            <LogOut className="h-4 w-4 shrink-0" />
-            <span>Log out</span>
-          </div>
-        </div> */}
-
-        {/* Appearance */}
         <div className="px-3 ">
           <div
             className="
