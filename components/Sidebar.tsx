@@ -140,9 +140,9 @@ export default function Sidebar({ dark, setDark }: any) {
             variant="ghost"
             size="sm"
             className="w-full justify-start gap-2 rounded-md
-            bg-none
+           
               text-sidebar-foreground/80
-              hover:bg-sidebar-primary hover:text-sidebar-accent-foreground
+              hover:bg-sidebar-accent hover:text-sidebar-accent-foreground
               focus-visible:ring-1 focus-visible:ring-sidebar-ring"
             onClick={() => setIsModalOpen(true)}
           >
