@@ -254,16 +254,24 @@ export default function Sidebar({ dark, setDark }: any) {
 
       {/* Footer */}
       <div className="border-t border-sidebar-border py-4">
-
-        <div className="px-3 ">
+        <div className="px-3">
           <div
+            role="button"
+            tabIndex={0}
+            onClick={() => setDark(!dark)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault()
+                setDark(!dark)
+              }
+            }}
             className="
-              flex items-center justify-between rounded-md px-2.5 py-2
-              text-sm text-sidebar-foreground/80 cursor-pointer
-              hover:bg-sidebar-accent hover:text-sidebar-accent-foreground
-              focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sidebar-ring
-              transition
-            "
+        flex items-center justify-between rounded-md px-2.5 py-2
+        text-sm text-sidebar-foreground/80 cursor-pointer
+        hover:bg-sidebar-accent hover:text-sidebar-accent-foreground
+        focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sidebar-ring
+        transition
+      "
           >
             <div className="flex items-center gap-2">
               <SunMoon className="h-4 w-4 shrink-0" />
@@ -273,6 +281,7 @@ export default function Sidebar({ dark, setDark }: any) {
             <Switch
               checked={dark}
               onCheckedChange={setDark}
+              onClick={(e) => e.stopPropagation()}
             />
           </div>
         </div>
