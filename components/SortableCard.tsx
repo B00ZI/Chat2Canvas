@@ -1,17 +1,22 @@
 'use client'
 
-import { memo } from "react";
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import Card from './Card';
+import { memo } from "react"
+import { useSortable } from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
+
+import CardPreview from "./CardPreview"
 
 interface SortableCardProps {
-  card: any;
-  projectId: string;
-  colId: string;
+  card: any
+  projectId: string
+  colId: string
 }
 
-const SortableCard = memo(function SortableCard({ card, projectId, colId }: SortableCardProps) {
+const SortableCard = memo(function SortableCard({
+  card,
+  projectId,
+  colId,
+}: SortableCardProps) {
   const {
     setNodeRef,
     transform,
@@ -23,17 +28,18 @@ const SortableCard = memo(function SortableCard({ card, projectId, colId }: Sort
     id: card.id,
     data: {
       type: "Card",
-      card
-    }
-  });
+      card,
+    },
+  })
 
-  // Style applied to the card wrapper
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     zIndex: isDragging ? 50 : undefined,
-    boxShadow: isDragging ? '0 4px 12px rgba(0,0,0,0.12)' : undefined,
-  };
+    boxShadow: isDragging
+      ? "0 4px 12px rgba(0,0,0,0.12)"
+      : undefined,
+  }
 
   // Placeholder while dragging
   if (isDragging) {
@@ -41,13 +47,16 @@ const SortableCard = memo(function SortableCard({ card, projectId, colId }: Sort
       <div
         ref={setNodeRef}
         style={{ ...style, height: 96 }}
-        className="w-full relative rounded-lg min-h-[96px] flex items-center justify-center bg-card/50 border border-border"
+        className="
+          w-full relative rounded-lg min-h-[96px]
+          flex items-center justify-center
+          bg-card/50 border border-border
+        "
       >
-        {/* Subtle color overlay from theme */}
         <div
           className="absolute inset-0 rounded-lg"
           style={{
-            backgroundColor: card.color || 'var(--accent)',
+            backgroundColor: card.color || "var(--accent)",
             opacity: 0.12,
           }}
         />
@@ -55,7 +64,7 @@ const SortableCard = memo(function SortableCard({ card, projectId, colId }: Sort
           Drop here
         </span>
       </div>
-    );
+    )
   }
 
   return (
@@ -64,14 +73,14 @@ const SortableCard = memo(function SortableCard({ card, projectId, colId }: Sort
       style={style}
       className="touch-none"
     >
-      <Card
+      <CardPreview
         card={card}
         projectId={projectId}
         colId={colId}
         dragHandleProps={{ ...attributes, ...listeners }}
       />
     </div>
-  );
-});
+  )
+})
 
-export default SortableCard;
+export default SortableCard
