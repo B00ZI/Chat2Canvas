@@ -23,7 +23,7 @@ import { useProjectStore } from "@/store/projectStore"
 import TopBar from "@/components/Topbar"
 import {EmptyDemo} from "@/components/WorkeSpaceEmpty"
 import Column from "@/components/Column"
-import Card from "@/components/Card"
+import CardPreview from '@/components/CardPreview'
 import { Button } from "@/components/ui/button"
 import { NewColumnDialog } from "@/components/NewColumnDialog "
 
@@ -262,7 +262,7 @@ export default function Home() {
                        bg-popover border
                        shadow-md rounded-md"
             >
-              <Card
+              <CardPreview
                 card={activeCard}
                 projectId={activeProject.id}
                 colId=""

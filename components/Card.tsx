@@ -201,4 +201,4 @@ function Card({ card, projectId, colId, dragHandleProps }: CardProps) {
   )
 }
 
-export default memo(Card)
+
