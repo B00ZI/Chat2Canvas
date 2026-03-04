@@ -1,7 +1,7 @@
 'use client'
 
 import { memo, useMemo, useState } from "react"
-import { CheckSquare } from "lucide-react" // Make sure to install lucide-react for the icon
+import { CheckSquare } from "lucide-react" 
 import { CardDetailsDrawer } from "./CardDetailsDrawer"
 
 interface Task {
@@ -12,7 +12,7 @@ interface Task {
 interface CardType {
   id: string
   title: string
-  color: string // Used as a label/cover color now
+  color: string 
   tasks: Task[]
 }
 
@@ -56,44 +56,36 @@ function CardPreview({
             setIsOpen(true)
           }
         }}
-        // Modern UI: Clean border, standard card background, subtle hover lift
+        // Clean layout: Added a thick top border (border-t-4)
         className="
-          group relative flex w-full cursor-pointer flex-col gap-2.5 
-          rounded-xl border border-border bg-card p-3 shadow-xs 
-          transition-all hover:border-primary/30 hover:shadow-md
-         
+          group relative flex w-full cursor-pointer flex-col gap-3 
+          rounded-xl border border-border border-t-4 bg-card p-4 
+          shadow-xs transition-all hover:shadow-md
         "
+        // Injects the dynamic color exactly into the top border
+        style={{ borderTopColor: card.color || "var(--color-border)" }}
       >
-        {/* 1. Trello-style Color Label */}
-        {card.color && (
-          <div
-            className="h-2 w-12 rounded-full"
-            style={{ backgroundColor: card.color }}
-            aria-hidden="true"
-          />
-        )}
-
-        {/* 2. Title: Sized down for Kanban readability */}
-        <h4 className="line-clamp-3 wrap-break-word text-sm font-medium leading-relaxed text-card-foreground">
+        {/* Title: Bigger, bolder, and acts as the main content */}
+        <h4 className="line-clamp-3 break-words text-base font-semibold leading-snug text-card-foreground">
           {card.title}
         </h4>
 
-        {/* 3. Footer / Task Badge */}
+        {/* Footer: Icon + Explicit Text */}
         {hasTasks && (
           <div className="mt-1 flex items-center">
             <div
               className={`
-                flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-xs font-medium transition-colors
+                flex items-center gap-1.5 text-xs font-medium transition-colors
                 ${
                   isAllDone
-                    ? "bg-green-500/15 text-green-700 dark:text-green-400" // Turns green when done!
-                    : "text-muted-foreground group-hover:bg-muted"
+                    ? "text-green-600 dark:text-green-400" // Green when fully completed
+                    : "text-muted-foreground group-hover:text-card-foreground/80"
                 }
               `}
             >
-              <CheckSquare className="h-3.5 w-3.5" />
+              <CheckSquare className="h-4 w-4" />
               <span>
-                {completed}/{total}
+                {completed} / {total} tasks completed
               </span>
             </div>
           </div>
