@@ -49,7 +49,7 @@ function CardPreview({
         {/* Title */}
         <h4
           className="
-            text-sm font-medium leading-snug
+            text-2xl font-medium leading-snug
             line-clamp-2 wrap-break-word
             text-white
           "
