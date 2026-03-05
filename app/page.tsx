@@ -260,7 +260,7 @@ export default function Home() {
             <div
               className="cursor-grabbing
                        bg-popover border
-                       shadow-md rounded-md"
+                       shadow-md rounded-xl"
             >
               <CardPreview
                 card={activeCard}

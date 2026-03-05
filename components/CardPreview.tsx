@@ -43,7 +43,7 @@ function CardPreview({
     }
   }, [card.tasks])
 
-  return (
+ return (
     <>
       <div
         {...dragHandleProps}
@@ -56,40 +56,55 @@ function CardPreview({
             setIsOpen(true)
           }
         }}
-        // Clean layout: Added a thick top border (border-t-4)
+        // Layout: Increased py-5 (top/bottom padding), added overflow-hidden for the background
+        // Hover: -translate-y-1 makes it lift up slightly, shadow increases
         className="
-          group relative flex w-full cursor-pointer flex-col gap-3 
-          rounded-xl border border-border border-t-4 bg-card p-4 
-          shadow-xs transition-all hover:shadow-md
+          group relative flex w-full cursor-pointer flex-col 
+          rounded-xl border border-border bg-card px-4 py-5 
+          shadow-sm transition-all duration-200 ease-in-out
+          hover:-translate-y-1 hover:border-primary/30 hover:shadow-md
+          overflow-hidden
         "
-        // Injects the dynamic color exactly into the top border
-        style={{ borderTopColor: card.color || "var(--color-border)" }}
       >
-        {/* Title: Bigger, bolder, and acts as the main content */}
-        <h4 className="line-clamp-3 break-words text-base font-semibold leading-snug text-card-foreground">
-          {card.title}
-        </h4>
-
-        {/* Footer: Icon + Explicit Text */}
-        {hasTasks && (
-          <div className="mt-1 flex items-center">
-            <div
-              className={`
-                flex items-center gap-1.5 text-xs font-medium transition-colors
-                ${
-                  isAllDone
-                    ? "text-green-600 dark:text-green-400" // Green when fully completed
-                    : "text-muted-foreground group-hover:text-card-foreground/80"
-                }
-              `}
-            >
-              <CheckSquare className="h-4 w-4" />
-              <span>
-                {completed} / {total} tasks completed
-              </span>
-            </div>
-          </div>
+        {/* 1. The Fused Background Gradient */}
+        {card.color && (
+          <div 
+            className="pointer-events-none absolute inset-0 z-0 opacity-[0.12] transition-opacity duration-200 group-hover:opacity-[0.2] dark:opacity-[0.20] dark:group-hover:opacity-[0.28]"
+            style={{ 
+              background: `linear-gradient(135deg, ${card.color} 0%, transparent 80%)` 
+            }}
+          />
         )}
+
+        {/* 2. Content Wrapper (z-10 keeps it above the background gradient) */}
+        <div className="relative z-10 flex flex-col gap-3">
+          
+          {/* Title: Enlarged to text-lg and made bolder */}
+          <h4 className="line-clamp-3 break-words text-xl font-semibold leading-snug text-card-foreground">
+            {card.title}
+          </h4>
+
+          {/* Footer: Task count */}
+          
+            <div className="mt-2 flex items-center">
+              <div
+                className={`
+                  flex items-center gap-1.5 text-xs font-medium transition-colors
+                  ${
+                    isAllDone
+                      ? "text-green-600 dark:text-green-400" 
+                      : "text-muted-foreground group-hover:text-card-foreground/80"
+                  }
+                `}
+              >
+                <CheckSquare className="h-4 w-4" />
+                <span>
+                  {completed} / {total} tasks completed
+                </span>
+              </div>
+            </div>
+          
+        </div>
       </div>
 
       <CardDetailsDrawer
@@ -101,6 +116,7 @@ function CardPreview({
       />
     </>
   )
+
 }
 
 export default memo(CardPreview)
