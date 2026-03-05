@@ -9,9 +9,10 @@ interface Task {
 
 interface Card {
   id: string;
-  number: number;
   title: string;
+  description?: string; // ✅ Added description
   color: string;
+  isDone: boolean; // ✅ Added full card completion status
   tasks: Task[];
 }
 
@@ -35,7 +36,9 @@ interface ImportData {
     color: string;
     cards: {
       title: string;
+      description?: string; // ✅ Added to import schema
       color: string;
+      isDone?: boolean; // ✅ Added to import schema
       tasks: { text: string; done: boolean }[];
     }[];
   }[];
@@ -44,7 +47,7 @@ interface ImportData {
 interface ProjectStore {
   projects: Project[];
   activeProjectId: string | null;
-  syncProjectNumbers: (projectId: string) => void;
+  // ❌ Removed syncProjectNumbers since numbering is no longer used
   importProject: (projectData: ImportData) => void;
   addProject: (name: string) => void;
   editProject: (id: string, newName: string) => void;
@@ -62,7 +65,7 @@ interface ProjectStore {
   addCard: (
     projectId: string,
     colId: string,
-    cardData: Omit<Card, "id" | "number">,
+    cardData: Omit<Card, "id">, // ❌ Removed "number" omission
   ) => void;
 
   editCard: (
@@ -79,6 +82,12 @@ interface ProjectStore {
     columnId: string,
     cardId: string,
     taskIndex: number,
+  ) => void;
+
+  toggleCardIsDone: ( // ✅ Added action to toggle full card done/undone
+    projectId: string,
+    columnId: string,
+    cardId: string
   ) => void;
 
   reorderCards: (
@@ -109,24 +118,8 @@ let saveTimeout: ReturnType<typeof setTimeout> | undefined;
 export const useProjectStore = create<ProjectStore>()(
   persist(
     (set) => ({
-      projects: [],
+      projects:[],
       activeProjectId: null,
-
-      syncProjectNumbers: (pId) => {
-        set((state) => ({
-          projects: state.projects.map((p) =>
-            p.id === pId
-              ? {
-                  ...p,
-                  columns: p.columns.map((col) => ({
-                    ...col,
-                    cards: col.cards.map((c, i) => ({ ...c, number: i + 1 })),
-                  })),
-                }
-              : p,
-          ),
-        }));
-      },
 
       reorderColumns: (projectId, oldIndex, newIndex) => {
         set((state) => ({
@@ -142,7 +135,7 @@ export const useProjectStore = create<ProjectStore>()(
         set((state) => {
           const pIdx = state.projects.findIndex((p) => p.id === projectId);
           if (pIdx === -1) return state;
-          const newProjects = [...state.projects];
+          const newProjects =[...state.projects];
 
           newProjects[pIdx] = {
             ...newProjects[pIdx],
@@ -150,9 +143,8 @@ export const useProjectStore = create<ProjectStore>()(
               col.id === columnId
                 ? {
                     ...col,
-                    cards: arrayMove(col.cards, oldIndex, newIndex).map(
-                      (c, i) => ({ ...c, number: i + 1 }),
-                    ),
+                    // ❌ Removed the .map((c, i) => ({ ...c, number: i + 1 })) logic
+                    cards: arrayMove(col.cards, oldIndex, newIndex),
                   }
                 : col,
             ),
@@ -207,18 +199,19 @@ export const useProjectStore = create<ProjectStore>()(
             id: genId("col"),
             title: col.title,
             color: col.color,
-            cards: col.cards.map((c, i) => ({
+            cards: col.cards.map((c) => ({
               id: genId("card"),
-              number: i + 1,
               title: c.title,
+              description: c.description || "", // ✅ Handle imported description
               color: c.color,
+              isDone: c.isDone || false, // ✅ Handle imported isDone
               tasks: c.tasks,
-            })),
+            })), // ❌ Removed index/number assignment
           })),
         };
 
         set((state) => ({
-          projects: [...state.projects, newP],
+          projects:[...state.projects, newP],
           activeProjectId: newP.id,
         }));
       },
@@ -228,7 +221,7 @@ export const useProjectStore = create<ProjectStore>()(
         const newP: Project = {
           id: genId("proj"),
           name,
-          columns: [
+          columns:[
             {
               id: genId("col-todo"),
               title: "To Do",
@@ -239,13 +232,13 @@ export const useProjectStore = create<ProjectStore>()(
               id: genId("col-prog"),
               title: "In Progress",
               color: "#e0f2fe",
-              cards: [],
+              cards:[],
             },
             {
               id: genId("col-done"),
               title: "Done",
               color: "#dcfce7",
-              cards: [],
+              cards:[],
             },
           ],
         };
@@ -285,7 +278,7 @@ export const useProjectStore = create<ProjectStore>()(
             p.id === pId
               ? {
                   ...p,
-                  columns: [
+                  columns:[
                     ...p.columns,
                     {
                       id: `col-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
@@ -335,13 +328,12 @@ export const useProjectStore = create<ProjectStore>()(
                     col.id === cId
                       ? {
                           ...col,
-                          cards: [
+                          cards:[
                             ...col.cards,
                             {
-                              ...data,
+                              ...data, // ✅ data now naturally includes description and isDone
                               id: `card-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-                              number: col.cards.length + 1,
-                            },
+                            }, // ❌ Removed number assignment
                           ],
                         }
                       : col,
@@ -384,9 +376,8 @@ export const useProjectStore = create<ProjectStore>()(
                     col.id === cId
                       ? {
                           ...col,
-                          cards: col.cards
-                            .filter((c) => c.id !== cardId)
-                            .map((c, i) => ({ ...c, number: i + 1 })),
+                          // ❌ Removed re-numbering logic
+                          cards: col.cards.filter((c) => c.id !== cardId),
                         }
                       : col,
                   ),
@@ -413,6 +404,29 @@ export const useProjectStore = create<ProjectStore>()(
                               nT[tIdx] = { ...nT[tIdx], done: !nT[tIdx].done };
                             return { ...c, tasks: nT };
                           }),
+                        }
+                      : col,
+                  ),
+                }
+              : p,
+          ),
+        }));
+      },
+
+      // ✅ New action to toggle a card's completion status
+      toggleCardIsDone: (pId, cId, cardId) => {
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === pId
+              ? {
+                  ...p,
+                  columns: p.columns.map((col) =>
+                    col.id === cId
+                      ? {
+                          ...col,
+                          cards: col.cards.map((c) =>
+                            c.id === cardId ? { ...c, isDone: !c.isDone } : c
+                          ),
                         }
                       : col,
                   ),

@@ -164,7 +164,7 @@ export default function Home() {
       }
     }
 
-    useProjectStore.getState().syncProjectNumbers(activeProject.id);
+   
   }, [activeProject, columnIds, reorderCards, reorderColumns]);
 
   if (!activeProject) return <EmptyDemo />;
