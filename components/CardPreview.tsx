@@ -1,7 +1,7 @@
 'use client'
 
 import { memo, useMemo, useState } from "react"
-import { CheckSquare } from "lucide-react" 
+import { CheckSquare } from "lucide-react"
 import { CardDetailsDrawer } from "./CardDetailsDrawer"
 
 interface Task {
@@ -12,7 +12,7 @@ interface Task {
 interface CardType {
   id: string
   title: string
-  color: string 
+  color: string
   tasks: Task[]
 }
 
@@ -43,7 +43,7 @@ function CardPreview({
     }
   }, [card.tasks])
 
- return (
+  return (
     <>
       <div
         {...dragHandleProps}
@@ -56,43 +56,44 @@ function CardPreview({
             setIsOpen(true)
           }
         }}
-        // Layout: Increased py-5 (top/bottom padding), added overflow-hidden for the background
-        // Hover: -translate-y-1 makes it lift up slightly, shadow increases
+        // Layout: Balanced padding (p-5), softened border, and sleek hover lift
         className="
           group relative flex w-full cursor-pointer flex-col 
-          rounded-xl border border-border bg-card px-4 py-5 
-          shadow-sm transition-all duration-200 ease-in-out
-          hover:-translate-y-1 hover:border-primary/30 hover:shadow-md
+          rounded-xl border border-border/60 bg-card p-5 
+          shadow-sm transition-all duration-300 ease-out
+          hover:-translate-y-1 hover:border-primary/40 hover:shadow-md
           overflow-hidden
         "
       >
-        {/* 1. The Fused Background Gradient */}
+        {/* 1. The Fused Modern Radial Glow */}
         {card.color && (
-          <div 
-            className="pointer-events-none absolute inset-0 z-0 opacity-[0.12] transition-opacity duration-200 group-hover:opacity-[0.2] dark:opacity-[0.20] dark:group-hover:opacity-[0.28]"
-            style={{ 
-              background: `linear-gradient(135deg, ${card.color} 0%, transparent 80%)` 
+          <div
+            // Opacity is perfectly tuned: 15% light mode, 25% dark mode (increases on hover)
+            className="pointer-events-none absolute inset-0 z-0 opacity-[0.50] transition-opacity duration-300 group-hover:opacity-[0.65] dark:opacity-[0.35] dark:group-hover:opacity-[0.45]"
+            style={{
+              // Switched to a radial gradient for a modern, smooth "spotlight" effect
+              background: `radial-gradient(120% 120% at 0% 0%, ${card.color} 0%, transparent 80%)`,
             }}
           />
         )}
 
-        {/* 2. Content Wrapper (z-10 keeps it above the background gradient) */}
-        <div className="relative z-10 flex flex-col gap-3">
+        {/* 2. Content Wrapper */}
+        <div className="relative z-10 flex flex-col gap-4">
           
-          {/* Title: Enlarged to text-lg and made bolder */}
-          <h4 className="line-clamp-3 break-words text-xl font-semibold leading-snug text-card-foreground">
+          {/* Title: Added tracking-tight for a more premium typography feel */}
+          <h4 className="line-clamp-3 break-words text-xl font-semibold leading-snug tracking-tight text-card-foreground">
             {card.title}
           </h4>
 
-          {/* Footer: Task count */}
-          
-            <div className="mt-2 flex items-center">
+          {/* Footer: Task count (Only shows if tasks exist) */}
+         
+            <div className="mt-1 flex items-center">
               <div
                 className={`
                   flex items-center gap-1.5 text-xs font-medium transition-colors
                   ${
                     isAllDone
-                      ? "text-green-600 dark:text-green-400" 
+                      ? "text-green-600 dark:text-green-400"
                       : "text-muted-foreground group-hover:text-card-foreground/80"
                   }
                 `}
@@ -116,7 +117,6 @@ function CardPreview({
       />
     </>
   )
-
 }
 
 export default memo(CardPreview)
