@@ -159,7 +159,7 @@ const Column = memo(function Column({ col, projectId }: ColumnProps) {
         {/* Cards container */}
         <div
           className="
-            flex-1 overflow-y-auto overflow-x-hidden min-h-12.5 p-1.5 pr-2 space-y-3
+            flex-1 overflow-y-auto overflow-x-hidden min-h-12.5 py-3  space-y-3
             [&::-webkit-scrollbar]:w-[4px]
             [&::-webkit-scrollbar-track]:bg-sidebar [&::-webkit-scrollbar-track]:rounded-full
             [&::-webkit-scrollbar-thumb]:bg-sidebar-accent [&::-webkit-scrollbar-thumb]:rounded-full
@@ -182,9 +182,9 @@ const Column = memo(function Column({ col, projectId }: ColumnProps) {
         <button
           onClick={() => setisNewCardDialogOpen(true)}
           className="
-            mt-3 w-full flex items-center justify-center gap-2
+            mt-2 w-full flex items-center justify-center gap-2
             cursor-pointer border-2 border-dashed border-muted
-            rounded-lg p-3 text-sm font-medium text-muted-foreground
+            rounded-xl p-2 text-sm font-medium text-muted-foreground
             transition
             hover:bg-accent/20 hover:border-accent hover:text-accent-foreground
             focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring
