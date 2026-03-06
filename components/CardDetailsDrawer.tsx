@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef } from "react"
-import { useProjectStore } from "@/store/projectStore" 
+import { useProjectStore } from "@/store/projectStore"
 import { COLUMN_COLORS } from "@/lib/column-colors"
 
 import {
@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
+  Check,
   CheckSquare,
   Square,
   AlignLeft,
@@ -59,12 +60,12 @@ export function CardDetailsDrawer({
 
   // Local View/Edit States
   const [isEditingTitle, setIsEditingTitle] = useState(false)
-  const[title, setTitle] = useState(card.title)
+  const [title, setTitle] = useState(card.title)
 
   const [isEditingDesc, setIsEditingDesc] = useState(false)
   const [desc, setDesc] = useState(card.description || "")
 
-  const[showColorOptions, setShowColorOptions] = useState(false)
+  const [showColorOptions, setShowColorOptions] = useState(false)
 
   const [isAddingTask, setIsAddingTask] = useState(false)
   const [newTaskText, setNewTaskText] = useState("")
@@ -110,12 +111,12 @@ export function CardDetailsDrawer({
       addTaskInputRef.current?.focus()
       return
     }
-    
+
     // Add new task to the TOP of the list
     editCard(projectId, colId, card.id, {
       tasks: [{ text: newTaskText.trim(), done: false }, ...(card.tasks || [])],
     })
-    
+
     setNewTaskText("")
     // Keep focus so user can rapidly add multiple tasks
     requestAnimationFrame(() => addTaskInputRef.current?.focus())
@@ -138,7 +139,7 @@ export function CardDetailsDrawer({
   }
 
   // --- PROGRESS BAR CALCULATION ---
-  const tasks = card.tasks ||[]
+  const tasks = card.tasks || []
   const totalTasks = tasks.length
   const completedTasks = tasks.filter((t) => t.done).length
   const progress = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100)
@@ -146,7 +147,7 @@ export function CardDetailsDrawer({
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="mx-auto flex w-full max-w-2xl flex-col border-border bg-card text-card-foreground">
-        
+
         {/* Hidden strictly for accessibility rules */}
         <DrawerHeader className="sr-only">
           <DrawerTitle>Card Details</DrawerTitle>
@@ -154,71 +155,95 @@ export function CardDetailsDrawer({
         </DrawerHeader>
 
         <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8">
-          
-          {/* 1. TOP HEADER (Title + Actions) */}
-          <div className="flex items-start justify-between gap-6">
-            
-            {/* Title Section */}
-            <div className="flex-1 -mt-1 group">
-              {isEditingTitle ? (
-                <Input
-                  autoFocus
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  onBlur={handleTitleSave}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleTitleSave()
-                    if (e.key === "Escape") {
-                      setTitle(card.title)
-                      setIsEditingTitle(false)
-                    }
-                  }}
-                  className="-ml-2 h-auto w-full bg-background px-2 py-1 text-[24px] font-bold tracking-tight shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                />
-              ) : (
-                <h2
-                  onClick={() => setIsEditingTitle(true)}
-                  className="-ml-2 cursor-text break-words rounded-md px-2 py-1 text-[24px] font-bold tracking-tight transition-colors "
-                >
-                  {card.title}
-                </h2>
-              )}
+
+          {/* 1. TOP HEADER (Checkbox + Title + Actions) */}
+          <div className="flex items-start  justify-between gap-4 border-b-2 border-border">
+
+            {/* Left Side: Checkbox & Title */}
+            <div className="flex flex-1 items-start gap-3">
+
+              {/* Circular "Mark as Done" Radio Button */}
+              {/* mt-1.5 perfectly aligns the size-6 circle with the first line of the text-3xl title */}
+              <button
+                onClick={() => toggleCardIsDone(projectId, colId, card.id)}
+                className="
+                  mt-1.5 flex size-6 shrink-0 items-center justify-center rounded-full 
+                  border-2 border-border/80 transition-all duration-200
+                  hover:scale-110 hover:border-green-500 hover:bg-green-500/10
+                  data-[done=true]:border-green-500 data-[done=true]:bg-green-500
+                "
+                data-done={card.isDone}
+                aria-label={card.isDone ? "Mark as undone" : "Mark as done"}
+              >
+                {card.isDone && <Check className="size-3.5 text-white stroke-[3]" />}
+              </button>
+
+              {/* Title Section */}
+              <div className="group flex-1 ">
+                {isEditingTitle ? (
+                  <textarea
+                    autoFocus
+                    value={title}
+                    rows={1}
+                    onChange={(e) => setTitle(e.target.value)}
+                    // 1. Auto-resize when typing
+                    onInput={(e) => {
+                      e.currentTarget.style.height = "auto"
+                      e.currentTarget.style.height = e.currentTarget.scrollHeight + "px"
+                    }}
+                    // 2. Set initial height on focus & move cursor to the end
+                    onFocus={(e) => {
+                      e.target.style.height = "auto"
+                      e.target.style.height = e.target.scrollHeight + "px"
+                      const val = e.target.value
+                      e.target.value = ""
+                      e.target.value = val
+                    }}
+                    onBlur={handleTitleSave}
+                    onKeyDown={(e) => {
+                      // Pressing Enter (without Shift) saves the title instead of adding a new line
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault()
+                        handleTitleSave()
+                      }
+                      if (e.key === "Escape") {
+                        setTitle(card.title)
+                        setIsEditingTitle(false)
+                      }
+                    }}
+                    className=" w-full h-auto   resize-none overflow-hidden break-words  rounded-md  px-2 py-1 text-3xl font-bold tracking-tight  focus-visible:outline-none  "
+                  />
+                ) : (
+                  <h2
+                    onClick={() => setIsEditingTitle(true)}
+                    className={` cursor-text wrap-break-word rounded-md mb-[7px]   px-2 py-1 text-3xl  font-bold tracking-tight transition-colors  ${card.isDone ? "text-muted-foreground line-through" : "text-foreground"
+                      }`}
+                  >
+                    {card.title}
+                  </h2>
+                )}
+              </div>
             </div>
 
-            {/* Top Right Actions */}
-            <div className="flex shrink-0 items-center gap-2">
-              <Button
-                variant={card.isDone ? "default" : "outline"}
-                size="sm"
-                onClick={() => toggleCardIsDone(projectId, colId, card.id)}
-                className={`transition-all duration-300 ${
-                  card.isDone
-                    ? "border-transparent bg-green-600 text-white shadow-md hover:bg-green-700"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                }`}
-              >
-                {card.isDone ? <CheckSquare className="mr-2 size-4" /> : <Square className="mr-2 size-4" />}
-                {card.isDone ? "Completed" : "Mark as done"}
-              </Button>
+            {/* Right Side: Actions (Compact color block + Delete) */}
+            <div className="flex shrink-0 items-center gap-1.5 pt-1.5">
 
+              {/* Color Button (Minimalist Block) */}
               <div className="relative">
                 <button
                   onClick={() => setShowColorOptions(!showColorOptions)}
-                  className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground shadow-sm"
-                >
-                  <span
-                    className="size-3.5 rounded-full shadow-sm"
-                    style={{ backgroundColor: card.color || "var(--color-primary)" }}
-                  />
-                  Color
-                </button>
+                  // Changed to standard border-2 instead of border-3 for broader tailwind support
+                  className="flex h-7 w-12 rounded-md border-2 border-muted transition-transform hover:scale-105 hover:border-foreground/30 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  style={{ backgroundColor: card.color || "var(--color-primary)" }}
+                  aria-label="Change card color"
+                />
 
                 {/* Color Options Grid + Click Outside Overlay */}
                 {showColorOptions && (
                   <>
-                    <div 
-                      className="fixed inset-0 z-40" 
-                      onClick={() => setShowColorOptions(false)} 
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setShowColorOptions(false)}
                     />
                     <div className="absolute right-0 top-full z-50 mt-2 flex w-56 flex-wrap gap-2 rounded-xl border border-border bg-popover p-3 shadow-lg">
                       {COLUMN_COLORS.map((c) => (
@@ -238,19 +263,21 @@ export function CardDetailsDrawer({
                 )}
               </div>
 
+              {/* Delete Button */}
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                className="size-7 bg-muted text-muted-foreground transition-colors hover:bg-destructive/15 hover:text-destructive"
                 onClick={() => {
                   deleteCard(projectId, colId, card.id)
                   onOpenChange(false)
                 }}
                 title="Delete Card"
               >
-                <Trash2 className="size-4.5" />
+                <Trash2 className="size-4" />
               </Button>
             </div>
+
           </div>
 
           {/* 2. DESCRIPTION SECTION */}
@@ -293,11 +320,10 @@ export function CardDetailsDrawer({
             ) : (
               <div
                 onClick={() => setIsEditingDesc(true)}
-                className={`mt-2 min-h-[80px] cursor-pointer rounded-lg border border-transparent px-3 py-3 text-sm leading-relaxed transition-colors ${
-                  card.description
-                    ? "hover:bg-muted/60"
-                    : "bg-muted/30 text-muted-foreground hover:bg-muted/60"
-                }`}
+                className={`mt-2 min-h-[80px] cursor-pointer rounded-lg border border-transparent px-3 py-3 text-sm leading-relaxed transition-colors ${card.description
+                  ? "hover:bg-muted/60"
+                  : "bg-muted/30 text-muted-foreground hover:bg-muted/60"
+                  }`}
               >
                 {card.description || "Add a more detailed description..."}
               </div>
@@ -306,7 +332,7 @@ export function CardDetailsDrawer({
 
           {/* 3. TASKS SECTION */}
           <div className="space-y-4">
-            
+
             {/* Header & Progress Bar */}
             <div>
               <div className="flex items-center gap-2 font-semibold text-foreground mb-3">
@@ -322,9 +348,7 @@ export function CardDetailsDrawer({
                   </div>
                   <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
                     <div
-                      className={`h-full transition-all duration-500 ease-out ${
-                        progress === 100 ? "bg-green-500" : "bg-primary"
-                      }`}
+                      className={`h-full transition-all duration-500 ease-out bg-primary `}
                       style={{ width: `${progress}%` }}
                     />
                   </div>
@@ -334,7 +358,7 @@ export function CardDetailsDrawer({
 
             {/* Add Task Input/Button */}
             {isAddingTask ? (
-              <div 
+              <div
                 // onBlur placed on the container checks if the new focused element is outside the form
                 onBlur={(e) => {
                   if (!e.currentTarget.contains(e.relatedTarget)) {
@@ -363,9 +387,9 @@ export function CardDetailsDrawer({
                   className="bg-background focus-visible:ring-2 focus-visible:ring-primary"
                 />
                 <div className="flex items-center gap-2">
-                  <Button 
+                  <Button
                     onMouseDown={(e) => e.preventDefault()} // Prevents focus loss when clicking button
-                    onClick={handleAddTask} 
+                    onClick={handleAddTask}
                     size="sm"
                   >
                     Add
@@ -386,7 +410,7 @@ export function CardDetailsDrawer({
             ) : (
               <Button
                 variant="ghost"
-                className="mb-4 w-full justify-start text-muted-foreground hover:bg-muted/60"
+                className="mb-4 w-full justify-start text-muted-foreground hover:bg-primary!"
                 onClick={() => {
                   setIsAddingTask(true)
                   setNewTaskText("")
@@ -405,8 +429,8 @@ export function CardDetailsDrawer({
                 // EDITED TASK VIEW (Matches layout of Add Task exactly)
                 if (isEditingThis) {
                   return (
-                    <div 
-                      key={index} 
+                    <div
+                      key={index}
                       onBlur={(e) => {
                         if (!e.currentTarget.contains(e.relatedTarget)) {
                           handleEditTaskCancel()
@@ -418,7 +442,7 @@ export function CardDetailsDrawer({
                         onClick={() => toggleTask(projectId, colId, card.id, index)}
                         className="mt-2 shrink-0 text-muted-foreground transition-colors hover:text-foreground"
                       >
-                        {task.done ? <CheckSquare className="size-5 text-green-500" /> : <Square className="size-5" />}
+                        {task.done ? <CheckSquare className="size-5 text-primary" /> : <Square className="size-5" />}
                       </button>
 
                       <div className="flex-1 space-y-3">
@@ -457,12 +481,12 @@ export function CardDetailsDrawer({
                 // NORMAL TASK VIEW (Borderless plain text)
                 return (
                   <div key={index} className="group flex items-start gap-3 rounded-md px-1 py-1 hover:bg-muted transition-colors">
-                    
+
                     <button
                       onClick={() => toggleTask(projectId, colId, card.id, index)}
                       className="mt-0.5 shrink-0 text-muted-foreground transition-colors hover:text-foreground"
                     >
-                      {task.done ? <CheckSquare className="size-5 text-green-500" /> : <Square className="size-5" />}
+                      {task.done ? <CheckSquare className="size-5 text-primary" /> : <Square className="size-5" />}
                     </button>
 
                     <span
@@ -470,11 +494,10 @@ export function CardDetailsDrawer({
                         setEditingTaskIdx(index)
                         setEditTaskText(task.text)
                       }}
-                      className={`flex-1 cursor-text select-none break-words rounded-md px-1.5 py-0.5 -ml-1.5 text-[15px] transition-colors  ${
-                        task.done
-                          ? "text-muted-foreground line-through"
-                          : "text-foreground"
-                      }`}
+                      className={`flex-1 cursor-text select-none break-words rounded-md px-1.5 py-0.5 -ml-1.5 text-[15px] transition-colors  ${task.done
+                        ? "text-muted-foreground line-through"
+                        : "text-foreground"
+                        }`}
                     >
                       {task.text}
                     </span>
