@@ -58,22 +58,22 @@ export function CardDetailsDrawer({
   const toggleCardIsDone = useProjectStore((state) => state.toggleCardIsDone)
 
   // Local View/Edit States
-  const[isEditingTitle, setIsEditingTitle] = useState(false)
-  const [title, setTitle] = useState(card.title)
+  const [isEditingTitle, setIsEditingTitle] = useState(false)
+  const[title, setTitle] = useState(card.title)
 
   const [isEditingDesc, setIsEditingDesc] = useState(false)
   const [desc, setDesc] = useState(card.description || "")
 
-  const [showColorOptions, setShowColorOptions] = useState(false)
+  const[showColorOptions, setShowColorOptions] = useState(false)
 
   const [isAddingTask, setIsAddingTask] = useState(false)
-  const[newTaskText, setNewTaskText] = useState("")
+  const [newTaskText, setNewTaskText] = useState("")
   const addTaskInputRef = useRef<HTMLInputElement>(null)
 
   const [editingTaskIdx, setEditingTaskIdx] = useState<number | null>(null)
-  const[editTaskText, setEditTaskText] = useState("")
+  const [editTaskText, setEditTaskText] = useState("")
 
-  // Reset UI states when opened/closed
+  // Reset all UI states when opened/closed to ensure clean slate
   useEffect(() => {
     if (!open) {
       setIsEditingTitle(false)
@@ -81,6 +81,8 @@ export function CardDetailsDrawer({
       setIsAddingTask(false)
       setEditingTaskIdx(null)
       setShowColorOptions(false)
+      setNewTaskText("")
+      setEditTaskText("")
     } else {
       setTitle(card.title)
       setDesc(card.description || "")
@@ -104,26 +106,29 @@ export function CardDetailsDrawer({
   }
 
   const handleAddTask = () => {
-    if (newTaskText.trim()) {
-      // ✅ Adds the new task to the TOP of the list
-      editCard(projectId, colId, card.id, {
-        tasks:[{ text: newTaskText.trim(), done: false }, ...(card.tasks || [])],
-      })
-      setNewTaskText("")
-      
-      // Keep focus on the input so the user can add multiple tasks quickly
-      requestAnimationFrame(() => addTaskInputRef.current?.focus())
-    } else {
-      setIsAddingTask(false)
+    if (!newTaskText.trim()) {
+      addTaskInputRef.current?.focus()
+      return
     }
+    
+    // Add new task to the TOP of the list
+    editCard(projectId, colId, card.id, {
+      tasks: [{ text: newTaskText.trim(), done: false }, ...(card.tasks || [])],
+    })
+    
+    setNewTaskText("")
+    // Keep focus so user can rapidly add multiple tasks
+    requestAnimationFrame(() => addTaskInputRef.current?.focus())
   }
 
   const handleEditTaskSave = (idx: number) => {
-    if (editTaskText.trim()) {
-      const newTasks =[...(card.tasks || [])]
-      newTasks[idx].text = editTaskText.trim()
-      editCard(projectId, colId, card.id, { tasks: newTasks })
+    if (!editTaskText.trim()) {
+      handleEditTaskCancel()
+      return
     }
+    const newTasks = [...(card.tasks || [])]
+    newTasks[idx].text = editTaskText.trim()
+    editCard(projectId, colId, card.id, { tasks: newTasks })
     setEditingTaskIdx(null)
   }
 
@@ -173,7 +178,7 @@ export function CardDetailsDrawer({
               ) : (
                 <h2
                   onClick={() => setIsEditingTitle(true)}
-                  className="-ml-2 cursor-text break-words rounded-md border border-transparent px-2 py-1 text-[24px] font-bold tracking-tight transition-colors hover:bg-muted/60"
+                  className="-ml-2 cursor-text break-words rounded-md px-2 py-1 text-[24px] font-bold tracking-tight transition-colors "
                 >
                   {card.title}
                 </h2>
@@ -208,21 +213,28 @@ export function CardDetailsDrawer({
                   Color
                 </button>
 
+                {/* Color Options Grid + Click Outside Overlay */}
                 {showColorOptions && (
-                  <div className="absolute right-0 top-full z-50 mt-2 flex w-56 flex-wrap gap-2 rounded-xl border border-border bg-popover p-3 shadow-lg">
-                    {COLUMN_COLORS.map((c) => (
-                      <button
-                        key={c.value}
-                        title={c.name}
-                        onClick={() => {
-                          editCard(projectId, colId, card.id, { color: c.value })
-                          setShowColorOptions(false)
-                        }}
-                        className="size-6 rounded-full border border-border/50 ring-offset-background transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
-                        style={{ backgroundColor: c.value }}
-                      />
-                    ))}
-                  </div>
+                  <>
+                    <div 
+                      className="fixed inset-0 z-40" 
+                      onClick={() => setShowColorOptions(false)} 
+                    />
+                    <div className="absolute right-0 top-full z-50 mt-2 flex w-56 flex-wrap gap-2 rounded-xl border border-border bg-popover p-3 shadow-lg">
+                      {COLUMN_COLORS.map((c) => (
+                        <button
+                          key={c.value}
+                          title={c.name}
+                          onClick={() => {
+                            editCard(projectId, colId, card.id, { color: c.value })
+                            setShowColorOptions(false)
+                          }}
+                          className="size-6 rounded-full border border-border/50 ring-offset-background transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+                          style={{ backgroundColor: c.value }}
+                        />
+                      ))}
+                    </div>
+                  </>
                 )}
               </div>
 
@@ -265,7 +277,6 @@ export function CardDetailsDrawer({
                 />
                 <div className="flex items-center gap-2">
                   <Button onClick={handleDescSave} size="sm">Save</Button>
-                  {/* onMouseDown preventDefault stops the blur from misfiring */}
                   <Button
                     variant="ghost"
                     size="sm"
@@ -323,20 +334,27 @@ export function CardDetailsDrawer({
 
             {/* Add Task Input/Button */}
             {isAddingTask ? (
-              <div className="mb-4 space-y-3 rounded-lg border border-border bg-muted/20 p-3 shadow-sm">
+              <div 
+                // onBlur placed on the container checks if the new focused element is outside the form
+                onBlur={(e) => {
+                  if (!e.currentTarget.contains(e.relatedTarget)) {
+                    setIsAddingTask(false)
+                    setNewTaskText("")
+                  }
+                }}
+                className="mb-4 space-y-3 rounded-lg border border-border bg-muted/20 p-3 shadow-sm"
+              >
                 <Input
                   ref={addTaskInputRef}
                   autoFocus
                   placeholder="What needs to be done?"
                   value={newTaskText}
                   onChange={(e) => setNewTaskText(e.target.value)}
-                  // If unfocused, hides the input and discards text
-                  onBlur={() => {
-                    setIsAddingTask(false)
-                    setNewTaskText("")
-                  }}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") handleAddTask()
+                    if (e.key === "Enter") {
+                      e.preventDefault()
+                      handleAddTask()
+                    }
                     if (e.key === "Escape") {
                       setIsAddingTask(false)
                       setNewTaskText("")
@@ -346,7 +364,7 @@ export function CardDetailsDrawer({
                 />
                 <div className="flex items-center gap-2">
                   <Button 
-                    onMouseDown={(e) => e.preventDefault()} // Prevents onBlur from firing first
+                    onMouseDown={(e) => e.preventDefault()} // Prevents focus loss when clicking button
                     onClick={handleAddTask} 
                     size="sm"
                   >
@@ -384,10 +402,18 @@ export function CardDetailsDrawer({
               {tasks.map((task, index) => {
                 const isEditingThis = editingTaskIdx === index
 
-                // EDITED TASK VIEW
+                // EDITED TASK VIEW (Matches layout of Add Task exactly)
                 if (isEditingThis) {
                   return (
-                    <div key={index} className="flex items-start gap-3 rounded-lg border border-border bg-muted/20 p-3 shadow-sm transition-colors">
+                    <div 
+                      key={index} 
+                      onBlur={(e) => {
+                        if (!e.currentTarget.contains(e.relatedTarget)) {
+                          handleEditTaskCancel()
+                        }
+                      }}
+                      className="flex items-start gap-3 rounded-lg border border-border bg-muted/20 p-3 shadow-sm transition-colors"
+                    >
                       <button
                         onClick={() => toggleTask(projectId, colId, card.id, index)}
                         className="mt-2 shrink-0 text-muted-foreground transition-colors hover:text-foreground"
@@ -395,12 +421,11 @@ export function CardDetailsDrawer({
                         {task.done ? <CheckSquare className="size-5 text-green-500" /> : <Square className="size-5" />}
                       </button>
 
-                      <div className="flex-1 space-y-2">
+                      <div className="flex-1 space-y-3">
                         <Input
                           autoFocus
                           value={editTaskText}
                           onChange={(e) => setEditTaskText(e.target.value)}
-                          onBlur={handleEditTaskCancel} // Cancels edit if user clicks away
                           onKeyDown={(e) => {
                             if (e.key === "Enter") handleEditTaskSave(index)
                             if (e.key === "Escape") handleEditTaskCancel()
@@ -429,9 +454,9 @@ export function CardDetailsDrawer({
                   )
                 }
 
-                // NORMAL TASK VIEW
+                // NORMAL TASK VIEW (Borderless plain text)
                 return (
-                  <div key={index} className="group flex items-start gap-3 rounded-md px-1 py-1 hover:bg-muted/40 transition-colors">
+                  <div key={index} className="group flex items-start gap-3 rounded-md px-1 py-1 hover:bg-muted transition-colors">
                     
                     <button
                       onClick={() => toggleTask(projectId, colId, card.id, index)}
@@ -445,7 +470,7 @@ export function CardDetailsDrawer({
                         setEditingTaskIdx(index)
                         setEditTaskText(task.text)
                       }}
-                      className={`flex-1 cursor-text select-none break-words rounded-md border border-transparent px-1.5 py-0.5 -ml-1.5 text-[15px] transition-colors hover:bg-muted/80 ${
+                      className={`flex-1 cursor-text select-none break-words rounded-md px-1.5 py-0.5 -ml-1.5 text-[15px] transition-colors  ${
                         task.done
                           ? "text-muted-foreground line-through"
                           : "text-foreground"
