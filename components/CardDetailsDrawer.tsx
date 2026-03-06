@@ -154,10 +154,22 @@ export function CardDetailsDrawer({
           <DrawerDescription>View and edit card details.</DrawerDescription>
         </DrawerHeader>
 
-        <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8">
+        <div className="
+  flex-1 overflow-y-auto p-6 md:p-8 space-y-8
+
+  /* Firefox */
+  [scrollbar-width:thin][scrollbar-color:var(--color-border)_transparent]
+
+  /* Webkit (Chrome, Edge, Safari) */
+  [&::-webkit-scrollbar]:w-2
+  [&::-webkit-scrollbar-track]:bg-transparent
+  [&::-webkit-scrollbar-thumb]:rounded-full
+  [&::-webkit-scrollbar-thumb]:bg-border/50
+  hover:[&::-webkit-scrollbar-thumb]:bg-border/80
+">
 
           {/* 1. TOP HEADER (Checkbox + Title + Actions) */}
-          <div className="flex items-start  justify-between gap-4 border-b-2 border-border">
+          <div className="flex items-start  justify-between gap-4 ">
 
             {/* Left Side: Checkbox & Title */}
             <div className="flex flex-1 items-start gap-3">
@@ -211,7 +223,7 @@ export function CardDetailsDrawer({
                         setIsEditingTitle(false)
                       }
                     }}
-                    className=" w-full h-auto   resize-none overflow-hidden break-words  rounded-md  px-2 py-1 text-3xl font-bold tracking-tight  focus-visible:outline-none  "
+                    className=" w-full h-auto   resize-none overflow-hidden break-words  rounded-md  px-2 py-1 text-3xl font-bold tracking-tight  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60  "
                   />
                 ) : (
                   <h2
