@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useMemo, memo } from "react"
+import { useState, useRef, useLayoutEffect, useMemo, memo, Fragment } from "react"
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import SortableCard from "./SortableCard"
-import { EditColumnDialog } from "./EditColumnDialog"
-import { NewCardDialog } from "./NewCardDialog "
-import { ConfirmDeleteDialog } from "./ConfirmDeleteDialog"
-import { useProjectStore } from "@/store/projectStore"
+import SortableCard from "@/components/SortableCard"
+import { EditColumnDialog } from "@/components/EditColumnDialog"
+import { NewCardDialog } from "@/components/NewCardDialog"
+import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog"
+import { useProjectStore, TEST_MODE } from "@/store/projectStore"
 
 import {
   DropdownMenu,
@@ -19,18 +19,18 @@ import {
 
 import { PencilIcon, TrashIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Column as ColumnType } from "@/lib/types"
 
 interface ColumnProps {
-  col: {
-    id: string
-    title: string
-    color: string
-    cards: any[]
-  }
+  col: ColumnType
   projectId: string
+  isDndActive: React.RefObject<boolean>
+  isDropTarget?: boolean
+  hoveredCardId?: string | null
+  landedCardId?: string | null
 }
 
-const Column = memo(function Column({ col, projectId }: ColumnProps) {
+const Column = memo(function Column({ col, projectId, isDndActive, isDropTarget, hoveredCardId, landedCardId }: ColumnProps) {
   const [isEditColumnDialogOpen, setIsEditColumnDialogOpen] = useState(false)
   const [isNewCardDialogOpen, setisNewCardDialogOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
@@ -60,30 +60,161 @@ const Column = memo(function Column({ col, projectId }: ColumnProps) {
 
   const cardIds = useMemo(() => col.cards.map(card => card.id), [col.cards])
 
+  // Where the "Drop here" indicator sits: before the hovered card, or at the
+  // end of the list when hovering the column body / empty bottom area.
+  const hoveredIdx = hoveredCardId
+    ? col.cards.findIndex((c) => c.id === hoveredCardId)
+    : -1
+  const dropIndex = isDropTarget
+    ? hoveredIdx >= 0 ? hoveredIdx : col.cards.length
+    : -1
+
+  const dropIndicator = (
+    <div className="card-drop-in h-24 rounded-xl border-2 border-dashed border-muted bg-muted/30 flex items-center justify-center opacity-50">
+      <span className="text-sm font-medium text-muted-foreground">Drop here</span>
+    </div>
+  )
+
+  // ── FLIP: smooth displacement for cards making room ───────────────
+  // Whenever layout shifts (indicator mounts/moves/unmounts, a card is
+  // removed or added), every card glides from its previous position to
+  // the new one instead of jumping.
+  //
+  // Measures offsetTop — NOT getBoundingClientRect — because offsetTop
+  // ignores CSS transforms and scroll position. Rect-based baselines
+  // would read back our own mid-glide transforms and compound every
+  // render (cards drifting away, scrollHeight exploding).
+  const listRef = useRef<HTMLDivElement>(null)
+  const prevTopsRef = useRef<Map<string, number>>(new Map())
+
+  useLayoutEffect(() => {
+    const root = listRef.current
+    if (!root) return
+
+    const els = Array.from(root.querySelectorAll<HTMLElement>("[data-card-id]"))
+    const prev = prevTopsRef.current
+    const next = new Map<string, number>()
+    const flips: { el: HTMLElement; dy: number }[] = []
+
+    for (const el of els) {
+      const id = el.dataset.cardId!
+      const top = el.offsetTop
+      next.set(id, top)
+      const old = prev.get(id)
+      if (old !== undefined) {
+        const dy = old - top
+        if (Math.abs(dy) > 1) flips.push({ el, dy })
+      }
+    }
+    prevTopsRef.current = next
+    if (flips.length === 0) return
+
+    // Invert: park each moved card at its old position, no transition
+    for (const { el, dy } of flips) {
+      el.style.transition = "none"
+      el.style.transform = `translateY(${dy}px)`
+    }
+    // Force reflow so the inverted position commits
+    void root.offsetHeight
+    // Play: glide to natural (current layout) position
+    requestAnimationFrame(() => {
+      for (const { el } of flips) {
+        el.style.transition = "transform 260ms cubic-bezier(0.22,1,0.36,1)"
+        el.style.transform = ""
+      }
+    })
+  })
+  // ── End FLIP ──────────────────────────────────────────────────────
+
+  // ── Height animation ──────────────────────────────────────────────
+  // Single effect: prevHeightRef holds the height from the PREVIOUS render.
+  // When card count changes, we animate from old → new.
+  const wrapperRef = useRef<HTMLDivElement>(null)
+  const prevCardCountRef = useRef(col.cards.length)
+  const prevHeightRef = useRef(0)
+
+  useLayoutEffect(() => {
+    const el = wrapperRef.current
+    if (!el) return
+
+    const newCount = col.cards.length
+    const oldCount = prevCardCountRef.current
+    prevCardCountRef.current = newCount
+
+    // First render: just capture height, no animation
+    if (prevHeightRef.current === 0) {
+      prevHeightRef.current = el.getBoundingClientRect().height
+      return
+    }
+
+    if (oldCount === newCount) {
+      prevHeightRef.current = el.getBoundingClientRect().height
+      return
+    }
+
+    // Skip animation during active drag — let dnd-kit handle visuals via transforms
+    if (isDndActive.current) {
+      prevHeightRef.current = el.getBoundingClientRect().height
+      return
+    }
+
+    const newHeight = el.getBoundingClientRect().height
+    const oldHeight = prevHeightRef.current
+
+    if (oldHeight === newHeight) {
+      prevHeightRef.current = newHeight
+      return
+    }
+
+    el.style.height = `${oldHeight}px`
+    el.style.overflow = "hidden"
+    el.style.setProperty("transition", "height 1s cubic-bezier(0.2, 0, 0, 1)", "important")
+
+    requestAnimationFrame(() => {
+      el.style.height = `${newHeight}px`
+    })
+
+    setTimeout(() => {
+      el.style.transition = ""
+      el.style.height = ""
+      el.style.overflow = ""
+      el.style.removeProperty("transition")
+    }, 1000)
+
+    prevHeightRef.current = newHeight
+  }, [col.cards.length, isDndActive])
+  // ── End height animation ──────────────────────────────────────────
+
   if (isDragging) {
     return (
       <div
         ref={setNodeRef}
         style={style}
+        suppressHydrationWarning
         className="w-80 shrink-0 relative rounded-lg border-2 border-dashed border-muted bg-muted/30 h-125 flex items-center justify-center opacity-50"
       />
     )
   }
 
   function handleDelete() {
-    deleteColumn(projectId, col.id)
+    if (!TEST_MODE) deleteColumn(projectId, col.id)
   }
 
   return (
     <>
       <div
-        ref={setNodeRef}
+        ref={(node) => {
+          setNodeRef(node)
+          wrapperRef.current = node
+        }}
         style={style}
-        className="bg-card rounded-lg p-4 w-80 shrink-0 flex flex-col max-h-[80vh]
-                   shadow-xs border border-border"
+        suppressHydrationWarning
+        className="w-80 shrink-0 flex flex-col
+                   rounded-lg border border-border
+                   shadow-xs bg-card"
       >
         {/* Column header */}
-        <div className="mb-4">
+        <div className="p-4 pb-0">
           <div
             className="h-1 rounded-t-lg mb-3"
             style={{ backgroundColor: col.color }}
@@ -158,41 +289,47 @@ const Column = memo(function Column({ col, projectId }: ColumnProps) {
 
         {/* Cards container */}
         <div
-          className="
-            flex-1 overflow-y-auto overflow-x-hidden min-h-12.5 py-3  space-y-3
-            [&::-webkit-scrollbar]:w-[4px]
-            [&::-webkit-scrollbar-track]:bg-sidebar [&::-webkit-scrollbar-track]:rounded-full
-            [&::-webkit-scrollbar-thumb]:bg-sidebar-accent [&::-webkit-scrollbar-thumb]:rounded-full
-            [&::-webkit-scrollbar-thumb:hover]:bg-primary
-          "
+          ref={listRef}
+          className="overflow-y-auto overflow-x-hidden py-3 px-4 space-y-3
+                     max-h-[calc(80vh-8rem)]
+                     [&::-webkit-scrollbar]:w-[4px]
+                     [&::-webkit-scrollbar-track]:bg-sidebar [&::-webkit-scrollbar-track]:rounded-full
+                     [&::-webkit-scrollbar-thumb]:bg-sidebar-accent [&::-webkit-scrollbar-thumb]:rounded-full
+                     [&::-webkit-scrollbar-thumb:hover]:bg-primary"
         >
           <SortableContext items={cardIds} strategy={verticalListSortingStrategy}>
-            {col.cards.map((card) => (
-              <SortableCard
-                key={card.id}
-                card={card}
-                projectId={projectId}
-                colId={col.id}
-              />
+            {col.cards.map((card, i) => (
+              <Fragment key={card.id}>
+                {isDropTarget && i === dropIndex && dropIndicator}
+                <SortableCard
+                  card={card}
+                  projectId={projectId}
+                  colId={col.id}
+                  justLanded={landedCardId === card.id}
+                />
+              </Fragment>
             ))}
+            {isDropTarget && dropIndex >= col.cards.length && dropIndicator}
           </SortableContext>
         </div>
 
         {/* Add new card */}
-        <button
-          onClick={() => setisNewCardDialogOpen(true)}
-          className="
-            mt-2 w-full flex items-center justify-center gap-2
-            cursor-pointer border-2 border-dashed border-muted
-            rounded-xl p-2 text-sm font-medium text-muted-foreground
-            transition
-            hover:bg-accent/20 hover:border-accent hover:text-accent-foreground
-            focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring
-          "
-        >
-          <span className="text-lg">+</span>
-          Add new card
-        </button>
+        <div className="p-4 pt-0">
+          <button
+            onClick={() => setisNewCardDialogOpen(true)}
+            className="
+              w-full flex items-center justify-center gap-2
+              cursor-pointer border-2 border-dashed border-muted
+              rounded-xl p-2 text-sm font-medium text-muted-foreground
+              transition
+              hover:bg-accent/20 hover:border-accent hover:text-accent-foreground
+              focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring
+            "
+          >
+            <span className="text-lg">+</span>
+            Add new card
+          </button>
+        </div>
       </div>
 
       {/* Dialogs */}

@@ -2,27 +2,12 @@
 
 import { memo, useMemo, useState } from "react"
 import { CheckSquare, Check } from "lucide-react"
-import { CardDetailsDrawer } from "./CardDetailsDrawer"
-// Adjust this import path to match where your Zustand store is located
-import { useProjectStore } from "@/store/projectStore"
-
-interface Task {
-  text: string
-  done: boolean
-}
-
-// ✅ Updated to match the new store schema
-interface CardType {
-  id: string
-  title: string
-  description?: string 
-  color: string
-  isDone: boolean
-  tasks: Task[]
-}
+import { CardDetailsDrawer } from "@/components/CardDetailsDrawer"
+import { useProjectStore, TEST_MODE } from "@/store/projectStore"
+import { Card } from "@/lib/types"
 
 interface CardPreviewProps {
-  card: CardType
+  card: Card
   projectId: string
   colId: string
   dragHandleProps?: Record<string, unknown>
@@ -51,11 +36,10 @@ function CardPreview({
     }
   },[card.tasks])
 
-  // ✅ Handler for clicking the Checkbox
-  const handleToggleDone = (e: React.MouseEvent | React.KeyboardEvent) => {
-    e.stopPropagation() // Prevents the card drawer from opening
+  const handleToggleDone = (e: React.MouseEvent<HTMLElement> | React.KeyboardEvent<HTMLElement>) => {
+    e.stopPropagation()
     e.preventDefault()
-    toggleCardIsDone(projectId, colId, card.id)
+    if (!TEST_MODE) toggleCardIsDone(projectId, colId, card.id)
   }
 
   return (

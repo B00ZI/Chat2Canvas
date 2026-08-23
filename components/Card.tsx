@@ -1,9 +1,9 @@
 'use client'
 
-import { memo, useState, useCallback } from "react"
+import { useState } from "react"
 import { useProjectStore } from "@/store/projectStore"
-import { EditCardDialog } from "./EditCardDialog"
-import { ConfirmDeleteDialog } from "./ConfirmDeleteDialog"
+import { EditCardDialog } from "@/components/EditCardDialog"
+import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog"
 
 import {
   DropdownMenu,
@@ -16,27 +16,21 @@ import {
 import { Button } from "@/components/ui/button"
 import { PencilIcon, TrashIcon } from "lucide-react"
 
-interface CardType {
-  id: string
-  number: number
-  title: string
-  color: string
-  tasks: { text: string; done: boolean }[]
-}
+import type { Card as CardType } from "@/lib/types"
 
 interface CardProps {
   card: CardType
   projectId: string
   colId: string
-  dragHandleProps?: any
+  dragHandleProps?: Record<string, unknown>
 }
 
-function Card({ card, projectId, colId, dragHandleProps }: CardProps) {
+export function Card({ card, projectId, colId, dragHandleProps }: CardProps) {
   const [isEditCardDialogOpen, setIsEditCardDialogOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
 
-  const toggleTask = useProjectStore(useCallback((state) => state.toggleTask, []))
-  const deleteCard = useProjectStore(useCallback((state) => state.deleteCard, []))
+  const toggleTask = useProjectStore((state) => state.toggleTask)
+  const deleteCard = useProjectStore((state) => state.deleteCard)
 
   const tasks = card?.tasks || []
   const completedTasks = tasks.filter(t => t?.done).length || 0
@@ -64,19 +58,6 @@ function Card({ card, projectId, colId, dragHandleProps }: CardProps) {
             touch-none select-none
           "
         >
-          {/* Number badge */}
-          <div
-            className="
-              w-8 h-8 rounded-full
-              flex items-center justify-center
-              text-white text-sm font-semibold
-              shrink-0 shadow-xs pointer-events-none
-            "
-            style={{ backgroundColor: card.color, willChange: 'transform' }}
-          >
-            {card.number}
-          </div>
-
           {/* Title */}
           <h4 className="font-medium text-sm text-foreground flex-1 leading-snug truncate pointer-events-none">
             {card.title}

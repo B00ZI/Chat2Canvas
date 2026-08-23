@@ -1,48 +1,20 @@
-import { create } from "zustand";
+import { create, StateCreator } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { arrayMove } from "@dnd-kit/sortable";
+import {
+  Task,
+  Card,
+  Column,
+  Project,
+  ImportData,
+} from "@/lib/types";
 
-interface Task {
-  text: string;
-  done: boolean;
-}
+export type { Task, Card, Column, Project, ImportData };
 
-interface Card {
-  id: string;
-  title: string;
-  description?: string; // ✅ Added description
-  color: string;
-  isDone: boolean; // ✅ Added full card completion status
-  tasks: Task[];
-}
-
-interface Column {
-  id: string;
-  title: string;
-  color: string;
-  cards: Card[];
-}
-
-interface Project {
-  id: string;
-  name: string;
-  columns: Column[];
-}
-
-interface ImportData {
-  name: string;
-  columns: {
-    title: string;
-    color: string;
-    cards: {
-      title: string;
-      description?: string; // ✅ Added to import schema
-      color: string;
-      isDone?: boolean; // ✅ Added to import schema
-      tasks: { text: string; done: boolean }[];
-    }[];
-  }[];
-}
+// Set to false to restore full functionality
+export const TEST_MODE = true;
+// Drags run on local React state; Zustand touched once at drop (skipped while TEST_MODE)
+export const LOCAL_DRAG_MODE = true;
 
 interface ProjectStore {
   projects: Project[];
@@ -110,16 +82,149 @@ interface ProjectStore {
     toColumnId: string,
     insertIndex?: number,
   ) => void;
+
+  replaceProjectColumns: (projectId: string, columns: Column[]) => void;
 }
 
-// 1️⃣ Define the debounce timer outside the store
-let saveTimeout: ReturnType<typeof setTimeout> | undefined;
-
-export const useProjectStore = create<ProjectStore>()(
-  persist(
-    (set) => ({
-      projects:[],
-      activeProjectId: null,
+const storeBody: StateCreator<ProjectStore> = (set) => ({
+      projects:[
+        {
+          id: "demo-proj",
+          name: "Demo Project",
+          columns: [
+            {
+              id: "demo-col-1",
+              title: "To Do",
+              color: "#f1f5f9",
+              cards: [
+                {
+                  id: "demo-card-1",
+                  title: "Design landing page",
+                  description: "Create wireframes and high-fidelity mockups for the new landing page",
+                  color: "#dbeafe",
+                  isDone: false,
+                  tasks: [
+                    { text: "Research competitor layouts", done: true },
+                    { text: "Create wireframes", done: true },
+                    { text: "Design high-fidelity mockups", done: false },
+                    { text: "Get stakeholder approval", done: false },
+                  ],
+                },
+                {
+                  id: "demo-card-2",
+                  title: "Set up CI/CD pipeline",
+                  description: "",
+                  color: "#e0e7ff",
+                  isDone: false,
+                  tasks: [
+                    { text: "Configure GitHub Actions", done: false },
+                    { text: "Add linting step", done: false },
+                    { text: "Add test runner", done: false },
+                  ],
+                },
+                {
+                  id: "demo-card-3",
+                  title: "Write API documentation",
+                  description: "Document all REST endpoints with examples",
+                  color: "#fce7f3",
+                  isDone: false,
+                  tasks: [
+                    { text: "Document auth endpoints", done: false },
+                    { text: "Document user endpoints", done: false },
+                    { text: "Add request/response examples", done: false },
+                  ],
+                },
+              ],
+            },
+            {
+              id: "demo-col-2",
+              title: "In Progress",
+              color: "#e0f2fe",
+              cards: [
+                {
+                  id: "demo-card-4",
+                  title: "Implement user authentication",
+                  description: "JWT-based auth with refresh tokens",
+                  color: "#cffafe",
+                  isDone: false,
+                  tasks: [
+                    { text: "Set up JWT library", done: true },
+                    { text: "Create login endpoint", done: true },
+                    { text: "Create register endpoint", done: true },
+                    { text: "Add refresh token flow", done: false },
+                    { text: "Write integration tests", done: false },
+                  ],
+                },
+                {
+                  id: "demo-card-5",
+                  title: "Database schema migration",
+                  description: "",
+                  color: "#a5f3fc",
+                  isDone: false,
+                  tasks: [
+                    { text: "Design new tables", done: true },
+                    { text: "Write migration scripts", done: false },
+                    { text: "Test rollback", done: false },
+                  ],
+                },
+              ],
+            },
+            {
+              id: "demo-col-3",
+              title: "Review",
+              color: "#fef3c7",
+              cards: [
+                {
+                  id: "demo-card-6",
+                  title: "Performance audit",
+                  description: "Lighthouse audit and bundle analysis",
+                  color: "#fef9c3",
+                  isDone: false,
+                  tasks: [
+                    { text: "Run Lighthouse", done: true },
+                    { text: "Analyze bundle size", done: true },
+                    { text: "Optimize images", done: true },
+                    { text: "Write up findings", done: false },
+                  ],
+                },
+              ],
+            },
+            {
+              id: "demo-col-4",
+              title: "Done",
+              color: "#dcfce7",
+              cards: [
+                {
+                  id: "demo-card-7",
+                  title: "Project setup",
+                  description: "Initialize repo with Next.js, Tailwind, and ESLint",
+                  color: "#d1fae5",
+                  isDone: true,
+                  tasks: [
+                    { text: "Create Next.js app", done: true },
+                    { text: "Install Tailwind CSS", done: true },
+                    { text: "Configure ESLint", done: true },
+                    { text: "Set up folder structure", done: true },
+                  ],
+                },
+                {
+                  id: "demo-card-8",
+                  title: "Component library",
+                  description: "Set up shadcn/ui with base components",
+                  color: "#bbf7d0",
+                  isDone: true,
+                  tasks: [
+                    { text: "Install shadcn/ui", done: true },
+                    { text: "Add Button, Dialog, Input", done: true },
+                    { text: "Configure theme", done: true },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      activeProjectId: "demo-proj",
 
       reorderColumns: (projectId, oldIndex, newIndex) => {
         set((state) => ({
@@ -160,24 +265,25 @@ export const useProjectStore = create<ProjectStore>()(
           if (pIdx === -1) return state;
 
           const proj = state.projects[pIdx];
-          const sCol = proj.columns.find((c) => c.id === fromId);
-          const tCol = proj.columns.find((c) => c.id === toId);
-          const card = sCol?.cards.find((c) => c.id === cardId);
-          if (!sCol || !tCol || !card) return state;
+          const colMap = new Map(proj.columns.map(c => [c.id, c]));
+          const sCol = colMap.get(fromId);
+          const tCol = colMap.get(toId);
+          if (!sCol || !tCol) return state;
+
+          const cardIdx = sCol.cards.findIndex((c) => c.id === cardId);
+          if (cardIdx === -1) return state;
+          const card = sCol.cards[cardIdx];
 
           const newCols = proj.columns.map((col) => {
-            if (col.id === fromId)
-              return {
-                ...col,
-                cards: col.cards.filter((c) => c.id !== cardId),
-              };
+            if (col.id === fromId) {
+              const newCards = [...col.cards];
+              newCards.splice(cardIdx, 1);
+              return { ...col, cards: newCards };
+            }
             if (col.id === toId) {
               const newCards = [...col.cards];
-              newCards.splice(
-                typeof idx === "number" && idx >= 0 ? idx : newCards.length,
-                0,
-                card,
-              );
+              const insertAt = typeof idx === "number" && idx >= 0 ? idx : newCards.length;
+              newCards.splice(insertAt, 0, card);
               return { ...col, cards: newCards };
             }
             return col;
@@ -187,6 +293,14 @@ export const useProjectStore = create<ProjectStore>()(
           newProjects[pIdx] = { ...proj, columns: newCols };
           return { projects: newProjects };
         });
+      },
+
+      replaceProjectColumns: (projectId, columns) => {
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === projectId ? { ...p, columns } : p,
+          ),
+        }));
       },
 
       importProject: (data) => {
@@ -435,27 +549,31 @@ export const useProjectStore = create<ProjectStore>()(
           ),
         }));
       },
-    }),
-    {
-      name: "chat2canvas-storage",
-      storage: createJSONStorage(() => {
-        let saveTimeout: ReturnType<typeof setTimeout> | undefined;
+});
 
-        return {
-          getItem: (name) => localStorage.getItem(name),
-          setItem: (name, value) => {
-            if (saveTimeout) clearTimeout(saveTimeout);
-            saveTimeout = setTimeout(() => {
-              localStorage.setItem(name, value);
-            }, 500);
-          },
-          removeItem: (name) => localStorage.removeItem(name),
-        };
+export const useProjectStore = TEST_MODE
+  ? create<ProjectStore>()(storeBody)
+  : create<ProjectStore>()(
+      persist(storeBody, {
+        name: "chat2canvas-storage",
+        skipHydration: true,
+        storage: createJSONStorage(() => {
+          let saveTimeout: ReturnType<typeof setTimeout> | undefined;
+
+          return {
+            getItem: (name) => localStorage.getItem(name),
+            setItem: (name, value) => {
+              if (saveTimeout) clearTimeout(saveTimeout);
+              saveTimeout = setTimeout(() => {
+                localStorage.setItem(name, value);
+              }, 500);
+            },
+            removeItem: (name) => localStorage.removeItem(name),
+          };
+        }),
+        partialize: (state) => ({
+          projects: state.projects,
+          activeProjectId: state.activeProjectId,
+        }),
       }),
-      partialize: (state) => ({
-        projects: state.projects,
-        activeProjectId: state.activeProjectId,
-      }),
-    },
-  ),
-);
+    );

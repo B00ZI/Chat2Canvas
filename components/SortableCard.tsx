@@ -1,84 +1,62 @@
 'use client'
 
-import { memo } from "react"
+import { memo, useMemo } from "react"
 import { useSortable } from "@dnd-kit/sortable"
-import { CSS } from "@dnd-kit/utilities"
 
-import CardPreview from "./CardPreview"
+import CardPreview from "@/components/CardPreview"
+import { Card } from "@/lib/types"
 
 interface SortableCardProps {
-  card: any
+  card: Card
   projectId: string
   colId: string
+  justLanded?: boolean
 }
 
 const SortableCard = memo(function SortableCard({
   card,
   projectId,
   colId,
+  justLanded,
 }: SortableCardProps) {
   const {
     setNodeRef,
-    transform,
-    transition,
     isDragging,
     attributes,
     listeners,
   } = useSortable({
     id: card.id,
-    data: {
-      type: "Card",
-      card,
-    },
+    data: useMemo(() => ({ type: "Card" as const, card }), [card]),
   })
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
+  // No transform here: positional smoothing is handled by the parent
+  // Column's FLIP animation. The dragged card's slot collapses instantly —
+  // the DragOverlay covers the visual, and FLIP glides the displaced cards.
+  const style = useMemo(() => ({
     zIndex: isDragging ? 50 : undefined,
-    boxShadow: isDragging
-      ? "0 4px 12px rgba(0,0,0,0.12)"
-      : undefined,
-  }
-
-  // Placeholder while dragging
-  if (isDragging) {
-    return (
-      <div
-        ref={setNodeRef}
-        style={{ ...style, height: 96 }}
-        className="
-          w-full relative rounded-lg min-h-[96px]
-          flex items-center justify-center
-          bg-card/50 border border-border
-        "
-      >
-        <div
-          className="absolute inset-0 rounded-lg"
-          style={{
-            backgroundColor: card.color || "var(--accent)",
-            opacity: 0.12,
-          }}
-        />
-        <span className="relative text-muted-foreground text-sm font-medium">
-          Drop here
-        </span>
-      </div>
-    )
-  }
+    height: isDragging ? 0 : undefined,
+    overflow: isDragging ? "hidden" : undefined,
+  }), [isDragging])
 
   return (
     <div
       ref={setNodeRef}
       style={style}
+      data-card-id={card.id}
+      suppressHydrationWarning
       className="touch-none"
     >
-      <CardPreview
-        card={card}
-        projectId={projectId}
-        colId={colId}
-        dragHandleProps={{ ...attributes, ...listeners }}
-      />
+      <div
+        suppressHydrationWarning
+        className={justLanded ? "card-land" : undefined}
+      >
+        <CardPreview
+          card={card}
+          projectId={projectId}
+          colId={colId}
+          dragHandleProps={{ ...attributes, ...listeners }}
+        />
+      </div>
     </div>
   )
 })
