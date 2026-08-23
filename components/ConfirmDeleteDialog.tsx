@@ -35,7 +35,7 @@ export function ConfirmDeleteDialog({
           bg-popover text-popover-foreground
           border border-border
           shadow-lg
-          rounded-lg
+          rounded-xl
         "
       >
         <AlertDialogHeader>
