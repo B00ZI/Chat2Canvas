@@ -1,37 +1,43 @@
 'use client'
-import { Oxanium, Merriweather, Fira_Code } from "next/font/google";
+import { Oxanium, Instrument_Sans, Fira_Code } from "next/font/google";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
-import { useState, useEffect } from "react";
+import CommandPalette from "@/components/CommandPalette";
+import { Toaster } from "@/components/ui/sonner";
+import { useEffect } from "react";
 import { useProjectStore, TEST_MODE } from "@/store/projectStore";
 
 const oxanium = Oxanium({ subsets: ["latin"], variable: "--font-oxanium", display: "swap" });
-const merriweather = Merriweather({ weight: ["400", "700"], subsets: ["latin"], variable: "--font-merriweather", display: "swap" });
+const instrument = Instrument_Sans({ subsets: ["latin"], variable: "--font-instrument", display: "swap" });
 const firaCode = Fira_Code({ subsets: ["latin"], variable: "--font-fira-code", display: "swap" });
 
+// Applies the persisted (or system) theme before first paint — no flash.
+const themeInitScript = `(function(){try{var t=localStorage.getItem("c2c-theme");if(t!=="light"&&t!=="dark")t="dark";var dark=t==="dark"||(t==="system"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",dark)}catch(e){document.documentElement.classList.add("dark")}})()`;
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
-  const [dark, setDark] = useState(false);
-
   useEffect(() => {
-    // skipHydration is set on the store; rehydrate manually after mount so
-    // SSR markup matches the first client render.
-    if (!TEST_MODE) useProjectStore.persist.rehydrate();
+    if (!TEST_MODE) {
+      const store = useProjectStore as unknown as { persist?: { rehydrate: () => void } };
+      store.persist?.rehydrate();
+    }
   }, []);
 
   return (
     <html
       lang="en"
-      className={` ${dark? "dark" : ""} ${oxanium.variable} ${merriweather.variable} ${firaCode.variable}`}
+      suppressHydrationWarning
+      className={`dark ${oxanium.variable} ${instrument.variable} ${firaCode.variable}`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className="bg-background text-foreground font-sans antialiased">
         <div className="flex min-h-screen">
-          <Sidebar dark={dark} setDark={setDark} />
+          <Sidebar />
 
           <main
             className="flex-1 bg-background
@@ -41,8 +47,10 @@ export default function RootLayout({
             {children}
           </main>
         </div>
+
+        <CommandPalette />
+        <Toaster />
       </body>
     </html>
   )
-
 }
