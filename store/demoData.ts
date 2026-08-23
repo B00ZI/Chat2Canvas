@@ -1,4 +1,7 @@
 import type { Project } from "@/lib/types";
+import { COLUMN_COLORS } from "@/lib/column-colors";
+
+const [CRIMSON, GOLD, GREEN, TEAL, AZURE, VIOLET] = COLUMN_COLORS;
 
 /**
  * Seed board shown on first run / whenever persistence is disabled
@@ -12,14 +15,14 @@ export const DEMO_PROJECTS: Project[] = [
       {
         id: "demo-col-1",
         title: "To Do",
-        color: "#f1f5f9",
+        color: AZURE.value,
         cards: [
           {
             id: "demo-card-1",
             title: "Design landing page",
             description:
               "Create wireframes and high-fidelity mockups for the new landing page",
-            color: "#dbeafe",
+            color: GOLD.value,
             isDone: false,
             tasks: [
               { text: "Research competitor layouts", done: true },
@@ -32,7 +35,7 @@ export const DEMO_PROJECTS: Project[] = [
             id: "demo-card-2",
             title: "Set up CI/CD pipeline",
             description: "",
-            color: "#e0e7ff",
+            color: VIOLET.value,
             isDone: false,
             tasks: [
               { text: "Configure GitHub Actions", done: false },
@@ -44,7 +47,7 @@ export const DEMO_PROJECTS: Project[] = [
             id: "demo-card-3",
             title: "Write API documentation",
             description: "Document all REST endpoints with examples",
-            color: "#fce7f3",
+            color: CRIMSON.value,
             isDone: false,
             tasks: [
               { text: "Document auth endpoints", done: false },
@@ -57,13 +60,13 @@ export const DEMO_PROJECTS: Project[] = [
       {
         id: "demo-col-2",
         title: "In Progress",
-        color: "#e0f2fe",
+        color: GOLD.value,
         cards: [
           {
             id: "demo-card-4",
             title: "Implement user authentication",
             description: "JWT-based auth with refresh tokens",
-            color: "#cffafe",
+            color: TEAL.value,
             isDone: false,
             tasks: [
               { text: "Set up JWT library", done: true },
@@ -77,7 +80,7 @@ export const DEMO_PROJECTS: Project[] = [
             id: "demo-card-5",
             title: "Database schema migration",
             description: "",
-            color: "#a5f3fc",
+            color: GREEN.value,
             isDone: false,
             tasks: [
               { text: "Design new tables", done: true },
@@ -90,13 +93,13 @@ export const DEMO_PROJECTS: Project[] = [
       {
         id: "demo-col-3",
         title: "Review",
-        color: "#fef3c7",
+        color: VIOLET.value,
         cards: [
           {
             id: "demo-card-6",
             title: "Performance audit",
             description: "Lighthouse audit and bundle analysis",
-            color: "#fef9c3",
+            color: AZURE.value,
             isDone: false,
             tasks: [
               { text: "Run Lighthouse", done: true },
@@ -110,13 +113,13 @@ export const DEMO_PROJECTS: Project[] = [
       {
         id: "demo-col-4",
         title: "Done",
-        color: "#dcfce7",
+        color: GREEN.value,
         cards: [
           {
             id: "demo-card-7",
             title: "Project setup",
             description: "Initialize repo with Next.js, Tailwind, and ESLint",
-            color: "#d1fae5",
+            color: TEAL.value,
             isDone: true,
             tasks: [
               { text: "Create Next.js app", done: true },
@@ -129,7 +132,7 @@ export const DEMO_PROJECTS: Project[] = [
             id: "demo-card-8",
             title: "Component library",
             description: "Set up shadcn/ui with base components",
-            color: "#bbf7d0",
+            color: GOLD.value,
             isDone: true,
             tasks: [
               { text: "Install shadcn/ui", done: true },

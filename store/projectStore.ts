@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { Card, Column, ImportData, Project } from "@/lib/types";
+import { COLUMN_COLORS, normalizeContentColor } from "@/lib/column-colors";
 import { DEMO_PROJECTS } from "./demoData";
 
 /**
@@ -88,12 +89,12 @@ export const useProjectStore = create<ProjectStore>()(
           columns: data.columns.map((col) => ({
             id: genId("col"),
             title: col.title,
-            color: col.color,
+            color: normalizeContentColor(col.color),
             cards: col.cards.map((c) => ({
               id: genId("card"),
               title: c.title,
               description: c.description || "",
-              color: c.color,
+              color: normalizeContentColor(c.color),
               isDone: c.isDone || false,
               tasks: c.tasks,
             })),
@@ -110,9 +111,9 @@ export const useProjectStore = create<ProjectStore>()(
           id: genId("proj"),
           name,
           columns: [
-            { id: genId("col"), title: "To Do", color: "#f1f5f9", cards: [] },
-            { id: genId("col"), title: "In Progress", color: "#e0f2fe", cards: [] },
-            { id: genId("col"), title: "Done", color: "#dcfce7", cards: [] },
+            { id: genId("col"), title: "To Do", color: COLUMN_COLORS[4].value, cards: [] },
+            { id: genId("col"), title: "In Progress", color: COLUMN_COLORS[1].value, cards: [] },
+            { id: genId("col"), title: "Done", color: COLUMN_COLORS[2].value, cards: [] },
           ],
         };
         set((state) => ({
@@ -241,6 +242,29 @@ export const useProjectStore = create<ProjectStore>()(
     }),
     {
       name: "chat2canvas-storage",
+      version: 1,
+      // v0 → v1: snap legacy colors (old OKLCH set, hex defaults) onto the
+      // current content palette so the Ember accent keeps its own lane.
+      migrate: (state) => {
+        const s = state as {
+          projects?: Project[];
+          activeProjectId?: string | null;
+        };
+        return {
+          projects: (s.projects ?? []).map((p) => ({
+            ...p,
+            columns: p.columns.map((col) => ({
+              ...col,
+              color: normalizeContentColor(col.color),
+              cards: col.cards.map((card) => ({
+                ...card,
+                color: normalizeContentColor(card.color),
+              })),
+            })),
+          })),
+          activeProjectId: s.activeProjectId ?? null,
+        };
+      },
       skipHydration: true, // rehydrated manually after mount (app/layout.tsx)
       storage: createJSONStorage(() => {
         if (TEST_MODE) {
