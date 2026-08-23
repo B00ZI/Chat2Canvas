@@ -8,6 +8,7 @@ import { EditColumnDialog } from "@/components/EditColumnDialog"
 import { NewCardDialog } from "@/components/NewCardDialog"
 import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog"
 import { useProjectStore, TEST_MODE } from "@/store/projectStore"
+import { toast } from "sonner"
 
 import {
   DropdownMenu,
@@ -17,7 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-import { PencilIcon, TrashIcon } from "lucide-react"
+import { PencilIcon, TrashIcon, MoreVertical, PlusIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Column as ColumnType } from "@/lib/types"
 
@@ -168,7 +169,7 @@ const Column = memo(function Column({ col, projectId, isDndActive, isDropTarget,
 
     el.style.height = `${oldHeight}px`
     el.style.overflow = "hidden"
-    el.style.setProperty("transition", "height 1s cubic-bezier(0.2, 0, 0, 1)", "important")
+    el.style.setProperty("transition", "height 200ms cubic-bezier(0.2, 0, 0, 1)", "important")
 
     requestAnimationFrame(() => {
       el.style.height = `${newHeight}px`
@@ -179,7 +180,7 @@ const Column = memo(function Column({ col, projectId, isDndActive, isDropTarget,
       el.style.height = ""
       el.style.overflow = ""
       el.style.removeProperty("transition")
-    }, 1000)
+    }, 240)
 
     prevHeightRef.current = newHeight
   }, [col.cards.length, isDndActive])
@@ -190,14 +191,18 @@ const Column = memo(function Column({ col, projectId, isDndActive, isDropTarget,
       <div
         ref={setNodeRef}
         style={style}
+        data-board-item
         suppressHydrationWarning
-        className="w-80 shrink-0 relative rounded-lg border-2 border-dashed border-muted bg-muted/30 h-125 flex items-center justify-center opacity-50"
+        className="w-80 shrink-0 relative rounded-xl border-2 border-dashed border-border bg-muted/30 min-h-48 flex items-center justify-center opacity-50"
       />
     )
   }
 
   function handleDelete() {
-    if (!TEST_MODE) deleteColumn(projectId, col.id)
+    if (!TEST_MODE) {
+      deleteColumn(projectId, col.id)
+      toast.success(`"${col.title}" deleted`)
+    }
   }
 
   return (
@@ -208,30 +213,37 @@ const Column = memo(function Column({ col, projectId, isDndActive, isDropTarget,
           wrapperRef.current = node
         }}
         style={style}
+        data-board-item
         suppressHydrationWarning
         className="w-80 shrink-0 flex flex-col
-                   rounded-lg border border-border
+                   rounded-xl border border-border
                    shadow-xs bg-card"
       >
-        {/* Column header */}
+        {/* Column header: spine dot + title + count pill */}
         <div className="p-4 pb-0">
-          <div
-            className="h-1 rounded-t-lg mb-3"
-            style={{ backgroundColor: col.color }}
-          />
-
           <div
             {...attributes}
             {...listeners}
             className="flex items-start justify-between gap-2
                        cursor-grab active:cursor-grabbing select-none"
           >
-            <div className="flex flex-col min-w-0">
-              <h3 className="font-semibold text-sm text-foreground truncate max-w-[9.5rem]">
-                {col.title}
-              </h3>
-              <span className="text-[11px] text-muted-foreground font-medium tracking-wide">
-                {col.cards.length} {col.cards.length === 1 ? "TASK" : "TASKS"}
+            <div className="flex min-w-0 items-center gap-2.5">
+              {col.color && (
+                <span
+                  aria-hidden
+                  className="mt-px size-3 shrink-0 rounded-full shadow-xs"
+                  style={{ backgroundColor: col.color }}
+                />
+              )}
+
+              <div className="flex min-w-0 flex-col">
+                <h3 className="max-w-[9rem] truncate text-sm font-semibold tracking-tight text-foreground">
+                  {col.title}
+                </h3>
+              </div>
+
+              <span className="bg-muted text-muted-foreground mt-px shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium leading-none tabular-nums">
+                {col.cards.length}
               </span>
             </div>
 
@@ -240,18 +252,19 @@ const Column = memo(function Column({ col, projectId, isDndActive, isDropTarget,
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  size="icon"
+                  size="icon-sm"
+                  aria-label={`Options for ${col.title}`}
                   onPointerDown={(e) => e.stopPropagation()}
                   onClick={(e) => e.stopPropagation()}
                   className="
-                    h-7 w-7 rounded-md
+                    -mr-1 size-7 rounded-md
                     text-muted-foreground
                     hover:text-foreground
                     hover:bg-muted
-                    focus-visible:ring-1 focus-visible:ring-ring
+                    focus-visible:ring-ring focus-visible:ring-1
                   "
                 >
-                  ⋮
+                  <MoreVertical className="size-4" />
                 </Button>
               </DropdownMenuTrigger>
 
@@ -290,12 +303,8 @@ const Column = memo(function Column({ col, projectId, isDndActive, isDropTarget,
         {/* Cards container */}
         <div
           ref={listRef}
-          className="overflow-y-auto overflow-x-hidden py-3 px-4 space-y-3
-                     max-h-[calc(80vh-8rem)]
-                     [&::-webkit-scrollbar]:w-[4px]
-                     [&::-webkit-scrollbar-track]:bg-sidebar [&::-webkit-scrollbar-track]:rounded-full
-                     [&::-webkit-scrollbar-thumb]:bg-sidebar-accent [&::-webkit-scrollbar-thumb]:rounded-full
-                     [&::-webkit-scrollbar-thumb:hover]:bg-primary"
+          className="scrollbar-slim overflow-y-auto overflow-x-hidden py-3 px-4 space-y-3
+                     max-h-[calc(80vh-8rem)]"
         >
           <SortableContext items={cardIds} strategy={verticalListSortingStrategy}>
             {col.cards.map((card, i) => (
@@ -313,21 +322,21 @@ const Column = memo(function Column({ col, projectId, isDndActive, isDropTarget,
           </SortableContext>
         </div>
 
-        {/* Add new card */}
-        <div className="p-4 pt-0">
+        {/* Add new card — same ghost-tile affordance as Add Column */}
+        <div className="p-4 pt-1">
           <button
             onClick={() => setisNewCardDialogOpen(true)}
             className="
-              w-full flex items-center justify-center gap-2
-              cursor-pointer border-2 border-dashed border-muted
+              w-full flex items-center justify-center gap-1.5
+              cursor-pointer border border-dashed border-border
               rounded-xl p-2 text-sm font-medium text-muted-foreground
-              transition
-              hover:bg-accent/20 hover:border-accent hover:text-accent-foreground
-              focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring
+              transition-colors duration-150
+              hover:border-primary/50 hover:bg-primary/5 hover:text-primary
+              focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none
             "
           >
-            <span className="text-lg">+</span>
-            Add new card
+            <PlusIcon className="size-4" />
+            Add card
           </button>
         </div>
       </div>

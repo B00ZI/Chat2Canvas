@@ -43,6 +43,7 @@ const SortableCard = memo(function SortableCard({
       ref={setNodeRef}
       style={style}
       data-card-id={card.id}
+      data-board-item
       suppressHydrationWarning
       className="touch-none"
     >

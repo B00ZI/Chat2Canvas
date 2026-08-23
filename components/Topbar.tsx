@@ -1,90 +1,131 @@
 'use client'
 
 import { Button } from "@/components/ui/button"
-import { memo, useState } from "react"
+import { memo, useEffect, useState } from "react"
 import AIToolsModal from "@/components/AIToolsModal"
 import { useProjectStore } from "@/store/projectStore"
 import { useShallow } from "zustand/react/shallow"
-import { LayoutTemplate } from "lucide-react"
+import { LayoutTemplate, PanelLeft } from "lucide-react"
+import { titleCase } from "@/lib/utils"
 
 const TopBar = memo(function TopBar() {
   const [isModalOpen, setIsModalOpen] = useState(false)
 
+  // Command palette can open Canvas Tools remotely.
+  useEffect(() => {
+    const handler = () => setIsModalOpen(true)
+    window.addEventListener("c2c:open-canvas-tools", handler)
+    return () => window.removeEventListener("c2c:open-canvas-tools", handler)
+  }, [])
+
   const project = useProjectStore(
     useShallow((state) => {
-      const proj = state.projects.find(p => p.id === state.activeProjectId)
+      const proj = state.projects.find((p) => p.id === state.activeProjectId)
       if (!proj) return null
-      const allTasks = proj.columns.flatMap(c => c.cards.flatMap(card => card.tasks))
-      const doneTasks = allTasks.filter(t => t.done).length
-      return { name: proj.name, allTasks: allTasks.length, doneTasks }
+      return {
+        name: proj.name,
+        cardsDone: proj.columns.flatMap((c) => c.cards).filter((card) => card.isDone).length,
+        cardsTotal: proj.columns.reduce((acc, c) => acc + c.cards.length, 0),
+      }
     })
   )
 
   if (!project) return null
 
+  // The ring tracks CARDS (whole-card completion), not subtasks — simpler
+  // signal at a glance.
+  const percent =
+    project.cardsTotal === 0 ? 0 : Math.round((project.cardsDone / project.cardsTotal) * 100)
+  const isComplete = project.cardsTotal > 0 && project.cardsDone === project.cardsTotal
+
   return (
-  <>
-    <div
-      className="h-20 bg-sidebar text-sidebar-foreground
-                 border-b border-sidebar-border
-                 px-6 flex items-center justify-between"
-    >
-      {/* Left - Project Name */}
-      <div className="flex flex-col">
-        <h1 className="text-xl font-semibold">
-          {project.name
-            .split(" ")
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(" ")}
-        </h1>
+    <>
+      <header
+        className="bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky top-0 z-30
+                   border-b border-border backdrop-blur
+                   flex h-16 shrink-0 items-center gap-3 px-4 md:px-6"
+      >
+        {/* Mobile sidebar trigger */}
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="md:hidden"
+          aria-label="Open navigation"
+          onClick={() => window.dispatchEvent(new CustomEvent("c2c:open-sidebar"))}
+        >
+          <PanelLeft />
+        </Button>
 
-        <p className="text-xs text-sidebar-foreground/70 flex items-center gap-2 mt-1">
-          {project.allTasks === 0 ? (
-            "No tasks yet"
-          ) : (
-            <>
-              <span
-                className="px-2 py-0.5 rounded-sm
-                           bg-sidebar-accent-foreground
-                           text-sidebar-primary
-                           text-xs font-medium"
-              >
-                {Math.round((project.doneTasks / project.allTasks) * 100)}%
-              </span>
+        {/* Project profile: completion ring + name */}
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          {/* Progress ring "avatar" */}
+          <div
+            role="progressbar"
+            aria-valuenow={percent}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={`${percent}% of cards completed`}
+            title={`${project.cardsDone} of ${project.cardsTotal} cards done`}
+            className="relative size-10 shrink-0"
+          >
+            <svg viewBox="0 0 36 36" className="size-full -rotate-90">
+              <circle
+                cx="18"
+                cy="18"
+                r="15.5"
+                fill="none"
+                strokeWidth="4.5"
+                className="stroke-muted"
+              />
+              {percent > 0 && (
+                <circle
+                  cx="18"
+                  cy="18"
+                  r="15.5"
+                  fill="none"
+                  strokeWidth="4.5"
+                  strokeLinecap="round"
+                  pathLength={100}
+                  strokeDasharray={`${percent} 100`}
+                  className={`transition-[stroke-dasharray] duration-500 ease-out ${
+                    isComplete ? "stroke-success" : "stroke-primary"
+                  }`}
+                />
+              )}
+            </svg>
+            <span
+              className={`absolute inset-0 flex items-center justify-center text-[10px] font-semibold tabular-nums ${
+                isComplete ? "text-success" : "text-foreground"
+              }`}
+            >
+              {percent}%
+            </span>
+          </div>
 
-              <span>
-                {project.doneTasks} of {project.allTasks} tasks completed
-              </span>
-            </>
-          )}
-        </p>
-      </div>
+          <div className="min-w-0">
+            <h1 className="truncate text-lg leading-tight font-semibold tracking-tight">
+              {titleCase(project.name)}
+            </h1>
+            <p className="text-muted-foreground mt-0.5 text-xs tabular-nums">
+              {project.cardsDone}/{project.cardsTotal} cards completed
+            </p>
+          </div>
+        </div>
 
-      {/* Right - Buttons */}
-      <div className="flex gap-2">
+        {/* Actions */}
         <Button
           size="sm"
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2
-                     bg-sidebar-primary
-                     text-sidebar-primary-foreground
-                     shadow-xs
-                     hover:opacity-90"
+          className="shadow-xs hover:bg-primary/90 flex items-center gap-2"
         >
-          <LayoutTemplate className="h-4 w-4" />
+          <LayoutTemplate />
           Canvas Tools
         </Button>
-      </div>
-    </div>
+      </header>
 
-    {/* Modal */}
-    <AIToolsModal
-      open={isModalOpen}
-      onClose={() => setIsModalOpen(false)}
-    />
-  </>
-)
-
+      <AIToolsModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
+    </>
+  )
 })
 
 export default memo(TopBar)

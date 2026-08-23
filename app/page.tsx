@@ -23,12 +23,12 @@ import { useProjectStore, TEST_MODE } from "@/store/projectStore"
 import { useShallow } from "zustand/react/shallow"
 
 import TopBar from "@/components/Topbar"
-import {EmptyDemo} from "@/components/WorkeSpaceEmpty"
+import { WorkspaceEmpty } from "@/components/WorkspaceEmpty"
 import Column from "@/components/Column"
 import { ColumnOverlay } from "@/components/ColumnOverlay"
 import CardPreview from '@/components/CardPreview'
-import { Button } from "@/components/ui/button"
 import { NewColumnDialog } from "@/components/NewColumnDialog"
+import { PlusIcon } from "lucide-react"
 import type { Column as ColumnType, Card as CardType } from "@/lib/types"
 
 const EMPTY_COLUMNS: ColumnType[] = []
@@ -143,31 +143,45 @@ export default function Home() {
     [boardColumns],
   );
 
+  // ── Blank-space pan ──────────────────────────────────────────────────
+  // Armed by mousedown on empty canvas, executed on mousemove. While a dnd
+  // session is active the pan NEVER runs — dnd-kit's edge autoscroll is the
+  // single owner of board scrolling whenever a card/column is held.
+  // Permanent listeners gated by refs: no add/remove churn, no stale
+  // closures, works identically across renders.
+  useEffect(() => {
+    function onPanMove(e: MouseEvent) {
+      if (!isDragging.current || isDndActive.current || !boardRef.current) return;
+      const x = e.pageX - boardRef.current.offsetLeft;
+      boardRef.current.scrollLeft = scrollLeft.current - (x - startX.current);
+    }
+    function onPanEnd() {
+      isDragging.current = false;
+    }
+
+    window.addEventListener("mousemove", onPanMove);
+    window.addEventListener("mouseup", onPanEnd);
+    return () => {
+      window.removeEventListener("mousemove", onPanMove);
+      window.removeEventListener("mouseup", onPanEnd);
+    };
+  }, []);
+
+  /** Disarm any active pan session (called when a dnd drag starts). */
+  function stopBoardScroll() {
+    isDragging.current = false;
+  }
+
   function handleMouseDown(e: React.MouseEvent) {
     if (!boardRef.current) return;
 
-    if ((e.target as HTMLElement).closest('.dnd-kit-drag-handle, .card, .column')) return;
+    // Grabbing a board item must not arm panning — items are dragged via
+    // dnd-kit, which handles edge autoscroll itself.
+    if ((e.target as HTMLElement).closest("[data-board-item]")) return;
 
     isDragging.current = true;
     startX.current = e.pageX - boardRef.current.offsetLeft;
     scrollLeft.current = boardRef.current.scrollLeft;
-
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
-  }
-
-  function handleMouseMove(e: MouseEvent) {
-    if (!isDragging.current || !boardRef.current) return;
-
-    const x = e.pageX - boardRef.current.offsetLeft;
-    const walk = (x - startX.current) * 1;
-    boardRef.current.scrollLeft = scrollLeft.current - walk;
-  }
-  function handleMouseUp() {
-    isDragging.current = false;
-
-    window.removeEventListener("mousemove", handleMouseMove);
-    window.removeEventListener("mouseup", handleMouseUp);
   }
 
 
@@ -183,6 +197,9 @@ export default function Home() {
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     isDndActive.current = true;
+    // Kill any pan armed by the initial press — from here on, only
+    // dnd-kit's edge autoscroll may scroll the board.
+    stopBoardScroll();
     const { active } = event;
     const data = active.data.current;
     if (!data) return;
@@ -324,7 +341,7 @@ export default function Home() {
     setBoard(dragOrigRef.current ? { projectId: pid, columns: dragOrigRef.current } : null);
   }, [activeProjectId, setBoard]);
 
-  if (!activeProjectId || !activeProjectName) return <EmptyDemo />;
+  if (!activeProjectId || !activeProjectName) return <WorkspaceEmpty />;
 
   const columnsList = boardColumns.map((col) => (
     <Column
@@ -345,6 +362,11 @@ export default function Home() {
       <DndContext
         sensors={sensors}
         collisionDetection={rectIntersection}
+        autoScroll={{
+          // Engage horizontal edge-scroll slightly earlier than the
+          // default on wide boards.
+          threshold: { x: 0.18, y: 0.25 },
+        }}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
@@ -360,13 +382,9 @@ export default function Home() {
         <div
           ref={boardRef}
           onMouseDown={handleMouseDown}
-          className="p-6  flex-1 overflow-x-auto overflow-y-hidden  select-none
-  [&::-webkit-scrollbar]:h-2
-  [&::-webkit-scrollbar-track]:bg-accent 
-  [&::-webkit-scrollbar-thumb]:bg-sidebar-accent
-  [&::-webkit-scrollbar-thumb:hover]:bg-primary
-">
-          <div className="flex gap-4 h-full items-start ">
+          className="canvas-dots p-6 flex-1 overflow-x-auto overflow-y-hidden select-none scrollbar-slim"
+        >
+          <div className="flex h-full items-start gap-4 pr-1">
             <SortableContext
               items={renderColumnIds}
               strategy={horizontalListSortingStrategy}
@@ -374,17 +392,22 @@ export default function Home() {
               {columnsList}
             </SortableContext>
 
-            <div
-              className="bg-card border shadow-xs rounded-lg
-                       p-4 w-80 shrink-0"
-            >
-              <Button
+            {/* Add column — same ghost-tile affordance as Add card */}
+            <div className="w-72 shrink-0 pt-0.5">
+              <button
                 onClick={() => setIsNewColumnDialogOpen(true)}
-                className="w-full"
-                variant="secondary"
+                className="
+                  w-full flex items-center justify-center gap-2
+                  cursor-pointer border border-dashed border-border
+                  rounded-xl p-3 text-sm font-medium text-muted-foreground
+                  transition-colors duration-150 bg-card/40 backdrop-blur-[1px]
+                  hover:border-primary/50 hover:bg-primary/5 hover:text-primary
+                  focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none
+                "
               >
-                + Add Column
-              </Button>
+                <PlusIcon className="size-4" />
+                Add column
+              </button>
 
               <NewColumnDialog
                 open={isNewColumnDialogOpen}
@@ -392,9 +415,6 @@ export default function Home() {
                 projectId={activeProjectId}
               />
             </div>
-            <div
-              className=" p-1 w-30 shrink-0"
-            />
           </div>
         </div>
 
@@ -414,8 +434,8 @@ export default function Home() {
           {activeCard ? (
             <div
               className="cursor-grabbing
-                       bg-popover border
-                       shadow-md rounded-xl"
+                       bg-card border border-border-strong
+                       shadow-xl rounded-xl"
             >
               <CardPreview
                 card={activeCard}

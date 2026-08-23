@@ -76,7 +76,7 @@ export function EditCardDialog({
           bg-card text-card-foreground
           border border-border
           shadow-lg
-          rounded-lg
+          rounded-xl
         "
             >
                 <DialogHeader className="space-y-1">

@@ -56,12 +56,12 @@ export function NewCardDialog({ open, onClose, projectId, colId }: NewCardDialog
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="bg-card text-card-foreground border border-border shadow-lg rounded-lg">
+            <DialogContent className="bg-card text-card-foreground border border-border shadow-lg rounded-xl">
                 <DialogHeader className="space-y-1">
-                    <DialogTitle className="text-sm font-semibold tracking-tight">
-                        Create New Card
+                    <DialogTitle className="text-base font-semibold tracking-tight">
+                        Create new card
                     </DialogTitle>
-                    <DialogDescription className="text-sm text-muted-foreground">
+                    <DialogDescription className="text-muted-foreground">
                         Set the card title, color, and tasks.
                     </DialogDescription>
                 </DialogHeader>

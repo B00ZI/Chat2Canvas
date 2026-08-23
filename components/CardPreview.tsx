@@ -19,27 +19,38 @@ function CardPreview({
   colId,
   dragHandleProps,
 }: CardPreviewProps) {
-  const[isOpen, setIsOpen] = useState(false)
-  
-  // ✅ Bring in the toggle function from your Zustand store
+  const [isOpen, setIsOpen] = useState(false)
+
   const toggleCardIsDone = useProjectStore((state) => state.toggleCardIsDone)
 
-  const { completed, total, hasTasks, isAllDone } = useMemo(() => {
-    const tasks = card.tasks ||[]
+  const { completed, total, hasTasks, percent, isAllDone } = useMemo(() => {
+    const tasks = card.tasks || []
     const total = tasks.length
     const completed = tasks.filter((t) => t.done).length
     return {
       total,
       completed,
       hasTasks: total > 0,
+      percent: total > 0 ? Math.round((completed / total) * 100) : 0,
       isAllDone: total > 0 && total === completed,
     }
-  },[card.tasks])
+  }, [card.tasks])
 
-  const handleToggleDone = (e: React.MouseEvent<HTMLElement> | React.KeyboardEvent<HTMLElement>) => {
+  const handleToggleDone = (
+    e: React.MouseEvent<HTMLElement> | React.KeyboardEvent<HTMLElement>
+  ) => {
     e.stopPropagation()
     e.preventDefault()
     if (!TEST_MODE) toggleCardIsDone(projectId, colId, card.id)
+  }
+
+  // Celebration trigger: fire once per transition into "done" (render-time
+  // state adjustment — no effect, no setState-in-effect lint violation).
+  const [pulse, setPulse] = useState<{ key: number } | null>(null)
+  const [prevDone, setPrevDone] = useState(card.isDone)
+  if (prevDone !== card.isDone) {
+    setPrevDone(card.isDone)
+    if (card.isDone) setPulse((p) => ({ key: (p?.key ?? 0) + 1 }))
   }
 
   return (
@@ -55,89 +66,107 @@ function CardPreview({
             setIsOpen(true)
           }
         }}
-        // We use data-done to easily style the entire card when it's completed
+        // data-done drives the completed-card treatment
         data-done={card.isDone}
         className="
-          group relative flex w-full cursor-pointer flex-col 
-          rounded-xl border border-border/60 bg-card p-5 
-          shadow-sm transition-all duration-300 ease-out
-          hover:-translate-y-1 hover:border-primary/40 hover:shadow-md
-          data-[done=true]:opacity-60 data-[done=true]:grayscale-[0.3]
-          overflow-hidden
+          group relative flex w-full cursor-pointer flex-col gap-3
+          rounded-xl border border-border bg-card p-4
+          shadow-xs transition-all duration-200 ease-out
+          hover:-translate-y-0.5 hover:border-border-strong hover:shadow-md
+          focus-visible:ring-ring/60 focus-visible:ring-2 focus-visible:outline-none
+          data-[done=true]:opacity-55 data-[done=true]:grayscale-[0.35]
+          data-[done=true]:hover:opacity-70
         "
       >
-        {/* The Fused Modern Radial Glow (Using your exact tweaked opacities) */}
-        {card.color && (
-          <div
-            className="pointer-events-none absolute inset-0 z-0 opacity-[0.50] transition-opacity duration-300 group-hover:opacity-[0.65] dark:opacity-[0.35] dark:group-hover:opacity-[0.45]"
-            style={{
-              background: `radial-gradient(120% 120% at 0% 0%, ${card.color} 0%, transparent 80%)`,
-            }}
-          />
-        )}
+        {/* Title row: content-color spine dot + title + completion toggle */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 flex-1 items-start gap-2.5">
+            {card.color && (
+              <span
+                aria-hidden
+                className="mt-[7px] size-2 shrink-0 rounded-full"
+                style={{ backgroundColor: card.color }}
+              />
+            )}
 
-        {/* Content Wrapper */}
-        <div className="relative z-10 flex flex-col gap-4">
-          
-          <div className="flex items-start justify-between gap-3">
-            {/* Title & Description Column */}
-            <div className="flex flex-1 flex-col gap-1.5">
-              <h4 
-                className="line-clamp-2 wrap-break-word text-xl font-semibold leading-snug tracking-tight text-card-foreground transition-all group-data-[done=true]:line-through group-data-[done=true]:text-muted-foreground"
-              >
-                {card.title}
-              </h4>
-              
-              {/* ✅ Added Description Field */}
-              {card.description && (
-                <p className="line-clamp-2 text-sm text-muted-foreground/90">
-                  {card.description}
-                </p>
-              )}
-            </div>
-
-            {/* ✅ Interactive Checkbox Button for Full Card Completion */}
-            <button
-              onClick={handleToggleDone}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") handleToggleDone(e)
-              }}
-              // Tailwind 4 size utility (size-6 = h-6 w-6)
+            <h4
               className="
-                mt-1 flex size-6 shrink-0 items-center justify-center rounded-full 
-                border-2 border-border/80 transition-all duration-200
-                hover:scale-110 hover:border-green-500 hover:bg-green-500/10
-                group-data-[done=true]:border-green-500 group-data-[done=true]:bg-green-500
+                line-clamp-2 wrap-break-word text-base leading-snug font-semibold tracking-tight
+                transition-all group-data-[done=true]:text-muted-foreground
+                group-data-[done=true]:line-through
               "
-              aria-label={card.isDone ? "Mark as undone" : "Mark as done"}
             >
-              {card.isDone && <Check className="size-3.5 text-white stroke-3" />}
-            </button>
+              {card.title}
+            </h4>
           </div>
 
-          {/* Footer: Task count */}
-          {hasTasks && (
-            <div className="mt-1 flex items-center">
-              <div
-                className={`
-                  flex items-center gap-1.5 text-xs font-medium transition-colors
-                  ${
-                    isAllDone || card.isDone
-                      ? "text-green-600 dark:text-green-400"
-                      : "text-muted-foreground group-hover:text-card-foreground/80"
-                  }
-                `}
-              >
-                {/* Tailwind 4 size utility */}
-                <CheckSquare className="size-4" />
-                <span>
-                  {completed} / {total} tasks completed
-                </span>
-              </div>
-            </div>
-          )}
-          
+          <button
+            onClick={handleToggleDone}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") handleToggleDone(e)
+            }}
+            aria-label={card.isDone ? "Mark as undone" : "Mark as done"}
+            data-done={card.isDone}
+            className={`after:absolute after:-inset-1.5 after:rounded-full after:content-['']
+              relative mt-0 flex size-7 shrink-0 cursor-pointer items-center justify-center
+              rounded-full border-2 transition-all duration-150 active:scale-90
+              focus-visible:ring-ring/60 focus-visible:ring-2 focus-visible:outline-none ${
+                card.isDone
+                  ? // Done look is applied unconditionally so hovering can
+                    // never make a completed card read as incomplete.
+                    "border-success bg-success"
+                  : "border-border-strong hover:border-success hover:bg-success/10"
+              }`}
+          >
+            {/* One-shot radiating ring on completion */}
+            {card.isDone && pulse && (
+              <span
+                key={`pulse-${pulse.key}`}
+                aria-hidden
+                className="done-pulse border-success pointer-events-none absolute inset-0 rounded-full border-2"
+              />
+            )}
+
+            {card.isDone && (
+              <Check
+                key={`check-${pulse ? `pop-${pulse.key}` : "initial"}`}
+                className="check-pop text-background relative size-4 stroke-[3]"
+              />
+            )}
+          </button>
         </div>
+
+        {card.description && (
+          <p className="text-muted-foreground -mt-1.5 line-clamp-2 text-sm leading-relaxed">
+            {card.description}
+          </p>
+        )}
+
+        {/* Task progress: compact count + hairline bar */}
+        {hasTasks && (
+          <div className="flex items-center gap-2">
+            <CheckSquare
+              className={`size-3.5 shrink-0 ${
+                isAllDone || card.isDone ? "text-success" : "text-muted-foreground"
+              }`}
+            />
+            <span
+              className={`text-[11px] font-medium tabular-nums ${
+                isAllDone || card.isDone ? "text-success" : "text-muted-foreground"
+              }`}
+            >
+              {completed}/{total}
+            </span>
+            <div className="bg-muted h-1 flex-1 overflow-hidden rounded-full">
+              <div
+                className={`h-full rounded-full transition-[width] duration-500 ease-out ${
+                  isAllDone || card.isDone ? "bg-success" : "bg-primary"
+                }`}
+                style={{ width: `${percent}%` }}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       <CardDetailsDrawer

@@ -50,11 +50,11 @@ export function EditProjectDialog({
           bg-card text-card-foreground
           border border-border
           shadow-lg
-          rounded-lg
+          rounded-xl
         "
       >
         <DialogHeader className="space-y-1">
-          <DialogTitle className="text-sm font-semibold tracking-tight">
+          <DialogTitle className="text-base font-semibold tracking-tight">
             Rename project
           </DialogTitle>
         </DialogHeader>
