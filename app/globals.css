@@ -263,12 +263,6 @@ body {
   animation: drop-indicator-in 130ms ease-out both;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .card-drop-in {
-    animation: none;
-  }
-}
-
 /* Landed card settle: plays once when a dropped card mounts in its new
    column. Applied on the SortableCard shell, not CardPreview, so it never
    conflicts with the card's hover transitions. */
@@ -288,6 +282,7 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .card-drop-in,
   .card-land {
     animation: none;
   }

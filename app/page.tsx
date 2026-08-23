@@ -75,9 +75,6 @@ function reorderCardInBoard(
 
 export default function Home() {
 
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
   const boardRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
   const startX = useRef(0);
@@ -88,12 +85,6 @@ export default function Home() {
     useShallow((s) => {
       const p = s.projects.find((p) => p.id === s.activeProjectId)
       return p?.name ?? null
-    })
-  )
-  const columnIds = useProjectStore(
-    useShallow((s) => {
-      const p = s.projects.find((p) => p.id === s.activeProjectId)
-      return p?.columns.map((c) => c.id) ?? []
     })
   )
   // Full columns from the store — fallback render source when no local
@@ -127,13 +118,11 @@ export default function Home() {
     boardOv && boardOv.projectId === activeProjectId ? boardOv.columns : null;
 
   // Stores the card's intended destination during drag. Updated on every
-  // onDragOver; read once at drop. No state updates during drag → zero
-  // re-renders → zero layout cascade.
+  // onDragOver; read once at drop. No board state changes mid-drag.
   const pendingMoveRef = useRef<{ activeId: string; toColId: string; insertIndex: number } | null>(null);
 
   // Lightweight drop-target indicator: which column (and optionally which
-  // card within it) the pointer is over. Only the hovered Column re-renders;
-  // no card data changes, no layout cascade.
+  // card within it) the pointer is over. Only the hovered Column re-renders.
   const [hoveredColId, setHoveredColId] = useState<string | null>(null);
   const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
 
@@ -141,14 +130,17 @@ export default function Home() {
   // animation. Cleared by timer; ref survives re-renders.
   const [landedCardId, setLandedCardId] = useState<string | null>(null);
   const landTimerRef = useRef<number>(0);
+  useEffect(() => () => clearTimeout(landTimerRef.current), []);
 
-  // While a local drag board is active, render straight from it (bypasses
-  // store subscriptions entirely). Otherwise fall back to store-driven.
+  // Single render source for the board: local drag board while dragging,
+  // otherwise live store data. Identical <Column> type + keys either way,
+  // so switching sources never remounts anything.
+  const boardColumns = activeBoard ?? storeColumns;
   // Memoized: SortableContext loops if `items` gets a new array identity
   // every render.
   const renderColumnIds = useMemo(
-    () => (activeBoard ? activeBoard.map((c) => c.id) : columnIds),
-    [activeBoard, columnIds],
+    () => boardColumns.map((c) => c.id),
+    [boardColumns],
   );
 
   function handleMouseDown(e: React.MouseEvent) {
@@ -339,28 +331,16 @@ export default function Home() {
 
   if (!activeProjectId || !activeProjectName) return <EmptyDemo />;
 
-  if (!mounted) {
-    return (
-      <div className="flex-1 bg-background flex flex-col overflow-hidden ">
-        <TopBar />
-        <div className="p-6 flex-1" />
-      </div>
-    );
-  }
-
-  // Single render path: local drag board when active, otherwise live store
-  // data. Identical component type + keys → zero remounts when a drag starts.
-  const boardColumns = activeBoard ?? storeColumns;
   const columnsList = boardColumns.map((col) => (
     <Column
       key={col.id}
       col={col}
       projectId={activeProjectId}
       isDndActive={isDndActive}
-          isDropTarget={hoveredColId === col.id}
-          hoveredCardId={hoveredColId === col.id ? hoveredCardId : null}
-          landedCardId={landedCardId}
-        />
+      isDropTarget={hoveredColId === col.id}
+      hoveredCardId={hoveredColId === col.id ? hoveredCardId : null}
+      landedCardId={landedCardId}
+    />
   ));
 
   return (
