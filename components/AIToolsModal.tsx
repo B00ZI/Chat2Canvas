@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import {
   Dialog,
@@ -14,6 +14,7 @@ import { Zap, FileText, ArrowDown, ArrowUp } from "lucide-react"
 import { INSTRUCTIONS_PROMPTS } from "@/lib/prompts"
 import { useState } from "react"
 import { useProjectStore } from "@/store/projectStore"
+import { ImportData } from "@/lib/types"
 
 interface AIToolsModalProps {
   open: boolean
@@ -64,7 +65,7 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
         return
       }
 
-      const data = JSON.parse(jsonMatch[0])
+      const data: ImportData = JSON.parse(jsonMatch[0])
 
       if (!data.name || !Array.isArray(data.columns)) {
         setImportError(
