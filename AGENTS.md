@@ -119,9 +119,7 @@ interface Task {
 **Key Actions**:
 - `addProject(name)` — Creates project with 3 default columns
 - `importProject(data)` — Parses AI JSON, generates IDs, sets as active
-- `reorderColumns(projectId, oldIndex, newIndex)`
-- `reorderCards(projectId, columnId, oldIndex, newIndex)`
-- `moveCardBetweenColumns(projectId, cardId, fromColId, toColId, insertIndex)`
+- `replaceProjectColumns(projectId, columns)` — Single write path for the drag system; UI commits the final board once, on drop
 - `toggleCardIsDone(projectId, columnId, cardId)` — Marks entire card complete
 - `toggleTask(projectId, columnId, cardId, taskIndex)` — Toggles subtask
 
@@ -131,16 +129,15 @@ interface Task {
 1. **Horizontal** (page.tsx): `SortableContext` with `horizontalListSortingStrategy` for column reordering
 2. **Vertical** (Column.tsx): Nested `SortableContext` with `verticalListSortingStrategy` per column
 
-**Drag Over Logic** (page.tsx:108-141):
-- `handleDragOver` detects cross-column card moves in real-time
-- Uses `rectIntersection` collision detection
-- Debounced with `isUpdating` ref to prevent thrashing
-- Calls `moveCardBetweenColumns` immediately during drag
+**Local drag board** (page.tsx): on first grab, store columns are snapshotted into local React state (`boardOv`); all rendering during drags comes from that copy so Zustand/localStorage are never touched mid-drag.
 
-**Drag End Logic** (page.tsx:143-168):
-- Column reorder → `reorderColumns`
-- Within-column card reorder → `reorderCards`
-- Cross-column already handled in `handleDragOver`
+**Drag Over Logic**:
+- `handleDragOver` records only the card's intended destination (`pendingMoveRef`) and updates the "Drop here" indicator state — zero state commits during drag
+
+**Drag End Logic**:
+- Applies cross-column move + column/card reorder to the local board in one pass
+- TEST_MODE: result stays in local state for the session
+- Otherwise: exactly ONE `replaceProjectColumns` write, then control returns to the store
 
 ### Chat-to-Kanban (AI Integration)
 

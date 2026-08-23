@@ -19,10 +19,9 @@ export default function RootLayout({
   const [dark, setDark] = useState(false);
 
   useEffect(() => {
-    if (!TEST_MODE) {
-      const store = useProjectStore as unknown as { persist?: { rehydrate: () => void } };
-      store.persist?.rehydrate();
-    }
+    // skipHydration is set on the store; rehydrate manually after mount so
+    // SSR markup matches the first client render.
+    if (!TEST_MODE) useProjectStore.persist.rehydrate();
   }, []);
 
   return (

@@ -19,7 +19,7 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable'
 import { useState, useRef, useCallback, useEffect, useMemo } from "react"
-import { useProjectStore, TEST_MODE, LOCAL_DRAG_MODE } from "@/store/projectStore"
+import { useProjectStore, TEST_MODE } from "@/store/projectStore"
 import { useShallow } from "zustand/react/shallow"
 
 import TopBar from "@/components/Topbar"
@@ -190,27 +190,24 @@ export default function Home() {
     if (data.type === "Column") setActiveColumn(data.col);
     if (data.type === "Card") setActiveCard(data.card);
 
-    if (LOCAL_DRAG_MODE) {
-      // First drag of the session: snapshot store columns into local state.
-      if (!boardOvRef.current) {
-        const st = useProjectStore.getState();
-        const proj = st.projects.find((p) => p.id === activeProjectId);
-        if (proj) {
-          setBoard({
-            projectId: activeProjectId!,
-            columns: proj.columns.map((c) => ({ ...c, cards: [...c.cards] })),
-          });
-        }
+    // First drag of the session: snapshot store columns into local state.
+    if (!boardOvRef.current) {
+      const st = useProjectStore.getState();
+      const proj = st.projects.find((p) => p.id === activeProjectId);
+      if (proj) {
+        setBoard({
+          projectId: activeProjectId!,
+          columns: proj.columns.map((c) => ({ ...c, cards: [...c.cards] })),
+        });
       }
-      // Remember pre-drag board so Esc can snap back
-      dragOrigRef.current = boardOvRef.current?.columns ?? null;
     }
+    // Remember pre-drag board so Esc can snap back
+    dragOrigRef.current = boardOvRef.current?.columns ?? null;
   }, [activeProjectId, setBoard]);
 
   const handleDragOver = useCallback((event: DragOverEvent) => {
     const { active, over } = event;
     if (!over) return;
-    if (!LOCAL_DRAG_MODE) return;
 
     const activeId = active.id as string;
     const overId = over.id as string;
@@ -259,7 +256,6 @@ export default function Home() {
     setHoveredColId(null);
     setHoveredCardId(null);
 
-    if (!LOCAL_DRAG_MODE) return;
 
     const cur = boardOvRef.current;
     if (!cur || cur.projectId !== activeProjectId) return;
@@ -319,7 +315,6 @@ export default function Home() {
     setHoveredColId(null);
     setHoveredCardId(null);
 
-    if (!LOCAL_DRAG_MODE) return;
 
     pendingMoveRef.current = null;
 

@@ -51,18 +51,15 @@ Drag Start
     ↓
 handleDragStart → Sets activeColumn/activeCard refs
     ↓
-Drag Over (real-time)
-    ↓
 handleDragOver → rectIntersection collision detection
     ↓
-Finds activeCol & overCol → moveCardBetweenColumns (immediate)
+Records intended destination (pendingMoveRef) + "Drop here" indicator state only — no commits mid-drag
     ↓
 Drag End
     ↓
-handleDragEnd
-    ├── Column reorder? → reorderColumns
-    └── Card same-column reorder? → reorderCards
-        (Cross-column already handled in Drag Over)
+handleDragEnd → applies move/reorder to the local board in one pass
+    ├── TEST_MODE: stays in local state for the session
+    └── Otherwise: ONE replaceProjectColumns write → control returns to store
 ```
 
 ---
