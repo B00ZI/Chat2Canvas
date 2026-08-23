@@ -1,13 +1,13 @@
 'use client'
-import type { Metadata } from "next";
 import { Oxanium, Merriweather, Fira_Code } from "next/font/google";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useProjectStore, TEST_MODE } from "@/store/projectStore";
 
-const oxanium = Oxanium({ subsets: ["latin"], variable: "--font-oxanium" });
-const merriweather = Merriweather({ weight: ["400", "700"], subsets: ["latin"], variable: "--font-merriweather" });
-const firaCode = Fira_Code({ subsets: ["latin"], variable: "--font-fira-code" });
+const oxanium = Oxanium({ subsets: ["latin"], variable: "--font-oxanium", display: "swap" });
+const merriweather = Merriweather({ weight: ["400", "700"], subsets: ["latin"], variable: "--font-merriweather", display: "swap" });
+const firaCode = Fira_Code({ subsets: ["latin"], variable: "--font-fira-code", display: "swap" });
 
 
 export default function RootLayout({
@@ -17,6 +17,13 @@ export default function RootLayout({
 }>) {
 
   const [dark, setDark] = useState(false);
+
+  useEffect(() => {
+    if (!TEST_MODE) {
+      const store = useProjectStore as unknown as { persist?: { rehydrate: () => void } };
+      store.persist?.rehydrate();
+    }
+  }, []);
 
   return (
     <html
