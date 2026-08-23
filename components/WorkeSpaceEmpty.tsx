@@ -9,8 +9,8 @@ import {
 } from "@/components/ui/empty"
 import { Folder } from "lucide-react"
 import { useState } from "react"
-import AIToolsModal from "./AIToolsModal"
-import { NewProjectDialog } from "./NewProjectDialog"
+import AIToolsModal from "@/components/AIToolsModal"
+import { NewProjectDialog } from "@/components/NewProjectDialog"
 export function EmptyDemo() {
 
   const [isToolsOpen, setIsToolsOpen] = useState(false)

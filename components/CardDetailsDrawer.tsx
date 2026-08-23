@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState, useRef } from "react"
+import { useState, useRef } from "react"
 import { useProjectStore } from "@/store/projectStore"
 import { COLUMN_COLORS } from "@/lib/column-colors"
+import { Card } from "@/lib/types"
 
 import {
   Drawer,
@@ -23,20 +24,6 @@ import {
   Plus,
   ListTodo,
 } from "lucide-react"
-
-interface Task {
-  text: string
-  done: boolean
-}
-
-interface Card {
-  id: string
-  title: string
-  description?: string
-  color: string
-  isDone: boolean
-  tasks: Task[]
-}
 
 interface CardDetailsDrawerProps {
   open: boolean
@@ -60,10 +47,10 @@ export function CardDetailsDrawer({
 
   // Local View/Edit States
   const [isEditingTitle, setIsEditingTitle] = useState(false)
-  const [title, setTitle] = useState(card.title)
+  const [title, setTitle] = useState(() => card.title)
 
   const [isEditingDesc, setIsEditingDesc] = useState(false)
-  const [desc, setDesc] = useState(card.description || "")
+  const [desc, setDesc] = useState(() => card.description || "")
 
   const [showColorOptions, setShowColorOptions] = useState(false)
 
@@ -73,22 +60,6 @@ export function CardDetailsDrawer({
 
   const [editingTaskIdx, setEditingTaskIdx] = useState<number | null>(null)
   const [editTaskText, setEditTaskText] = useState("")
-
-  // Reset all UI states when opened/closed to ensure clean slate
-  useEffect(() => {
-    if (!open) {
-      setIsEditingTitle(false)
-      setIsEditingDesc(false)
-      setIsAddingTask(false)
-      setEditingTaskIdx(null)
-      setShowColorOptions(false)
-      setNewTaskText("")
-      setEditTaskText("")
-    } else {
-      setTitle(card.title)
-      setDesc(card.description || "")
-    }
-  }, [open, card.title, card.description])
 
   // --- ACTIONS ---
 

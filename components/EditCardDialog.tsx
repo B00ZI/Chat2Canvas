@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useEffect } from "react"
+import { useRef, useState } from "react"
 import {
     Dialog,
     DialogContent,
@@ -9,23 +9,11 @@ import {
     DialogDescription,
 } from "@/components/ui/dialog"
 
-import { Button } from "./ui/button"
-import { Input } from "./ui/input"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { useProjectStore } from "@/store/projectStore"
 import { COLUMN_COLORS } from "@/lib/column-colors"
-
-interface Task {
-    text: string
-    done: boolean
-}
-
-interface Card {
-    id: string
-    number: number
-    title: string
-    color: string
-    tasks: Task[]
-}
+import { Card, Task } from "@/lib/types"
 
 interface EditCardDialogProps {
     open: boolean
@@ -43,20 +31,13 @@ export function EditCardDialog({
     card,
 }: EditCardDialogProps) {
 
-    const [tasks, setTasks] = useState<Task[]>([])
-    const [selectedColor, setSelectedColor] = useState(card.color)
-
     const titleInputRef = useRef<HTMLInputElement>(null)
     const taskInputRef = useRef<HTMLInputElement>(null)
 
     const editCard = useProjectStore((state) => state.editCard)
 
-    useEffect(() => {
-        if (open) {
-            setTasks(card.tasks)
-            setSelectedColor(card.color)
-        }
-    }, [card.id, open])
+    const [tasks, setTasks] = useState<Task[]>(card.tasks)
+    const [selectedColor, setSelectedColor] = useState(card.color)
 
     function handleAddTask() {
         const taskText = taskInputRef.current?.value.trim()

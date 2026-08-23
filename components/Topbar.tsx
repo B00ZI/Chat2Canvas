@@ -1,24 +1,26 @@
-"use client"
+'use client'
 
-import { Button } from "./ui/button"
-import { useState } from "react"
-import AIToolsModal from "./AIToolsModal"
+import { Button } from "@/components/ui/button"
+import { memo, useState } from "react"
+import AIToolsModal from "@/components/AIToolsModal"
 import { useProjectStore } from "@/store/projectStore"
+import { useShallow } from "zustand/react/shallow"
 import { LayoutTemplate } from "lucide-react"
 
-export default function TopBar() {
+const TopBar = memo(function TopBar() {
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const activeProjectId = useProjectStore((state) => state.activeProjectId)
-  const projects = useProjectStore((state) => state.projects)
 
-  if (!activeProjectId) return null
-  const activeProject = projects.find((proj) => proj.id === activeProjectId)
-  if (!activeProject) return null
-
-  const allTasks = activeProject.columns.flatMap(col =>
-    col.cards.flatMap(card => card.tasks)
+  const project = useProjectStore(
+    useShallow((state) => {
+      const proj = state.projects.find(p => p.id === state.activeProjectId)
+      if (!proj) return null
+      const allTasks = proj.columns.flatMap(c => c.cards.flatMap(card => card.tasks))
+      const doneTasks = allTasks.filter(t => t.done).length
+      return { name: proj.name, allTasks: allTasks.length, doneTasks }
+    })
   )
-  const doneTasks = allTasks.filter(t => t.done).length
+
+  if (!project) return null
 
   return (
   <>
@@ -30,14 +32,14 @@ export default function TopBar() {
       {/* Left - Project Name */}
       <div className="flex flex-col">
         <h1 className="text-xl font-semibold">
-          {activeProject.name
+          {project.name
             .split(" ")
             .map(word => word.charAt(0).toUpperCase() + word.slice(1))
             .join(" ")}
         </h1>
 
         <p className="text-xs text-sidebar-foreground/70 flex items-center gap-2 mt-1">
-          {allTasks.length === 0 ? (
+          {project.allTasks === 0 ? (
             "No tasks yet"
           ) : (
             <>
@@ -47,11 +49,11 @@ export default function TopBar() {
                            text-sidebar-primary
                            text-xs font-medium"
               >
-                {Math.round((doneTasks / allTasks.length) * 100)}%
+                {Math.round((project.doneTasks / project.allTasks) * 100)}%
               </span>
 
               <span>
-                {doneTasks} of {allTasks.length} tasks completed
+                {project.doneTasks} of {project.allTasks} tasks completed
               </span>
             </>
           )}
@@ -83,4 +85,6 @@ export default function TopBar() {
   </>
 )
 
-}
+})
+
+export default memo(TopBar)

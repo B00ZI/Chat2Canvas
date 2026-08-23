@@ -7,8 +7,8 @@ import {
     DialogTitle,
     
 } from "@/components/ui/dialog"
-import { Button } from "./ui/button"
-import { Input } from "./ui/input"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { useProjectStore } from "@/store/projectStore"
 interface NewProjectDialog {
     open: boolean
@@ -22,9 +22,9 @@ export function NewProjectDialog({ open, onClose }: NewProjectDialog) {
     const addProject = useProjectStore((state) => state.addProject)
    
 
- function handleSubmit(e: React.FormEvent) {
-        e.preventDefault(); // Prevents the page from reloading
-        let name = inputRef.current?.value;
+  function handleSubmit(e: React.FormEvent) {
+        e.preventDefault();
+        const name = inputRef.current?.value;
         if (name && name.trim()) {
             addProject(name);
             onClose();

@@ -7,30 +7,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Button } from "./ui/button"
-import { Input } from "./ui/input"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { useProjectStore } from "@/store/projectStore"
 import { COLUMN_COLORS } from "@/lib/column-colors"
-
-interface Task {
-  text: string
-  done: boolean
-}
-
-interface Card {
-  id: string
-  number: number
-  title: string
-  color: string
-  tasks: Task[]
-}
-
-interface Column {
-  id: string
-  title: string
-  color: string
-  cards: Card[]
-}
+import { Column } from "@/lib/types"
 
 interface EditColumnDialogProps {
   open: boolean

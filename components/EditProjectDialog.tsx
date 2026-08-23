@@ -8,8 +8,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Button } from "./ui/button"
-import { Input } from "./ui/input"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { useProjectStore } from "@/store/projectStore"
 
 interface EditProjectDialogProps {
@@ -44,7 +44,7 @@ export function EditProjectDialog({
   }
 
   return (
-    <Dialog  open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent
         className="
           bg-card text-card-foreground

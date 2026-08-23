@@ -3,11 +3,11 @@
 import { Search, Plus, Shapes, SunMoon } from "lucide-react"
 import { useState, useRef, useEffect } from "react"
 import { useProjectStore } from "@/store/projectStore"
-import { NewProjectDialog } from "./NewProjectDialog"
-import { EditProjectDialog } from "./EditProjectDialog"
-import { ConfirmDeleteDialog } from "./ConfirmDeleteDialog"
+import { NewProjectDialog } from "@/components/NewProjectDialog"
+import { EditProjectDialog } from "@/components/EditProjectDialog"
+import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog"
 import { Button } from "@/components/ui/button"
-import { Switch } from "./ui/switch"
+import { Switch } from "@/components/ui/switch"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,8 +16,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { PencilIcon, TrashIcon } from "lucide-react"
+import { SidebarProps } from "@/lib/types"
 
-export default function Sidebar({ dark, setDark }: any) {
+export default function Sidebar({ dark, setDark }: SidebarProps) {
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editProjectId, setEditProjectId] = useState<string | null>(null)
