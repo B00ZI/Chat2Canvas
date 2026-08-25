@@ -1,21 +1,57 @@
 import type { Project } from "@/lib/types";
 import { COLUMN_COLORS } from "@/lib/column-colors";
 
-const [CRIMSON, GOLD, GREEN, TEAL, AZURE, VIOLET] = COLUMN_COLORS;
+const [CRIMSON, GOLD, GREEN, TEAL, AZURE, VIOLET, PINK, GRAPHITE] =
+  COLUMN_COLORS;
 
 /**
  * Seed board shown on first run / whenever persistence is disabled
- * (TEST_MODE). Kept out of the store file for readability.
+ * (TEST_MODE). Rich enough to show off progress rings, segmented bars,
+ * tags, and the completed-cards group.
  */
 export const DEMO_PROJECTS: Project[] = [
   {
     id: "demo-proj",
     name: "Demo Project",
+    description: "",
+    createdAt: new Date("2026-08-20T12:00:00").getTime(),
     columns: [
+      {
+        id: "demo-col-backlog",
+        title: "Backlog",
+        color: AZURE.value,
+        cards: [
+          {
+            id: "demo-card-b1",
+            title: "Multi-language support",
+            description: "i18n scaffolding with locale files and a language switcher",
+            color: GRAPHITE.value,
+            isDone: false,
+            tags: [{ name: "i18n", color: AZURE.value }],
+            tasks: [
+              { text: "Research i18n libraries", done: false },
+              { text: "Extract UI strings", done: false },
+            ],
+          },
+          {
+            id: "demo-card-b2",
+            title: "Accessibility audit",
+            description: "",
+            color: VIOLET.value,
+            isDone: false,
+            tags: [{ name: "quality", color: PINK.value }],
+            tasks: [
+              { text: "Keyboard-only walkthrough", done: false },
+              { text: "Contrast pass on both themes", done: false },
+              { text: "Screen reader spot-check", done: false },
+            ],
+          },
+        ],
+      },
       {
         id: "demo-col-1",
         title: "To Do",
-        color: AZURE.value,
+        color: VIOLET.value,
         cards: [
           {
             id: "demo-card-1",
@@ -24,6 +60,10 @@ export const DEMO_PROJECTS: Project[] = [
               "Create wireframes and high-fidelity mockups for the new landing page",
             color: GOLD.value,
             isDone: false,
+            tags: [
+              { name: "design", color: PINK.value },
+              { name: "web", color: AZURE.value },
+            ],
             tasks: [
               { text: "Research competitor layouts", done: true },
               { text: "Create wireframes", done: true },
@@ -35,7 +75,7 @@ export const DEMO_PROJECTS: Project[] = [
             id: "demo-card-2",
             title: "Set up CI/CD pipeline",
             description: "",
-            color: VIOLET.value,
+            color: CRIMSON.value,
             isDone: false,
             tasks: [
               { text: "Configure GitHub Actions", done: false },
@@ -47,8 +87,9 @@ export const DEMO_PROJECTS: Project[] = [
             id: "demo-card-3",
             title: "Write API documentation",
             description: "Document all REST endpoints with examples",
-            color: CRIMSON.value,
+            color: TEAL.value,
             isDone: false,
+            tags: [{ name: "docs", color: GREEN.value }],
             tasks: [
               { text: "Document auth endpoints", done: false },
               { text: "Document user endpoints", done: false },
@@ -68,6 +109,7 @@ export const DEMO_PROJECTS: Project[] = [
             description: "JWT-based auth with refresh tokens",
             color: TEAL.value,
             isDone: false,
+            tags: [{ name: "backend", color: CRIMSON.value }],
             tasks: [
               { text: "Set up JWT library", done: true },
               { text: "Create login endpoint", done: true },
@@ -88,15 +130,29 @@ export const DEMO_PROJECTS: Project[] = [
               { text: "Test rollback", done: false },
             ],
           },
+          {
+            id: "demo-card-6",
+            title: "Realtime notifications",
+            description: "WebSocket-powered toast notifications for board updates",
+            color: PINK.value,
+            isDone: false,
+            tags: [{ name: "feature", color: AZURE.value }],
+            tasks: [
+              { text: "Set up WebSocket server", done: true },
+              { text: "Client subscription layer", done: false },
+              { text: "Toast UI + throttling", done: false },
+              { text: "Reconnect handling", done: false },
+            ],
+          },
         ],
       },
       {
         id: "demo-col-3",
         title: "Review",
-        color: VIOLET.value,
+        color: PINK.value,
         cards: [
           {
-            id: "demo-card-6",
+            id: "demo-card-7",
             title: "Performance audit",
             description: "Lighthouse audit and bundle analysis",
             color: AZURE.value,
@@ -108,6 +164,18 @@ export const DEMO_PROJECTS: Project[] = [
               { text: "Write up findings", done: false },
             ],
           },
+          {
+            id: "demo-card-8",
+            title: "Onboarding flow copy",
+            description: "",
+            color: VIOLET.value,
+            isDone: false,
+            tags: [{ name: "content", color: GOLD.value }],
+            tasks: [
+              { text: "Draft welcome screen copy", done: true },
+              { text: "Review with stakeholders", done: false },
+            ],
+          },
         ],
       },
       {
@@ -116,7 +184,7 @@ export const DEMO_PROJECTS: Project[] = [
         color: GREEN.value,
         cards: [
           {
-            id: "demo-card-7",
+            id: "demo-card-9",
             title: "Project setup",
             description: "Initialize repo with Next.js, Tailwind, and ESLint",
             color: TEAL.value,
@@ -129,7 +197,7 @@ export const DEMO_PROJECTS: Project[] = [
             ],
           },
           {
-            id: "demo-card-8",
+            id: "demo-card-10",
             title: "Component library",
             description: "Set up shadcn/ui with base components",
             color: GOLD.value,
@@ -139,6 +207,38 @@ export const DEMO_PROJECTS: Project[] = [
               { text: "Add Button, Dialog, Input", done: true },
               { text: "Configure theme", done: true },
             ],
+          },
+          {
+            id: "demo-card-11",
+            title: "Set up analytics",
+            description: "",
+            color: AZURE.value,
+            isDone: true,
+            tags: [{ name: "infra", color: GRAPHITE.value }],
+            tasks: [
+              { text: "Choose analytics provider", done: true },
+              { text: "Wire page-view events", done: true },
+            ],
+          },
+          {
+            id: "demo-card-12",
+            title: "Write launch checklist",
+            description: "",
+            color: PINK.value,
+            isDone: true,
+            tasks: [
+              { text: "List go-live steps", done: true },
+              { text: "Assign owners", done: true },
+              { text: "Schedule dry run", done: true },
+            ],
+          },
+          {
+            id: "demo-card-13",
+            title: "Fix login redirect bug",
+            description: "Users were bounced to /login after OAuth callback",
+            color: CRIMSON.value,
+            isDone: true,
+            tasks: [{ text: "Patch callback handler", done: true }],
           },
         ],
       },

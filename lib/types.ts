@@ -3,6 +3,12 @@ export interface Task {
   done: boolean;
 }
 
+/** Free-form label attached to cards — denormalized (name + palette color). */
+export interface Tag {
+  name: string;
+  color: string;
+}
+
 export interface Card {
   id: string;
   title: string;
@@ -10,6 +16,7 @@ export interface Card {
   color: string;
   isDone: boolean;
   tasks: Task[];
+  tags?: Tag[];
 }
 
 export interface Column {
@@ -22,11 +29,14 @@ export interface Column {
 export interface Project {
   id: string;
   name: string;
+  description?: string;
+  createdAt?: number;
   columns: Column[];
 }
 
 export interface ImportData {
   name: string;
+  description?: string;
   columns: {
     title: string;
     color: string;
@@ -36,6 +46,7 @@ export interface ImportData {
       color: string;
       isDone?: boolean;
       tasks: { text: string; done: boolean }[];
+      tags?: { name: string; color: string }[];
     }[];
   }[];
 }

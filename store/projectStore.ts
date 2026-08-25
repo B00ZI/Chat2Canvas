@@ -1,8 +1,34 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { Card, Column, ImportData, Project } from "@/lib/types";
+import { Card, Column, ImportData, Project, Tag } from "@/lib/types";
 import { COLUMN_COLORS, normalizeContentColor } from "@/lib/column-colors";
 import { DEMO_PROJECTS } from "./demoData";
+
+/** Sanitize AI/user-provided tags onto the content palette. */
+function sanitizeTags(raw: unknown): Tag[] {
+  const palette: string[] = COLUMN_COLORS.map((c) => c.value);
+  const seen = new Set<string>();
+  const out: Tag[] = [];
+  for (const item of Array.isArray(raw) ? raw : []) {
+    const name = String((item as Tag)?.name ?? "")
+      .trim()
+      .slice(0, 12);
+    if (!name) continue;
+    const key = name.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const color = (item as Tag)?.color;
+    out.push({
+      name,
+      color:
+        typeof color === "string" && palette.includes(color)
+          ? color
+          : COLUMN_COLORS[7].value,
+    });
+    if (out.length >= 4) break;
+  }
+  return out;
+}
 
 /**
  * When true, persistence is swapped for a no-op adapter and the UI guards
@@ -15,9 +41,18 @@ interface ProjectStore {
   projects: Project[];
   activeProjectId: string | null;
 
+  /** Transient UI state — which card's drawer is open. Never persisted. */
+  openCard: { colId: string; cardId: string } | null;
+  setOpenCard: (open: { colId: string; cardId: string } | null) => void;
+
   importProject: (projectData: ImportData) => void;
+  updateProjectFromImport: (
+    projectId: string,
+    projectData: ImportData,
+  ) => void;
   addProject: (name: string) => void;
   editProject: (id: string, newName: string) => void;
+  setProjectDescription: (id: string, description: string) => void;
   deleteProject: (id: string) => void;
   setActiveProject: (id: string) => void;
 
@@ -49,6 +84,13 @@ interface ProjectStore {
     taskIndex: number,
   ) => void;
   toggleCardIsDone: (projectId: string, colId: string, cardId: string) => void;
+  addTag: (projectId: string, colId: string, cardId: string, tag: Tag) => void;
+  removeTag: (
+    projectId: string,
+    colId: string,
+    cardId: string,
+    tagIndex: number,
+  ) => void;
 }
 
 /** Collision-safe id: "<prefix>-<timestamp>-<random>" */
@@ -80,12 +122,22 @@ export const useProjectStore = create<ProjectStore>()(
       projects: DEMO_PROJECTS,
       activeProjectId: DEMO_PROJECTS[0].id,
 
+      // ── Transient UI state ─────────────────────────────────────────
+
+      openCard: null,
+      setOpenCard: (open) => set({ openCard: open }),
+
       // ── Projects ──────────────────────────────────────────────────
 
       importProject: (data) => {
         const newProject: Project = {
           id: genId("proj"),
           name: data.name,
+          description:
+            typeof data.description === "string"
+              ? data.description.slice(0, 500)
+              : "",
+          createdAt: Date.now(),
           columns: data.columns.map((col) => ({
             id: genId("col"),
             title: col.title,
@@ -97,6 +149,7 @@ export const useProjectStore = create<ProjectStore>()(
               color: normalizeContentColor(c.color),
               isDone: c.isDone || false,
               tasks: c.tasks,
+              tags: sanitizeTags(c.tags),
             })),
           })),
         };
@@ -106,10 +159,40 @@ export const useProjectStore = create<ProjectStore>()(
         }));
       },
 
+      /** Refine flow: swap an existing project's sections/cards in place,
+       *  keeping its identity (id, name, description, createdAt). */
+      updateProjectFromImport: (projectId, data) =>
+        set((state) => ({
+          openCard: null,
+          projects: state.projects.map((p) =>
+            p.id !== projectId
+              ? p
+              : {
+                  ...p,
+                  columns: data.columns.map((col) => ({
+                    id: genId("col"),
+                    title: col.title,
+                    color: normalizeContentColor(col.color),
+                    cards: col.cards.map((c) => ({
+                      id: genId("card"),
+                      title: c.title,
+                      description: c.description || "",
+                      color: normalizeContentColor(c.color),
+                      isDone: c.isDone || false,
+                      tasks: c.tasks,
+                      tags: sanitizeTags(c.tags),
+                    })),
+                  })),
+                }
+          ),
+        })),
+
       addProject: (name) => {
         const newProject: Project = {
           id: genId("proj"),
           name,
+          description: "",
+          createdAt: Date.now(),
           columns: [
             { id: genId("col"), title: "To Do", color: COLUMN_COLORS[4].value, cards: [] },
             { id: genId("col"), title: "In Progress", color: COLUMN_COLORS[1].value, cards: [] },
@@ -126,6 +209,15 @@ export const useProjectStore = create<ProjectStore>()(
         set((state) => ({
           projects: state.projects.map((p) =>
             p.id === id ? { ...p, name: newName } : p,
+          ),
+        })),
+
+      setProjectDescription: (id, description) =>
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === id
+              ? { ...p, description: description.trim().slice(0, 500) }
+              : p,
           ),
         })),
 
@@ -239,12 +331,40 @@ export const useProjectStore = create<ProjectStore>()(
             ),
           ),
         })),
+
+      addTag: (projectId, colId, cardId, tag) =>
+        set((state) => ({
+          projects: mapCardsIn(state.projects, projectId, colId, (cards) =>
+            cards.map((c) => {
+              if (c.id !== cardId) return c;
+              // Replace same-name tag, cap at 4
+              const tags = (c.tags ?? []).filter(
+                (t) => t.name.toLowerCase() !== tag.name.toLowerCase(),
+              );
+              return { ...c, tags: [...tags, tag].slice(0, 4) };
+            }),
+          ),
+        })),
+
+      removeTag: (projectId, colId, cardId, tagIndex) =>
+        set((state) => ({
+          projects: mapCardsIn(state.projects, projectId, colId, (cards) =>
+            cards.map((c) =>
+              c.id === cardId
+                ? {
+                    ...c,
+                    tags: (c.tags ?? []).filter((_, i) => i !== tagIndex),
+                  }
+                : c,
+            ),
+          ),
+        })),
     }),
     {
       name: "chat2canvas-storage",
-      version: 1,
-      // v0 → v1: snap legacy colors (old OKLCH set, hex defaults) onto the
-      // current content palette so the Ember accent keeps its own lane.
+      version: 2,
+      // v0→v1: snap legacy colors onto the current palette.
+      // v1→v2: backfill project createdAt for the details panel.
       migrate: (state) => {
         const s = state as {
           projects?: Project[];
@@ -253,6 +373,7 @@ export const useProjectStore = create<ProjectStore>()(
         return {
           projects: (s.projects ?? []).map((p) => ({
             ...p,
+            createdAt: p.createdAt ?? Date.now(),
             columns: p.columns.map((col) => ({
               ...col,
               color: normalizeContentColor(col.color),
