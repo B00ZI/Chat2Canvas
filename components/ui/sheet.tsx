@@ -49,14 +49,17 @@ function SheetContent({
   children,
   side = "right",
   showClose = true,
+  showOverlay = true,
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Content> & {
   side?: "top" | "right" | "bottom" | "left"
   showClose?: boolean
+  /** Render the dimmed backdrop. Off pairs with <Sheet modal={false}>. */
+  showOverlay?: boolean
 }) {
   return (
     <SheetPortal>
-      <SheetOverlay />
+      {showOverlay && <SheetOverlay />}
       <SheetPrimitive.Content
         data-slot="sheet-content"
         className={cn(

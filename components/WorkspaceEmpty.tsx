@@ -6,13 +6,12 @@ import {
   EmptyContent,
   EmptyDescription,
   EmptyHeader,
-  EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty"
-import { Shapes } from "lucide-react"
 import { useState } from "react"
 import AIToolsModal from "@/components/AIToolsModal"
 import { NewProjectDialog } from "@/components/NewProjectDialog"
+import { LogoMark } from "@/components/Logo"
 
 /** Ghost column skeletons rendered on a faint dot-grid canvas. */
 function GhostBoard() {
@@ -51,9 +50,7 @@ export function WorkspaceEmpty() {
       <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto p-6">
         <Empty>
           <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <Shapes />
-            </EmptyMedia>
+            <LogoMark className="text-foreground/70 size-10" />
 
             <EmptyTitle className="font-display text-2xl font-semibold tracking-tight">
               Nothing on the canvas yet

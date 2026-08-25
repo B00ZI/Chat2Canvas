@@ -5,11 +5,13 @@ import { memo, useEffect, useState } from "react"
 import AIToolsModal from "@/components/AIToolsModal"
 import { useProjectStore } from "@/store/projectStore"
 import { useShallow } from "zustand/react/shallow"
-import { LayoutTemplate, PanelLeft } from "lucide-react"
+import { LayoutTemplate, PanelLeft, Maximize2 } from "lucide-react"
 import { titleCase } from "@/lib/utils"
+import { useFocusMode } from "@/lib/ui-state"
 
-const TopBar = memo(function TopBar() {
+const TopBarInner = memo(function TopBarInner() {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [focus, toggleFocus] = useFocusMode()
 
   // Command palette can open Canvas Tools remotely.
   useEffect(() => {
@@ -22,10 +24,11 @@ const TopBar = memo(function TopBar() {
     useShallow((state) => {
       const proj = state.projects.find((p) => p.id === state.activeProjectId)
       if (!proj) return null
+      const cards = proj.columns.flatMap((c) => c.cards)
       return {
         name: proj.name,
-        cardsDone: proj.columns.flatMap((c) => c.cards).filter((card) => card.isDone).length,
-        cardsTotal: proj.columns.reduce((acc, c) => acc + c.cards.length, 0),
+        cardsDone: cards.filter((card) => card.isDone).length,
+        cardsTotal: cards.length,
       }
     })
   )
@@ -35,15 +38,23 @@ const TopBar = memo(function TopBar() {
   // The ring tracks CARDS (whole-card completion), not subtasks — simpler
   // signal at a glance.
   const percent =
-    project.cardsTotal === 0 ? 0 : Math.round((project.cardsDone / project.cardsTotal) * 100)
-  const isComplete = project.cardsTotal > 0 && project.cardsDone === project.cardsTotal
+    project.cardsTotal === 0
+      ? 0
+      : Math.round((project.cardsDone / project.cardsTotal) * 100)
+  const isComplete =
+    project.cardsTotal > 0 && project.cardsDone === project.cardsTotal
 
   return (
     <>
       <header
-        className="bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky top-0 z-30
+        className={`bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky top-0 z-30
                    border-b border-border backdrop-blur
-                   flex h-16 shrink-0 items-center gap-3 px-4 md:px-6"
+                   flex h-[72px] shrink-0 items-center gap-3 px-4 md:px-6
+                   transition-[margin,transform,opacity] duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${
+                     focus
+                       ? "pointer-events-none -mt-[72px] -translate-y-3 opacity-0"
+                       : ""
+                   }`}
       >
         {/* Mobile sidebar trigger */}
         <Button
@@ -57,7 +68,7 @@ const TopBar = memo(function TopBar() {
         </Button>
 
         {/* Project profile: completion ring + name */}
-        <div className="flex min-w-0 flex-1 items-center gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3.5">
           {/* Progress ring "avatar" */}
           <div
             role="progressbar"
@@ -66,7 +77,7 @@ const TopBar = memo(function TopBar() {
             aria-valuemax={100}
             aria-label={`${percent}% of cards completed`}
             title={`${project.cardsDone} of ${project.cardsTotal} cards done`}
-            className="relative size-10 shrink-0"
+            className="relative size-12 shrink-0"
           >
             <svg viewBox="0 0 36 36" className="size-full -rotate-90">
               <circle
@@ -94,7 +105,7 @@ const TopBar = memo(function TopBar() {
               )}
             </svg>
             <span
-              className={`absolute inset-0 flex items-center justify-center text-[10px] font-semibold tabular-nums ${
+              className={`absolute inset-0 flex items-center justify-center text-xs font-semibold tabular-nums ${
                 isComplete ? "text-success" : "text-foreground"
               }`}
             >
@@ -103,24 +114,37 @@ const TopBar = memo(function TopBar() {
           </div>
 
           <div className="min-w-0">
-            <h1 className="truncate text-lg leading-tight font-semibold tracking-tight">
+            <h1 className="truncate text-xl leading-tight font-semibold tracking-tight">
               {titleCase(project.name)}
             </h1>
-            <p className="text-muted-foreground mt-0.5 text-xs tabular-nums">
+            <p className="text-muted-foreground mt-0.5 text-[13px] tabular-nums">
               {project.cardsDone}/{project.cardsTotal} cards completed
             </p>
           </div>
         </div>
 
         {/* Actions */}
-        <Button
-          size="sm"
-          onClick={() => setIsModalOpen(true)}
-          className="shadow-xs hover:bg-primary/90 flex items-center gap-2"
-        >
-          <LayoutTemplate />
-          Canvas Tools
-        </Button>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Enter focus mode"
+            title="Focus mode — hide sidebar and top bar (Esc to exit)"
+            onClick={toggleFocus}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <Maximize2 />
+          </Button>
+
+          <Button
+            size="sm"
+            onClick={() => setIsModalOpen(true)}
+            className="shadow-xs hover:bg-primary/90 ml-1 flex items-center gap-2"
+          >
+            <LayoutTemplate />
+            Canvas Tools
+          </Button>
+        </div>
       </header>
 
       <AIToolsModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
@@ -128,4 +152,4 @@ const TopBar = memo(function TopBar() {
   )
 })
 
-export default memo(TopBar)
+export default memo(TopBarInner)

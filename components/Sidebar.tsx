@@ -1,6 +1,6 @@
 'use client'
 
-import { Search, Plus, Shapes, SunMoon, Check, Monitor, Moon, Sun } from "lucide-react"
+import { Search, Plus, Check, Monitor, Moon, Sun, SunMoon, Maximize2, MoreVertical } from "lucide-react"
 import { useState, useEffect } from "react"
 import { useProjectStore } from "@/store/projectStore"
 import { NewProjectDialog } from "@/components/NewProjectDialog"
@@ -15,9 +15,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
-import { PencilIcon, TrashIcon, MoreVertical } from "lucide-react"
+import { PencilIcon, TrashIcon } from "lucide-react"
+import { Logo } from "@/components/Logo"
 import { titleCase } from "@/lib/utils"
 import { useTheme, type Theme } from "@/lib/theme"
+import { useFocusMode } from "@/lib/ui-state"
 import { toast } from "sonner"
 
 /** Opens the global command palette (registered in CommandPalette.tsx). */
@@ -31,12 +33,46 @@ const THEME_OPTIONS: { value: Theme; label: string; icon: typeof Sun }[] = [
   { value: "system", label: "System", icon: Monitor },
 ]
 
+function FocusModeRow() {
+  const [focus, toggleFocus] = useFocusMode()
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      aria-pressed={focus}
+      className="
+        text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground
+        focus-visible:ring-sidebar-ring w-full justify-start gap-2
+      "
+      onClick={toggleFocus}
+    >
+      <Maximize2 className="size-4 shrink-0" />
+      Focus mode
+      <span
+        className={`ml-auto text-[10px] font-semibold tracking-wider uppercase transition-colors ${
+          focus ? "text-primary" : "text-muted-foreground/50"
+        }`}
+      >
+        {focus ? "On" : "Off"}
+      </span>
+    </Button>
+  )
+}
+
 export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editProjectId, setEditProjectId] = useState<string | null>(null)
   const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null)
 
   const [theme, setTheme] = useTheme()
+
+  // Canvas Tools' "Create manually" hands off to the project dialog here.
+  useEffect(() => {
+    const handler = () => setIsModalOpen(true)
+    window.addEventListener("c2c:new-project", handler)
+    return () => window.removeEventListener("c2c:new-project", handler)
+  }, [])
 
   const projects = useProjectStore((state) => state.projects)
   const activeProjectId = useProjectStore((state) => state.activeProjectId)
@@ -60,13 +96,8 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="bg-sidebar text-sidebar-foreground flex h-full flex-col">
       {/* Brand */}
-      <div className="flex h-16 shrink-0 items-center gap-3 border-b border-sidebar-border px-4">
-        <div className="bg-primary text-primary-foreground shadow-xs flex h-8 w-8 items-center justify-center rounded-lg">
-          <Shapes className="h-4 w-4" />
-        </div>
-        <h2 className="font-display text-base leading-none font-semibold tracking-tight">
-          Chat2Canvas
-        </h2>
+      <div className="flex h-16 shrink-0 items-center border-b border-sidebar-border px-5">
+        <Logo />
       </div>
 
       {/* Actions */}
@@ -146,6 +177,15 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
                 <span className="flex-1 truncate pl-1">{titleCase(project.name)}</span>
 
+                {/* Card count chip */}
+                <span
+                  className={`shrink-0 text-[10px] font-medium tabular-nums ${
+                    isActive ? "text-primary/80" : "text-muted-foreground/60"
+                  }`}
+                >
+                  {project.columns.reduce((acc, c) => acc + c.cards.length, 0)}
+                </span>
+
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -201,7 +241,9 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       </div>
 
       {/* Footer */}
-      <div className="border-t border-sidebar-border p-3">
+      <div className="space-y-0.5 border-t border-sidebar-border p-3">
+        <FocusModeRow />
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -262,6 +304,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
 export default function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [focus] = useFocusMode()
 
   // Topbar hamburger requests the off-canvas sidebar on small screens.
   useEffect(() => {
@@ -272,8 +315,12 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Desktop rail */}
-      <aside className="hidden w-60 shrink-0 md:block">
+      {/* Desktop rail — slides out in focus mode */}
+      <aside
+        className={`hidden w-60 shrink-0 transition-[margin] duration-300 ease-[cubic-bezier(0.2,0,0,1)] md:block ${
+          focus ? "-ml-60" : ""
+        }`}
+      >
         <SidebarContent />
       </aside>
 
