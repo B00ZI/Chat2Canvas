@@ -18,9 +18,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-import { PencilIcon, TrashIcon, MoreVertical, PlusIcon } from "lucide-react"
+import { PencilIcon, TrashIcon, MoreVertical, PlusIcon, ChevronDown, Check } from "lucide-react"
+import CardPreview from "@/components/CardPreview"
 import { Button } from "@/components/ui/button"
-import { Column as ColumnType } from "@/lib/types"
+import { Column as ColumnType, Card as CardType } from "@/lib/types"
 
 interface ColumnProps {
   col: ColumnType
@@ -29,6 +30,58 @@ interface ColumnProps {
   isDropTarget?: boolean
   hoveredCardId?: string | null
   landedCardId?: string | null
+}
+
+/** Collapsible zone that keeps finished work out of the active lane. */
+function CompletedGroup({
+  cards,
+  projectId,
+  colId,
+}: {
+  cards: CardType[]
+  projectId: string
+  colId: string
+}) {
+  // Small wins stay visible; bigger piles collapse by default.
+  const [expanded, setExpanded] = useState(cards.length <= 3)
+
+  return (
+    <div className="pt-1">
+      <button
+        type="button"
+        onClick={() => setExpanded((e) => !e)}
+        aria-expanded={expanded}
+        className="group/completed text-muted-foreground hover:text-foreground flex w-full cursor-pointer items-center gap-1.5 border-t border-border/60 pt-3 text-[10px] font-semibold tracking-widest uppercase transition-colors"
+      >
+        <ChevronDown
+          className={`size-3.5 shrink-0 transition-transform duration-200 ${
+            expanded ? "" : "-rotate-90"
+          }`}
+        />
+        <Check className="text-success size-3 shrink-0 stroke-[3]" />
+        Completed
+        <span className="bg-muted group-hover/completed:bg-border ml-auto rounded-full px-1.5 py-0.5 text-[10px] leading-none tabular-nums normal-case">
+          {cards.length}
+        </span>
+      </button>
+
+      <div
+        aria-hidden={!expanded}
+        className="grid transition-[grid-template-rows] duration-300 ease-out"
+        style={{ gridTemplateRows: expanded ? "1fr" : "0fr" }}
+      >
+        <div className="min-h-0 overflow-hidden">
+          {/* Real cards, full done-state treatment (fade + strikethrough).
+              Not draggable — outside any SortableContext by design. */}
+          <div className="scrollbar-slim space-y-3 pt-3 pr-0.5">
+            {cards.map((card) => (
+              <CardPreview key={card.id} card={card} projectId={projectId} colId={colId} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 const Column = memo(function Column({ col, projectId, isDndActive, isDropTarget, hoveredCardId, landedCardId }: ColumnProps) {
@@ -59,16 +112,23 @@ const Column = memo(function Column({ col, projectId, isDndActive, isDropTarget,
     willChange: 'transform',
   }
 
-  const cardIds = useMemo(() => col.cards.map(card => card.id), [col.cards])
+  // Active lane vs completed zone — derived at render, store untouched.
+  // Done cards are excluded from SortableContext so they can never be
+  // drag targets; open-card dragging behaves exactly as before.
+  const openCards = useMemo(() => col.cards.filter((c) => !c.isDone), [col.cards])
+  const doneCards = useMemo(() => col.cards.filter((c) => c.isDone), [col.cards])
+  const cardIds = useMemo(() => openCards.map((card) => card.id), [openCards])
 
-  // Where the "Drop here" indicator sits: before the hovered card, or at the
-  // end of the list when hovering the column body / empty bottom area.
-  const hoveredIdx = hoveredCardId
-    ? col.cards.findIndex((c) => c.id === hoveredCardId)
-    : -1
-  const dropIndex = isDropTarget
-    ? hoveredIdx >= 0 ? hoveredIdx : col.cards.length
-    : -1
+  // Stored-order index of each card (drop math works on the full array)
+  const storedIdx = useMemo(
+    () => new Map(col.cards.map((c, i) => [c.id, i] as const)),
+    [col.cards],
+  )
+
+  // Where the "Drop here" indicator sits: before the hovered OPEN card,
+  // or after the last open card when hovering the column body / empty area.
+  const dropIndex =
+    isDropTarget && hoveredCardId ? (storedIdx.get(hoveredCardId) ?? -1) : -1
 
   const dropIndicator = (
     <div className="card-drop-in h-24 rounded-xl border-2 border-dashed border-muted bg-muted/30 flex items-center justify-center opacity-50">
@@ -212,12 +272,19 @@ const Column = memo(function Column({ col, projectId, isDndActive, isDropTarget,
           setNodeRef(node)
           wrapperRef.current = node
         }}
-        style={style}
+        style={{
+          ...style,
+          // Section identity: soft wash of the section color blended into
+          // the surface token (works in both themes; graphite ≈ neutral).
+          backgroundColor: col.color
+            ? `color-mix(in oklab, ${col.color} 9%, var(--card))`
+            : "var(--card)",
+        }}
         data-board-item
         suppressHydrationWarning
         className="w-80 shrink-0 flex flex-col
                    rounded-xl border border-border
-                   shadow-xs bg-card"
+                   shadow-xs"
       >
         {/* Column header: spine dot + title + count pill */}
         <div className="p-4 pb-0">
@@ -307,9 +374,9 @@ const Column = memo(function Column({ col, projectId, isDndActive, isDropTarget,
                      max-h-[calc(80vh-8rem)]"
         >
           <SortableContext items={cardIds} strategy={verticalListSortingStrategy}>
-            {col.cards.map((card, i) => (
+            {openCards.map((card) => (
               <Fragment key={card.id}>
-                {isDropTarget && i === dropIndex && dropIndicator}
+                {isDropTarget && storedIdx.get(card.id) === dropIndex && dropIndicator}
                 <SortableCard
                   card={card}
                   projectId={projectId}
@@ -318,8 +385,13 @@ const Column = memo(function Column({ col, projectId, isDndActive, isDropTarget,
                 />
               </Fragment>
             ))}
-            {isDropTarget && dropIndex >= col.cards.length && dropIndicator}
+            {isDropTarget && !hoveredCardId && dropIndicator}
           </SortableContext>
+
+          {/* Completed zone — sunk below the active lane */}
+          {doneCards.length > 0 && (
+            <CompletedGroup cards={doneCards} projectId={projectId} colId={col.id} />
+          )}
         </div>
 
         {/* Add new card — same ghost-tile affordance as Add Column */}

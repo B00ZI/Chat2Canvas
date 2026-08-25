@@ -45,7 +45,6 @@ const SortableCard = memo(function SortableCard({
       data-card-id={card.id}
       data-board-item
       suppressHydrationWarning
-      className="touch-none"
     >
       <div
         suppressHydrationWarning

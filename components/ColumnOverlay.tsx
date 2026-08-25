@@ -8,7 +8,12 @@ interface ColumnOverlayProps {
 export function ColumnOverlay({ col }: ColumnOverlayProps) {
   return (
     <div
-      className="bg-card rounded-xl p-4 w-80 shrink-0 flex flex-col max-h-[80vh]
+      style={{
+        backgroundColor: col.color
+          ? `color-mix(in oklab, ${col.color} 9%, var(--card))`
+          : "var(--card)",
+      }}
+      className="rounded-xl p-4 w-80 shrink-0 flex flex-col max-h-[80vh]
                  shadow-xl border border-border-strong opacity-95"
     >
       <div className="flex items-center gap-2.5">
@@ -35,18 +40,9 @@ export function ColumnOverlay({ col }: ColumnOverlayProps) {
             key={card.id}
             className="text-card-foreground w-full rounded-xl border border-border bg-card p-4 shadow-xs"
           >
-            <div className="flex items-start gap-2.5">
-              {card.color && (
-                <span
-                  aria-hidden
-                  className="mt-[7px] size-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: card.color }}
-                />
-              )}
-              <h4 className="truncate text-sm font-medium text-foreground">
-                {card.title}
-              </h4>
-            </div>
+            <h4 className="truncate text-sm font-medium text-foreground">
+              {card.title}
+            </h4>
             {card.tasks.length > 0 && (
               <p className="text-muted-foreground mt-2 text-[11px] tabular-nums">
                 {card.tasks.filter((t) => t.done).length}/{card.tasks.length} tasks

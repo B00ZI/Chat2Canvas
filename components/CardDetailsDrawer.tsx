@@ -3,7 +3,17 @@
 import { useState, useRef, useEffect } from "react"
 import { useProjectStore } from "@/store/projectStore"
 import { COLUMN_COLORS } from "@/lib/column-colors"
-import { Card } from "@/lib/types"
+import {
+  Check,
+  CheckSquare,
+  Square,
+  AlignLeft,
+  Trash2,
+  Plus,
+  ListTodo,
+  Pencil,
+} from "lucide-react"
+import { toast } from "sonner"
 
 import {
   Drawer,
@@ -21,16 +31,8 @@ import {
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {
-  Check,
-  CheckSquare,
-  Square,
-  AlignLeft,
-  Trash2,
-  Plus,
-  ListTodo,
-} from "lucide-react"
-import { toast } from "sonner"
+import { TagPill } from "@/components/TagPill"
+import type { Card } from "@/lib/types"
 
 interface CardDetailsProps {
   open: boolean
@@ -40,13 +42,135 @@ interface CardDetailsProps {
   card: Card
 }
 
-/** Body shared by the desktop side panel and the mobile bottom drawer. */
+/** ── Tags section ────────────────────────────────────────────────────── */
+function TagsSection({
+  projectId,
+  colId,
+  card,
+}: Pick<CardDetailsProps, "projectId" | "colId" | "card">) {
+  const addTag = useProjectStore((s) => s.addTag)
+  const removeTag = useProjectStore((s) => s.removeTag)
+
+  const [adding, setAdding] = useState(false)
+  const [name, setName] = useState("")
+  const [color, setColor] = useState<string>(COLUMN_COLORS[4].value)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (adding) inputRef.current?.focus()
+  }, [adding])
+
+  function reset() {
+    setAdding(false)
+    setName("")
+    setColor(COLUMN_COLORS[4].value)
+  }
+
+  function commit() {
+    const trimmed = name.trim()
+    if (!trimmed) {
+      reset()
+      return
+    }
+    addTag(projectId, colId, card.id, { name: trimmed.slice(0, 12), color })
+    reset()
+  }
+
+  // Blur lives on the whole editor box: clicking a swatch or button keeps
+  // us inside, clicking truly away commits — fixes "always saves blue".
+  function handleBoxBlur(e: React.FocusEvent<HTMLDivElement>) {
+    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) commit()
+  }
+
+  return (
+    <div className="space-y-2.5">
+      <span className="text-muted-foreground block text-[10px] font-semibold tracking-widest uppercase">
+        Tags {(card.tags?.length ?? 0) > 0 && `· ${card.tags!.length}/4`}
+      </span>
+
+      <div className="flex flex-wrap items-center gap-1.5">
+        {(card.tags ?? []).map((tag, i) => (
+          <TagPill
+            key={`${tag.name}-${i}`}
+            name={tag.name}
+            color={tag.color}
+            onRemove={() => removeTag(projectId, colId, card.id, i)}
+          />
+        ))}
+
+        {!adding && (card.tags?.length ?? 0) < 4 && (
+          <button
+            type="button"
+            onClick={() => setAdding(true)}
+            className="text-muted-foreground hover:border-primary/50 hover:text-primary flex cursor-pointer items-center gap-1 rounded-full border border-dashed border-border px-3 py-1.5 text-xs font-medium transition-colors"
+          >
+            <Plus className="size-3.5" />
+            Add tag
+          </button>
+        )}
+      </div>
+
+      {adding && (
+        /* Comfortable editor box — commits on Enter or click-away */
+        <div
+          onBlur={handleBoxBlur}
+          className="bg-muted/20 space-y-3 rounded-xl border border-border p-3.5"
+        >
+          <Input
+            ref={inputRef}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") commit()
+              if (e.key === "Escape") reset()
+            }}
+            placeholder="Tag name…"
+            maxLength={12}
+            className="h-9 bg-background text-sm"
+          />
+
+          {/* Swatches get their own full-width row */}
+          <div className="flex flex-wrap items-center gap-2">
+            {COLUMN_COLORS.map((c) => (
+              <button
+                key={c.value}
+                type="button"
+                aria-label={`Tag color ${c.name}`}
+                onClick={() => setColor(c.value)}
+                className={`size-6 cursor-pointer rounded-full transition-transform hover:scale-110 ${
+                  color === c.value
+                    ? "ring-ring ring-2 ring-offset-2 ring-offset-card"
+                    : ""
+                }`}
+                style={{ backgroundColor: c.value }}
+              />
+            ))}
+          </div>
+
+          {/* Actions pinned under the swatches — never pushed off-canvas */}
+          <div className="flex items-center justify-end gap-1.5">
+            <Button variant="ghost" size="sm" onClick={reset}>
+              Cancel
+            </Button>
+            <Button size="sm" className="min-w-20 px-4" onClick={commit}>
+              Add tag
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** ── Body shared by the desktop panel and the mobile sheet ───────────── */
 function CardDetailsBody({
   projectId,
   colId,
   card,
   onClose,
-}: Pick<CardDetailsProps, "projectId" | "colId" | "card"> & { onClose: () => void }) {
+}: Pick<CardDetailsProps, "projectId" | "colId" | "card"> & {
+  onClose: () => void
+}) {
   const editCard = useProjectStore((state) => state.editCard)
   const deleteCard = useProjectStore((state) => state.deleteCard)
   const toggleTask = useProjectStore((state) => state.toggleTask)
@@ -59,14 +183,19 @@ function CardDetailsBody({
   const [isEditingDesc, setIsEditingDesc] = useState(false)
   const [desc, setDesc] = useState(() => card.description || "")
 
-  const [showColorOptions, setShowColorOptions] = useState(false)
-
   const [isAddingTask, setIsAddingTask] = useState(false)
   const [newTaskText, setNewTaskText] = useState("")
   const addTaskInputRef = useRef<HTMLInputElement>(null)
 
+  // Only ONE task may be in edit mode; null = none.
   const [editingTaskIdx, setEditingTaskIdx] = useState<number | null>(null)
   const [editTaskText, setEditTaskText] = useState("")
+
+  function handleDelete() {
+    deleteCard(projectId, colId, card.id)
+    onClose()
+    toast.success("Card deleted")
+  }
 
   // --- ACTIONS ---
 
@@ -100,19 +229,29 @@ function CardDetailsBody({
     requestAnimationFrame(() => addTaskInputRef.current?.focus())
   }
 
-  const handleEditTaskSave = (idx: number) => {
-    if (!editTaskText.trim()) {
-      setEditingTaskIdx(null)
-      setEditTaskText("")
-      return
+  /** Inline task editor commits on Enter OR blur — no stuck states. */
+  const beginEditTask = (idx: number) => {
+    setEditingTaskIdx(idx)
+    setEditTaskText(card.tasks?.[idx]?.text ?? "")
+  }
+  const commitEditTask = () => {
+    if (editingTaskIdx === null) return
+    const idx = editingTaskIdx
+    const trimmed = editTaskText.trim()
+    if (trimmed && trimmed !== card.tasks?.[idx]?.text) {
+      const newTasks = [...(card.tasks || [])]
+      newTasks[idx] = { ...newTasks[idx], text: trimmed }
+      editCard(projectId, colId, card.id, { tasks: newTasks })
     }
-    const newTasks = [...(card.tasks || [])]
-    newTasks[idx].text = editTaskText.trim()
-    editCard(projectId, colId, card.id, { tasks: newTasks })
     setEditingTaskIdx(null)
+    setEditTaskText("")
+  }
+  const cancelEditTask = () => {
+    setEditingTaskIdx(null)
+    setEditTaskText("")
   }
 
-  // --- PROGRESS BAR CALCULATION ---
+  // --- PROGRESS ---
   const tasks = card.tasks || []
   const totalTasks = tasks.length
   const completedTasks = tasks.filter((t) => t.done).length
@@ -120,19 +259,18 @@ function CardDetailsBody({
     totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100)
 
   return (
-    <div className="scrollbar-slim flex-1 space-y-8 overflow-y-auto p-6 md:p-8">
-      {/* 1. TOP HEADER (Checkbox + Title + Actions) */}
-      <div className="flex items-start justify-between gap-4">
-        {/* Left Side: Checkbox & Title */}
-        <div className="flex flex-1 items-start gap-3">
-          {/* Circular "Mark as Done" Button — done styling is applied
-              conditionally so hover can never mask the completed state */}
+    <>
+      {/* Scrollable content */}
+      <div className="scrollbar-slim min-h-0 flex-1 space-y-8 overflow-y-auto p-7">
+        {/* ── 1. HERO TITLE ───────────────────────────────────────────── */}
+        <div className="flex items-start gap-3.5 pt-1">
+          {/* Circular "Mark as Done" Button */}
           <button
             onClick={() => toggleCardIsDone(projectId, colId, card.id)}
             aria-label={card.isDone ? "Mark as undone" : "Mark as done"}
             data-done={card.isDone}
             className={`after:absolute after:-inset-1 after:rounded-full after:content-['']
-              relative mt-2 flex size-7 shrink-0 items-center justify-center
+              relative mt-2.5 flex size-7 shrink-0 cursor-pointer items-center justify-center
               rounded-full border-2 transition-all duration-150 active:scale-90 ${
                 card.isDone
                   ? "border-success bg-success"
@@ -144,15 +282,14 @@ function CardDetailsBody({
             )}
           </button>
 
-          {/* Title Section */}
-          <div className="group flex-1">
+          {/* Title — the biggest element in the drawer */}
+          <div className="min-w-0 flex-1">
             {isEditingTitle ? (
               <textarea
                 autoFocus
                 value={title}
                 rows={1}
                 onChange={(e) => setTitle(e.target.value)}
-                // Auto-resize while typing
                 onInput={(e) => {
                   e.currentTarget.style.height = "auto"
                   e.currentTarget.style.height = `${e.currentTarget.scrollHeight}px`
@@ -172,12 +309,13 @@ function CardDetailsBody({
                     setIsEditingTitle(false)
                   }
                 }}
-                className="h-auto w-full resize-none overflow-hidden break-words rounded-md px-2 py-1 text-2xl font-bold tracking-tight focus-visible:ring-primary/60 focus-visible:ring-2 focus-visible:outline-none"
+                className="h-auto w-full resize-none overflow-hidden break-words rounded-md px-2 py-1 text-3xl leading-tight font-bold tracking-tight focus-visible:ring-primary/60 focus-visible:ring-2 focus-visible:outline-none"
               />
             ) : (
               <h2
                 onClick={() => setIsEditingTitle(true)}
-                className={`wrap-break-word mb-[7px] cursor-text rounded-md px-2 py-1 text-2xl font-bold tracking-tight transition-colors ${
+                title="Click to rename"
+                className={`wrap-break-word -mx-2 cursor-text rounded-md px-2 py-1 text-3xl leading-tight font-bold tracking-tight transition-colors ${
                   card.isDone
                     ? "text-muted-foreground line-through"
                     : "text-foreground"
@@ -189,319 +327,241 @@ function CardDetailsBody({
           </div>
         </div>
 
-        {/* Right Side: Actions (color + delete) */}
-        <div className="flex shrink-0 items-center gap-1.5 pt-1.5">
-          {/* Color picker */}
-          <div className="relative">
-            <button
-              onClick={() => setShowColorOptions(!showColorOptions)}
-              className="focus-visible:ring-ring shadow-sm hover:border-border-strong flex h-7 w-12 rounded-md border-2 border-border transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:outline-none"
-              style={{ backgroundColor: card.color || "var(--color-primary)" }}
-              aria-label="Change card color"
-            />
+        {/* ── 2. TAGS ──────────────────────────────────────────────────── */}
+        <TagsSection projectId={projectId} colId={colId} card={card} />
 
-            {showColorOptions && (
-              <>
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setShowColorOptions(false)}
-                />
-                <div className="bg-popover absolute top-full right-0 z-50 mt-2 flex w-56 flex-wrap gap-2 rounded-xl border border-border p-3 shadow-lg">
-                  {COLUMN_COLORS.map((c) => (
-                    <button
-                      key={c.value}
-                      title={c.name}
-                      onClick={() => {
-                        editCard(projectId, colId, card.id, { color: c.value })
-                        setShowColorOptions(false)
-                      }}
-                      className="focus-visible:ring-ring ring-offset-background size-6 rounded-full border border-border/50 transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-                      style={{ backgroundColor: c.value }}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
+        {/* ── 3. DESCRIPTION ───────────────────────────────────────────── */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <AlignLeft className="text-muted-foreground size-4" />
+            <h3 className="text-muted-foreground text-[10px] font-semibold tracking-widest uppercase">
+              Description
+            </h3>
           </div>
 
-          {/* Delete */}
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="bg-muted text-muted-foreground hover:bg-destructive/15 hover:text-destructive transition-colors"
-            onClick={() => {
-              deleteCard(projectId, colId, card.id)
-              onClose()
-              toast.success("Card deleted")
-            }}
-            title="Delete Card"
-          >
-            <Trash2 className="size-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* 2. DESCRIPTION */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2 font-semibold text-foreground">
-          <AlignLeft className="text-muted-foreground size-5" />
-          <h3>Description</h3>
-        </div>
-
-        {isEditingDesc ? (
-          <div className="mt-2 space-y-2">
-            <textarea
-              autoFocus
-              value={desc}
-              onChange={(e) => setDesc(e.target.value)}
-              placeholder="Add a more detailed description..."
-              className="placeholder:text-muted-foreground focus-visible:ring-ring min-h-[140px] w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:ring-2 focus-visible:outline-none"
-              onKeyDown={(e) => {
-                if (e.key === "Escape") {
-                  setDesc(card.description || "")
-                  setIsEditingDesc(false)
-                }
-              }}
-            />
-            <div className="flex items-center gap-2">
-              <Button onClick={handleDescSave} size="sm">
-                Save
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => {
-                  setDesc(card.description || "")
-                  setIsEditingDesc(false)
+          {isEditingDesc ? (
+            <div className="space-y-2">
+              <textarea
+                autoFocus
+                value={desc}
+                onChange={(e) => setDesc(e.target.value)}
+                placeholder="Add a more detailed description..."
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                    e.preventDefault()
+                    handleDescSave()
+                  }
+                  if (e.key === "Escape") {
+                    setDesc(card.description || "")
+                    setIsEditingDesc(false)
+                  }
                 }}
-              >
-                Cancel
-              </Button>
+                className="placeholder:text-muted-foreground/70 focus-visible:ring-ring min-h-[120px] w-full resize-none rounded-lg border border-input bg-background px-3 py-2.5 text-sm leading-relaxed shadow-sm focus-visible:ring-2 focus-visible:outline-none"
+              />
+              <p className="text-muted-foreground/60 text-[10px]">
+                ⌘↵ to save · Esc to cancel
+              </p>
             </div>
-          </div>
-        ) : (
-          <div
-            onClick={() => setIsEditingDesc(true)}
-            className={`mt-2 min-h-[80px] cursor-pointer rounded-lg px-3 py-3 text-sm leading-relaxed transition-colors ${
-              card.description
-                ? "border border-transparent hover:bg-muted/60"
-                : "bg-muted/30 text-muted-foreground hover:bg-muted/60"
-            }`}
-          >
-            {card.description || "Add a more detailed description..."}
-          </div>
-        )}
-      </div>
-
-      {/* 3. TASKS */}
-      <div className="space-y-4">
-        <div>
-          <div className="mb-3 flex items-center gap-2 font-semibold text-foreground">
-            <ListTodo className="text-muted-foreground size-5" />
-            <h3>Tasks</h3>
-          </div>
-
-          {totalTasks > 0 && (
-            <div className="mb-4 space-y-1.5">
-              <div className="text-muted-foreground flex items-center justify-between text-xs font-medium">
-                <span>Progress</span>
-                <span className="tabular-nums">{progress}%</span>
-              </div>
-              <div className="bg-secondary h-2 w-full overflow-hidden rounded-full">
-                <div
-                  className={`h-full transition-all duration-500 ease-out ${
-                    progress === 100 ? "bg-success" : "bg-primary"
-                  }`}
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
+          ) : (
+            <div
+              onClick={() => setIsEditingDesc(true)}
+              className={`cursor-text rounded-lg text-sm leading-relaxed transition-colors ${
+                card.description
+                  ? "-mx-2 border border-transparent px-2 py-1.5 hover:bg-muted/60"
+                  : "bg-muted/30 text-muted-foreground hover:bg-muted/60 px-3 py-3"
+              }`}
+            >
+              {card.description || "Add a more detailed description..."}
             </div>
           )}
         </div>
 
-        {/* Add Task */}
-        {isAddingTask ? (
-          <div
-            onBlur={(e) => {
-              if (!e.currentTarget.contains(e.relatedTarget)) {
-                setIsAddingTask(false)
-                setNewTaskText("")
-              }
-            }}
-            className="bg-muted/20 mb-4 space-y-3 rounded-lg border border-border p-3 shadow-sm"
-          >
-            <Input
-              ref={addTaskInputRef}
-              autoFocus
-              placeholder="What needs to be done?"
-              value={newTaskText}
-              onChange={(e) => setNewTaskText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault()
-                  handleAddTask()
-                }
-                if (e.key === "Escape") {
+        {/* ── 4. TASKS ─────────────────────────────────────────────────── */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ListTodo className="text-muted-foreground size-4" />
+              <h3 className="text-muted-foreground text-[10px] font-semibold tracking-widest uppercase">
+                Tasks
+              </h3>
+            </div>
+
+            {totalTasks > 0 && (
+              <span
+                className={`text-xs font-medium tabular-nums ${
+                  progress === 100 ? "text-success" : "text-muted-foreground"
+                }`}
+              >
+                {completedTasks}/{totalTasks}
+              </span>
+            )}
+          </div>
+
+          {totalTasks > 0 && (
+            <div className="bg-secondary h-1.5 w-full overflow-hidden rounded-full">
+              <div
+                className={`h-full transition-all duration-500 ease-out ${
+                  progress === 100 ? "bg-success" : "bg-primary"
+                }`}
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          )}
+
+          {/* Add task */}
+          {isAddingTask ? (
+            <div
+              onBlur={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget)) {
                   setIsAddingTask(false)
                   setNewTaskText("")
                 }
               }}
-              className="bg-background focus-visible:ring-ring focus-visible:ring-2"
-            />
-            <div className="flex items-center gap-2">
-              <Button
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={handleAddTask}
-                size="sm"
-              >
-                Add
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => {
-                  setIsAddingTask(false)
-                  setNewTaskText("")
+              className="bg-muted/20 space-y-2.5 rounded-xl border border-border p-3.5"
+            >
+              <Input
+                ref={addTaskInputRef}
+                autoFocus
+                placeholder="What needs to be done?"
+                value={newTaskText}
+                onChange={(e) => setNewTaskText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault()
+                    handleAddTask()
+                  }
+                  if (e.key === "Escape") {
+                    setIsAddingTask(false)
+                    setNewTaskText("")
+                  }
                 }}
-              >
-                Cancel
-              </Button>
+                className="h-9 bg-background focus-visible:ring-ring focus-visible:ring-2"
+              />
+              <p className="text-muted-foreground/60 text-[10px]">
+                ↵ to add · keeps focus for rapid entry · Esc to close
+              </p>
             </div>
-          </div>
-        ) : (
-          <Button
-            variant="ghost"
-            className="text-muted-foreground hover:bg-accent hover:text-accent-foreground mb-4 w-full justify-start"
-            onClick={() => {
-              setIsAddingTask(true)
-              setNewTaskText("")
-            }}
-          >
-            <Plus className="mr-2 size-4" />
-            Add task
-          </Button>
-        )}
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setIsAddingTask(true)
+                setNewTaskText("")
+              }}
+              className="text-muted-foreground hover:border-primary/50 hover:bg-primary/5 hover:text-primary flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-dashed border-border py-2.5 text-sm font-medium transition-colors"
+            >
+              <Plus className="size-4" />
+              Add task
+            </button>
+          )}
 
-        {/* Task List */}
-        <div className="space-y-1.5">
-          {tasks.map((task, index) => {
-            const isEditingThis = editingTaskIdx === index
+          {/* Task list */}
+          <div className="space-y-1">
+            {tasks.map((task, index) => {
+              const isEditingThis = editingTaskIdx === index
 
-            if (isEditingThis) {
-              return (
-                <div
-                  key={index}
-                  onBlur={(e) => {
-                    if (!e.currentTarget.contains(e.relatedTarget)) {
-                      setEditingTaskIdx(null)
-                      setEditTaskText("")
-                    }
-                  }}
-                  className="bg-muted/20 flex items-start gap-3 rounded-lg border border-border p-3 shadow-sm transition-colors"
-                >
-                  <button
-                    onClick={() =>
-                      toggleTask(projectId, colId, card.id, index)
-                    }
-                    className="text-muted-foreground mt-2 shrink-0 transition-colors hover:text-foreground"
-                    aria-label={task.done ? "Mark task as not done" : "Mark task as done"}
-                  >
-                    {task.done ? (
-                      <CheckSquare className="text-success size-5" />
-                    ) : (
-                      <Square className="size-5" />
-                    )}
-                  </button>
-
-                  <div className="flex-1 space-y-3">
+              // ── EDIT MODE: bare input, commits on Enter/blur, Esc reverts
+              if (isEditingThis) {
+                return (
+                  <div key={index} className="-mx-1.5">
                     <Input
                       autoFocus
                       value={editTaskText}
                       onChange={(e) => setEditTaskText(e.target.value)}
+                      onBlur={commitEditTask}
                       onKeyDown={(e) => {
-                        if (e.key === "Enter") handleEditTaskSave(index)
-                        if (e.key === "Escape") {
-                          setEditingTaskIdx(null)
-                          setEditTaskText("")
-                        }
+                        if (e.key === "Enter") commitEditTask()
+                        if (e.key === "Escape") cancelEditTask()
                       }}
-                      className="focus-visible:ring-ring h-9 w-full bg-background shadow-sm focus-visible:ring-2"
+                      className="focus-visible:ring-ring h-9 bg-background text-sm shadow-sm focus-visible:ring-2"
                     />
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => handleEditTaskSave(index)}
-                      >
-                        Update
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => {
-                          setEditingTaskIdx(null)
-                          setEditTaskText("")
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
+                    <p className="text-muted-foreground/60 mt-1 pl-1 text-[10px]">
+                      ↵ to save · Esc to cancel
+                    </p>
                   </div>
+                )
+              }
+
+              // ── NORMAL ROW: click anywhere toggles; pencil edits
+              return (
+                <div
+                  key={index}
+                  className="group/task hover:bg-muted -mx-2 flex items-start gap-3 rounded-lg px-2 py-2 transition-colors"
+                >
+                  <button
+                    onClick={() => toggleTask(projectId, colId, card.id, index)}
+                    className="text-muted-foreground mt-0.5 shrink-0 transition-colors hover:text-foreground"
+                    aria-label={
+                      task.done ? "Mark task as not done" : "Mark task as done"
+                    }
+                  >
+                    {task.done ? (
+                      <CheckSquare className="text-success size-[18px]" />
+                    ) : (
+                      <Square className="size-[18px]" />
+                    )}
+                  </button>
+
+                  <span
+                    onClick={() => toggleTask(projectId, colId, card.id, index)}
+                    className={`flex-1 cursor-pointer break-words py-0.5 text-sm leading-relaxed select-none transition-colors ${
+                      task.done
+                        ? "text-muted-foreground decoration-border-strong line-through"
+                        : "text-foreground"
+                    }`}
+                  >
+                    {task.text}
+                  </span>
+
+                  <span className="flex shrink-0 items-center gap-0.5 pt-0.5 opacity-0 transition-opacity group-hover/task:opacity-100 focus-within:opacity-100">
+                    <button
+                      onClick={() => beginEditTask(index)}
+                      aria-label="Edit task"
+                      className="text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer rounded-md p-1.5 transition-colors"
+                    >
+                      <Pencil className="size-3.5" />
+                    </button>
+                    <button
+                      onClick={() =>
+                        editCard(projectId, colId, card.id, {
+                          tasks: tasks.filter((_, i) => i !== index),
+                        })
+                      }
+                      aria-label="Remove task"
+                      className="text-muted-foreground hover:text-destructive hover:bg-destructive/15 cursor-pointer rounded-md p-1.5 transition-colors"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  </span>
                 </div>
               )
-            }
+            })}
 
-            return (
-              <div
-                key={index}
-                className="group hover:bg-muted flex items-start gap-3 rounded-md px-1 py-1 transition-colors"
-              >
-                <button
-                  onClick={() => toggleTask(projectId, colId, card.id, index)}
-                  className="text-muted-foreground mt-0.5 shrink-0 transition-colors hover:text-foreground"
-                  aria-label={task.done ? "Mark task as not done" : "Mark task as done"}
-                >
-                  {task.done ? (
-                    <CheckSquare className="text-success size-5" />
-                  ) : (
-                    <Square className="size-5" />
-                  )}
-                </button>
-
-                <span
-                  onClick={() => {
-                    setEditingTaskIdx(index)
-                    setEditTaskText(task.text)
-                  }}
-                  className={`-ml-1.5 flex-1 cursor-text break-words rounded-md px-1.5 py-0.5 text-[15px] select-none transition-colors ${
-                    task.done
-                      ? "text-muted-foreground line-through"
-                      : "text-foreground"
-                  }`}
-                >
-                  {task.text}
-                </span>
-
-                <button
-                  onClick={() => {
-                    const newTasks = [...tasks]
-                    newTasks.splice(index, 1)
-                    editCard(projectId, colId, card.id, { tasks: newTasks })
-                  }}
-                  className="text-muted-foreground hover:text-destructive shrink-0 p-1 opacity-0 transition-opacity group-hover:opacity-100"
-                  title="Remove task"
-                >
-                  <Trash2 className="size-4" />
-                </button>
-              </div>
-            )
-          })}
+            {totalTasks === 0 && (
+              <p className="text-muted-foreground/60 py-1 text-sm">
+                No subtasks yet — break this card down into steps.
+              </p>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Fixed footer: delete + big close */}
+      <div className="flex shrink-0 items-center gap-2 border-t border-border bg-card px-6 py-4">
+        <Button
+          variant="ghost"
+          onClick={handleDelete}
+          className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive h-10 shrink-0 gap-2 transition-colors"
+        >
+          <Trash2 className="size-4" />
+          Delete
+        </Button>
+
+        <Button onClick={onClose} className="h-10 flex-1">
+          Close
+        </Button>
+      </div>
+    </>
   )
 }
 
@@ -523,24 +583,41 @@ export function CardDetailsDrawer({
     return () => mq.removeEventListener("change", update)
   }, [])
 
+  const close = () => onOpenChange(false)
+
   if (isDesktop) {
     return (
-      <Sheet open={open} onOpenChange={onOpenChange}>
+      /* Non-modal: background stays interactive. Clicking another card
+         swaps content; clicking EMPTY board space closes the drawer. */
+      <Sheet open={open} onOpenChange={onOpenChange} modal={false}>
         <SheetContent
           side="right"
           showClose={false}
-          className="w-[520px] gap-0 p-0 sm:max-w-[520px]"
+          showOverlay={false}
+          onPointerDownOutside={(e) => {
+            // Swallow dismisses that land on cards/columns (that click is a
+            // swap-in-place); let empty-space clicks close the drawer.
+            const target = e.detail.originalEvent.target as HTMLElement | null
+            if (target?.closest("[data-board-item]")) e.preventDefault()
+          }}
+          onFocusOutside={(e) => e.preventDefault()}
+          className="
+            top-4 right-4 bottom-4 h-auto w-[520px] max-w-[calc(100vw-2rem)]
+            gap-0 overflow-hidden rounded-2xl border border-border p-0 shadow-xl
+          "
         >
-          <SheetTitle className="sr-only">Card details</SheetTitle>
+          <SheetTitle className="sr-only">{card.title}</SheetTitle>
           <SheetDescription className="sr-only">
             View and edit card details.
           </SheetDescription>
 
+          {/* key resets local edit state when swapping between cards */}
           <CardDetailsBody
+            key={card.id}
             projectId={projectId}
             colId={colId}
             card={card}
-            onClose={() => onOpenChange(false)}
+            onClose={close}
           />
         </SheetContent>
       </Sheet>
@@ -556,10 +633,11 @@ export function CardDetailsDrawer({
         </DrawerHeader>
 
         <CardDetailsBody
+          key={card.id}
           projectId={projectId}
           colId={colId}
           card={card}
-          onClose={() => onOpenChange(false)}
+          onClose={close}
         />
       </DrawerContent>
     </Drawer>
