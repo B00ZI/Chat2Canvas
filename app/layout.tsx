@@ -4,8 +4,11 @@ import "./globals.css";
 import Sidebar from "@/components/Sidebar";
 import CommandPalette from "@/components/CommandPalette";
 import { Toaster } from "@/components/ui/sonner";
+import { Button } from "@/components/ui/button";
+import { Minimize2 } from "lucide-react";
 import { useEffect } from "react";
 import { useProjectStore, TEST_MODE } from "@/store/projectStore";
+import { useFocusMode } from "@/lib/ui-state";
 
 const oxanium = Oxanium({ subsets: ["latin"], variable: "--font-oxanium", display: "swap" });
 const instrument = Instrument_Sans({ subsets: ["latin"], variable: "--font-instrument", display: "swap" });
@@ -19,12 +22,24 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const [focus, toggleFocus] = useFocusMode();
+
   useEffect(() => {
     if (!TEST_MODE) {
       const store = useProjectStore as unknown as { persist?: { rehydrate: () => void } };
       store.persist?.rehydrate();
     }
   }, []);
+
+  // Esc always exits focus mode.
+  useEffect(() => {
+    if (!focus) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") toggleFocus();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [focus, toggleFocus]);
 
   return (
     <html
@@ -50,6 +65,20 @@ export default function RootLayout({
 
         <CommandPalette />
         <Toaster />
+
+        {/* Focus-mode exit — always reachable so nobody gets trapped */}
+        {focus && (
+          <Button
+            onClick={toggleFocus}
+            aria-label="Exit focus mode"
+            title="Exit focus mode (Esc)"
+            variant="outline"
+            size="icon"
+            className="bg-background/90 hover:bg-background fixed top-3 right-3 z-50 shadow-lg backdrop-blur"
+          >
+            <Minimize2 className="size-4" />
+          </Button>
+        )}
       </body>
     </html>
   )
