@@ -1,12 +1,13 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { Card, Column, ImportData, Project, Tag } from "@/lib/types";
-import { COLUMN_COLORS, normalizeContentColor } from "@/lib/column-colors";
+import { COLUMN_COLORS } from "@/lib/column-colors";
+import { LEGACY_COLOR_MAP } from "@/lib/column-colors";
 import { DEMO_PROJECTS } from "./demoData";
 
 /** Sanitize AI/user-provided tags onto the content palette. */
 function sanitizeTags(raw: unknown): Tag[] {
-  const palette: string[] = COLUMN_COLORS.map((c) => c.value);
+  const palette: string[] = COLUMN_COLORS.map((c) => c.value as string);
   const seen = new Set<string>();
   const out: Tag[] = [];
   for (const item of Array.isArray(raw) ? raw : []) {
@@ -23,7 +24,7 @@ function sanitizeTags(raw: unknown): Tag[] {
       color:
         typeof color === "string" && palette.includes(color)
           ? color
-          : COLUMN_COLORS[7].value,
+          : FALLBACK_COLOR,
     });
     if (out.length >= 4) break;
   }
@@ -45,6 +46,10 @@ interface ProjectStore {
   openCard: { colId: string; cardId: string } | null;
   setOpenCard: (open: { colId: string; cardId: string } | null) => void;
 
+  /** Transient search query for filtering cards across columns. */
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+
   importProject: (projectData: ImportData) => void;
   updateProjectFromImport: (
     projectId: string,
@@ -54,10 +59,12 @@ interface ProjectStore {
   editProject: (id: string, newName: string) => void;
   setProjectDescription: (id: string, description: string) => void;
   deleteProject: (id: string) => void;
-  setActiveProject: (id: string) => void;
+  restoreProject: (project: Project) => void;
+  setActiveProject: (id: string | null) => void;
 
   addColumn: (projectId: string, title: string, color: string) => void;
   deleteColumn: (projectId: string, columnId: string) => void;
+  restoreColumn: (projectId: string, column: Column) => void;
   editColumn: (
     projectId: string,
     columnId: string,
@@ -77,6 +84,7 @@ interface ProjectStore {
     updates: Partial<Card>,
   ) => void;
   deleteCard: (projectId: string, colId: string, cardId: string) => void;
+  restoreCard: (projectId: string, colId: string, card: Card) => void;
   toggleTask: (
     projectId: string,
     colId: string,
@@ -96,6 +104,15 @@ interface ProjectStore {
 /** Collision-safe id: "<prefix>-<timestamp>-<random>" */
 const genId = (prefix: string) =>
   `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+
+/** Only allow colors from the approved palette — rejects arbitrary CSS. */
+const PALETTE_SET = new Set<string>(COLUMN_COLORS.map((c) => c.value));
+const FALLBACK_COLOR = COLUMN_COLORS[7].value as string;
+function safeColor(raw: string): string {
+  if (PALETTE_SET.has(raw)) return raw;
+  const mapped = LEGACY_COLOR_MAP[raw];
+  return mapped && PALETTE_SET.has(mapped) ? mapped : FALLBACK_COLOR;
+}
 
 /** Immutably replace one column's cards array. Shared by all card actions. */
 function mapCardsIn(
@@ -127,12 +144,16 @@ export const useProjectStore = create<ProjectStore>()(
       openCard: null,
       setOpenCard: (open) => set({ openCard: open }),
 
+      searchQuery: "",
+      setSearchQuery: (query) => set({ searchQuery: query }),
+
       // ── Projects ──────────────────────────────────────────────────
 
       importProject: (data) => {
+        if (!data.columns || !Array.isArray(data.columns)) return;
         const newProject: Project = {
           id: genId("proj"),
-          name: data.name,
+          name: (data.name || "Untitled").slice(0, 100),
           description:
             typeof data.description === "string"
               ? data.description.slice(0, 500)
@@ -140,15 +161,15 @@ export const useProjectStore = create<ProjectStore>()(
           createdAt: Date.now(),
           columns: data.columns.map((col) => ({
             id: genId("col"),
-            title: col.title,
-            color: normalizeContentColor(col.color),
-            cards: col.cards.map((c) => ({
+            title: (col.title || "Untitled").slice(0, 60),
+            color: safeColor(col.color),
+            cards: (col.cards || []).map((c) => ({
               id: genId("card"),
-              title: c.title,
-              description: c.description || "",
-              color: normalizeContentColor(c.color),
+              title: (c.title || "Untitled").slice(0, 120),
+              description: (c.description || "").slice(0, 500),
+              color: safeColor(c.color),
               isDone: c.isDone || false,
-              tasks: c.tasks,
+              tasks: Array.isArray(c.tasks) ? c.tasks : [],
               tags: sanitizeTags(c.tags),
             })),
           })),
@@ -161,8 +182,9 @@ export const useProjectStore = create<ProjectStore>()(
 
       /** Refine flow: swap an existing project's sections/cards in place,
        *  keeping its identity (id, name, description, createdAt). */
-      updateProjectFromImport: (projectId, data) =>
-        set((state) => ({
+      updateProjectFromImport: (projectId, data) => {
+        if (!data.columns || !Array.isArray(data.columns)) return;
+        return set((state) => ({
           openCard: null,
           projects: state.projects.map((p) =>
             p.id !== projectId
@@ -171,21 +193,21 @@ export const useProjectStore = create<ProjectStore>()(
                   ...p,
                   columns: data.columns.map((col) => ({
                     id: genId("col"),
-                    title: col.title,
-                    color: normalizeContentColor(col.color),
-                    cards: col.cards.map((c) => ({
+                    title: (col.title || "Untitled").slice(0, 60),
+                    color: safeColor(col.color),
+                    cards: (col.cards || []).map((c) => ({
                       id: genId("card"),
-                      title: c.title,
-                      description: c.description || "",
-                      color: normalizeContentColor(c.color),
+                      title: (c.title || "Untitled").slice(0, 120),
+                      description: (c.description || "").slice(0, 500),
+                      color: safeColor(c.color),
                       isDone: c.isDone || false,
-                      tasks: c.tasks,
+                      tasks: Array.isArray(c.tasks) ? c.tasks : [],
                       tags: sanitizeTags(c.tags),
                     })),
                   })),
                 }
           ),
-        })),
+        }))},
 
       addProject: (name) => {
         const newProject: Project = {
@@ -205,12 +227,15 @@ export const useProjectStore = create<ProjectStore>()(
         }));
       },
 
-      editProject: (id, newName) =>
-        set((state) => ({
+      editProject: (id, newName) => {
+        const trimmed = newName.trim();
+        if (!trimmed) return;
+        return set((state) => ({
           projects: state.projects.map((p) =>
-            p.id === id ? { ...p, name: newName } : p,
+            p.id === id ? { ...p, name: trimmed } : p,
           ),
-        })),
+        }));
+      },
 
       setProjectDescription: (id, description) =>
         set((state) => ({
@@ -233,7 +258,12 @@ export const useProjectStore = create<ProjectStore>()(
           };
         }),
 
-      setActiveProject: (id) => set({ activeProjectId: id }),
+      restoreProject: (project) =>
+        set((state) => ({
+          projects: [...state.projects, project],
+        })),
+
+      setActiveProject: (id: string | null) => set({ activeProjectId: id }),
 
       // ── Columns ───────────────────────────────────────────────────
 
@@ -268,21 +298,34 @@ export const useProjectStore = create<ProjectStore>()(
               ? { ...p, columns: p.columns.filter((c) => c.id !== columnId) }
               : p,
           ),
+          openCard:
+            state.openCard?.colId === columnId ? null : state.openCard,
         })),
 
-      editColumn: (projectId, columnId, updates) =>
+      restoreColumn: (projectId, column) =>
         set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === projectId
+              ? { ...p, columns: [...p.columns, column] }
+              : p,
+          ),
+        })),
+
+      editColumn: (projectId, columnId, updates) => {
+        const { id: _id, cards: _cards, ...safe } = updates as Record<string, unknown>;
+        return set((state) => ({
           projects: state.projects.map((p) =>
             p.id === projectId
               ? {
                   ...p,
                   columns: p.columns.map((c) =>
-                    c.id === columnId ? { ...c, ...updates } : c,
+                    c.id === columnId ? { ...c, ...safe } : c,
                   ),
                 }
               : p,
           ),
-        })),
+        }));
+      },
 
       // ── Cards ─────────────────────────────────────────────────────
 
@@ -294,18 +337,30 @@ export const useProjectStore = create<ProjectStore>()(
           ]),
         })),
 
-      editCard: (projectId, colId, cardId, updates) =>
-        set((state) => ({
+      editCard: (projectId, colId, cardId, updates) => {
+        const { id: _id, ...safe } = updates as Record<string, unknown>;
+        return set((state) => ({
           projects: mapCardsIn(state.projects, projectId, colId, (cards) =>
-            cards.map((c) => (c.id === cardId ? { ...c, ...updates } : c)),
+            cards.map((c) => (c.id === cardId ? { ...c, ...safe } : c)),
           ),
-        })),
+        }));
+      },
 
       deleteCard: (projectId, colId, cardId) =>
         set((state) => ({
           projects: mapCardsIn(state.projects, projectId, colId, (cards) =>
             cards.filter((c) => c.id !== cardId),
           ),
+          openCard:
+            state.openCard?.cardId === cardId ? null : state.openCard,
+        })),
+
+      restoreCard: (projectId, colId, card) =>
+        set((state) => ({
+          projects: mapCardsIn(state.projects, projectId, colId, (cards) => [
+            ...cards,
+            card,
+          ]),
         })),
 
       toggleTask: (projectId, colId, cardId, taskIndex) =>
@@ -376,10 +431,10 @@ export const useProjectStore = create<ProjectStore>()(
             createdAt: p.createdAt ?? Date.now(),
             columns: p.columns.map((col) => ({
               ...col,
-              color: normalizeContentColor(col.color),
+              color: safeColor(col.color),
               cards: col.cards.map((card) => ({
                 ...card,
-                color: normalizeContentColor(card.color),
+                color: safeColor(card.color),
               })),
             })),
           })),
@@ -398,15 +453,53 @@ export const useProjectStore = create<ProjectStore>()(
         }
         // Debounced writes so rapid mutations coalesce into one save.
         let saveTimeout: ReturnType<typeof setTimeout> | undefined;
+        let pendingValue: string | null = null;
+        let pendingName: string | null = null;
+
+        function flushPending() {
+          if (saveTimeout) clearTimeout(saveTimeout);
+          saveTimeout = undefined;
+          if (pendingName && pendingValue !== null) {
+            try {
+              localStorage.setItem(pendingName, pendingValue);
+            } catch {
+              // localStorage full or unavailable — warn once, then degrade
+              if (typeof window !== "undefined" && !(window as unknown as Record<string, unknown>).__c2c_storageWarned) {
+                (window as unknown as Record<string, unknown>).__c2c_storageWarned = true;
+                window.dispatchEvent(new CustomEvent("c2c:storage-warning"));
+              }
+            }
+            pendingValue = null;
+            pendingName = null;
+          }
+        }
+
+        // Flush before the tab closes so no writes are lost.
+        if (typeof window !== "undefined") {
+          window.addEventListener("beforeunload", flushPending);
+        }
+
         return {
-          getItem: (name) => localStorage.getItem(name),
-          setItem: (name, value) => {
-            if (saveTimeout) clearTimeout(saveTimeout);
-            saveTimeout = setTimeout(() => {
-              localStorage.setItem(name, value);
-            }, 500);
+          getItem: (name) => {
+            try {
+              return localStorage.getItem(name);
+            } catch {
+              return null;
+            }
           },
-          removeItem: (name) => localStorage.removeItem(name),
+          setItem: (name, value) => {
+            pendingName = name;
+            pendingValue = value;
+            if (saveTimeout) clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(flushPending, 500);
+          },
+          removeItem: (name) => {
+            try {
+              localStorage.removeItem(name);
+            } catch {
+              // silently degrade
+            }
+          },
         };
       }),
       partialize: (state) => ({

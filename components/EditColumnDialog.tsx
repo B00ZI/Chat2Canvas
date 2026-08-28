@@ -69,11 +69,12 @@ export function EditColumnDialog({
           <div className="space-y-4">
             {/* Title */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-foreground">
+              <label htmlFor="edit-column-title" className="text-sm font-medium text-foreground">
                 Column title
               </label>
 
               <Input
+                id="edit-column-title"
                 ref={titleInputRef}
                 type="text"
                 defaultValue={col.title}
