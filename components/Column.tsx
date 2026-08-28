@@ -417,7 +417,7 @@ const Column = memo(function Column({ col, projectId, isDndActive, isDropTarget,
                      max-h-[calc(80vh-8rem)]"
         >
           <SortableContext items={cardIds} strategy={verticalListSortingStrategy}>
-            <div role="list" aria-label={`${col.title} cards`}>
+            <div role="list" aria-label={`${col.title} cards`} className="space-y-3">
               {openCards.map((card) => {
                 const dimmed = matchingCardIds && !matchingCardIds.has(card.id);
                 return (
