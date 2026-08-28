@@ -6,13 +6,15 @@ import {
   DragStartEvent,
   DragOverEvent,
   DragOverlay,
-  rectIntersection,
+  closestCenter,
   PointerSensor,
   KeyboardSensor,
   useSensor,
   useSensors,
   defaultDropAnimationSideEffects,
-  MeasuringStrategy
+  MeasuringStrategy,
+  type ClientRect,
+  type CollisionDetection,
 } from '@dnd-kit/core'
 import {
   SortableContext,
@@ -75,6 +77,30 @@ function reorderCardInBoard(
   )
 }
 
+// Pure: move a card to the bottom of its column ("append at end" drop zone)
+function moveCardToEndOfColumn(
+  columns: ColumnType[],
+  cardId: string,
+  colId: string,
+): ColumnType[] {
+  return columns.map((col) => {
+    if (col.id !== colId) return col
+    const idx = col.cards.findIndex((c) => c.id === cardId)
+    if (idx === -1 || idx === col.cards.length - 1) return col
+    const cards = [...col.cards]
+    const [card] = cards.splice(idx, 1)
+    cards.push(card)
+    return { ...col, cards }
+  })
+}
+
+// Zero-size rect at the pointer. Collision runs against this instead of the
+// dragged card's rect, so a tall card targets the card under the POINTER,
+// not the card it merely overlaps the most.
+function pointerRect(x: number, y: number): ClientRect {
+  return { top: y, bottom: y, left: x, right: x, width: 0, height: 0 }
+}
+
 export default function Home() {
 
   const boardRef = useRef<HTMLDivElement>(null);
@@ -128,6 +154,8 @@ export default function Home() {
   // card within it) the pointer is over. Only the hovered Column re-renders.
   const [hoveredColId, setHoveredColId] = useState<string | null>(null);
   const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
+  // When the pointer is over a column's "append at end" tail zone.
+  const [tailTargetColId, setTailTargetColId] = useState<string | null>(null);
 
   // Card that just landed at drop — drives the one-shot "card-land" settle
   // animation. Cleared by timer; ref survives re-renders.
@@ -214,6 +242,60 @@ export default function Home() {
     scrollLeft.current = boardRef.current.scrollLeft;
   }
 
+  /**
+   * Pointer-based collision detection.
+   *
+   * Cards resolve against a zero-size rect at the pointer, not the dragged
+   * card's bounding rect — otherwise a tall dragged card "hovers" whatever
+   * it overlaps the most (often NOT the card under the cursor), which made
+   * dropping between two small cards erratic. Column drags keep plain
+   * nearest-center detection so they always land on another column.
+   */
+  const collisionDetectionStrategy = useCallback(
+    (args: Parameters<CollisionDetection>[0]): ReturnType<CollisionDetection> => {
+      const board =
+        boardOvRef.current?.columns ??
+        useProjectStore.getState().projects.find((p) => p.id === activeProjectId)
+          ?.columns ??
+        [];
+      const colIdSet = new Set(board.map((c) => c.id));
+
+      // Column drags must always land on another column — never a card, even
+      // if a short column makes one of its cards the closest center.
+      if (args.active.data.current?.type === "Column") {
+        return closestCenter({
+          ...args,
+          droppableContainers: args.droppableContainers.filter((c) =>
+            colIdSet.has(String(c.id)),
+          ),
+        });
+      }
+
+      const cardIds = new Set(board.flatMap((c) => c.cards.map((card) => card.id)));
+      const { pointerCoordinates, collisionRect, droppableRects, droppableContainers } = args;
+      const x = pointerCoordinates?.x ?? collisionRect.left;
+      const y = pointerCoordinates?.y ?? collisionRect.top;
+
+      // Prefer the narrowest droppable under the pointer: a card (insert
+      // before it) or a column's tail strip (append at the end). The nested
+      // column container is ignored — it would swallow these precise hits.
+      const hit = droppableContainers.find((c) => {
+        const id = String(c.id);
+        if (!cardIds.has(id) && !id.startsWith("tail:")) return false;
+        const rect = droppableRects.get(c.id);
+        return !!rect && x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+      });
+      if (hit) {
+        return [{ id: hit.id, data: { droppableContainer: hit, value: hit.id } }];
+      }
+
+      // In card gaps / over headers: fall back to nearest center from the
+      // pointer, which crisply flips between the two cards around a gap.
+      return closestCenter({ ...args, collisionRect: pointerRect(x, y) });
+    },
+    [activeProjectId],
+  );
+
 
 
   const sensors = useSensors(
@@ -276,17 +358,29 @@ export default function Home() {
     if (!cur || cur.projectId !== activeProjectId) return;
 
     const cols = cur.columns;
-    const overIsColumn = over.data.current?.type === "Column";
-    const toCol = overIsColumn
-      ? cols.find((c) => c.id === overId)
-      : cols.find((c) => c.cards.some((card) => card.id === overId));
+    const overKind = over.data.current?.type; // "Column" | "Card" | "ColumnTail"
+    const isTail = overKind === "ColumnTail";
+    const overIsColumn = overKind === "Column";
+
+    // Resolve the target column: a card → its column; a column/column-tail
+    // → that column directly.
+    let toCol: ColumnType | undefined;
+    if (overIsColumn || isTail) {
+      const colId = isTail
+        ? (over.data.current as { colId: string }).colId
+        : overId;
+      toCol = cols.find((c) => c.id === colId);
+    } else {
+      toCol = cols.find((c) => c.cards.some((card) => card.id === overId));
+    }
 
     const fromCol = cols.find((c) => c.cards.some((card) => card.id === activeId));
     if (!fromCol || !toCol) return;
 
     // Always update hover state so the line indicator follows the pointer
     setHoveredColId(toCol.id);
-    setHoveredCardId(overIsColumn ? null : overId);
+    setHoveredCardId(overIsColumn || isTail ? null : overId);
+    setTailTargetColId(isTail ? toCol.id : null);
 
     // Same column: no cross-column move needed, clear any stale destination
     if (fromCol.id === toCol.id) {
@@ -295,7 +389,7 @@ export default function Home() {
     }
 
     let insertIndex = toCol.cards.length;
-    if (!overIsColumn) {
+    if (!overIsColumn && !isTail) {
       const idx = toCol.cards.findIndex((c) => c.id === overId);
       if (idx >= 0) insertIndex = idx;
     }
@@ -311,6 +405,7 @@ export default function Home() {
     setActiveColumn(null);
     setHoveredColId(null);
     setHoveredCardId(null);
+    setTailTargetColId(null);
 
 
     const cur = boardOvRef.current;
@@ -341,7 +436,13 @@ export default function Home() {
 
     // 3. Apply within-column reorder (if card stayed in same column)
     if (over && active.data.current?.type === "Card" && !pending) {
-      cols = reorderCardInBoard(cols, active.id as string, over.id as string);
+      if (over.data.current?.type === "ColumnTail") {
+        // Dropped on the column's append-at-end zone → move to the bottom
+        const colId = (over.data.current as { colId: string }).colId;
+        cols = moveCardToEndOfColumn(cols, active.id as string, colId);
+      } else {
+        cols = reorderCardInBoard(cols, active.id as string, over.id as string);
+      }
     }
 
     // Single state update at drop — one discrete layout reflow
@@ -379,6 +480,7 @@ export default function Home() {
     setActiveColumn(null);
     setHoveredColId(null);
     setHoveredCardId(null);
+    setTailTargetColId(null);
     setDragAnnounce("Drag cancelled");
 
 
@@ -403,6 +505,7 @@ export default function Home() {
       landedCardId={landedCardId}
       landedColumnId={landedColumnId}
       searchQuery={searchQuery}
+      isTailTarget={tailTargetColId === col.id}
     />
   ));
 
@@ -417,7 +520,7 @@ export default function Home() {
 
       <DndContext
         sensors={sensors}
-        collisionDetection={rectIntersection}
+        collisionDetection={collisionDetectionStrategy}
         autoScroll={{
           // Engage horizontal edge-scroll slightly earlier than the
           // default on wide boards.

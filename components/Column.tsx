@@ -2,6 +2,7 @@
 
 import { useState, useRef, useLayoutEffect, useMemo, memo, Fragment } from "react"
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
+import { useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import SortableCard from "@/components/SortableCard"
 import { EditColumnDialog } from "@/components/EditColumnDialog"
@@ -32,6 +33,7 @@ interface ColumnProps {
   landedCardId?: string | null
   landedColumnId?: string | null
   searchQuery?: string
+  isTailTarget?: boolean
 }
 
 /** Collapsible zone that keeps finished work out of the active lane. */
@@ -86,7 +88,7 @@ function CompletedGroup({
   )
 }
 
-const Column = memo(function Column({ col, projectId, isDndActive, isDropTarget, hoveredCardId, landedCardId, landedColumnId, searchQuery }: ColumnProps) {
+const Column = memo(function Column({ col, projectId, isDndActive, isDropTarget, hoveredCardId, landedCardId, landedColumnId, searchQuery, isTailTarget }: ColumnProps) {
   const [isEditColumnDialogOpen, setIsEditColumnDialogOpen] = useState(false)
   const [isNewCardDialogOpen, setisNewCardDialogOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
@@ -114,6 +116,14 @@ const Column = memo(function Column({ col, projectId, isDndActive, isDropTarget,
     transform: CSS.Transform.toString(transform),
     willChange: 'transform',
   }
+
+  // Explicit "append at bottom" drop zone below the open cards. Lets the
+  // collision strategy target a precise strip (not the whole column), so
+  // dropping under the last card is unambiguous.
+  const { setNodeRef: setTailRef } = useDroppable({
+    id: `tail:${col.id}`,
+    data: { type: "ColumnTail", colId: col.id },
+  })
 
   // Active lane vs completed zone — derived at render, store untouched.
   // Done cards are excluded from SortableContext so they can never be
@@ -434,12 +444,28 @@ const Column = memo(function Column({ col, projectId, isDndActive, isDropTarget,
                   </Fragment>
                 );
               })}
-              {isDropTarget && !hoveredCardId && dropIndicator}
-              {openCards.length === 0 && !isDropTarget && (
-                <p className="text-muted-foreground/50 py-8 text-center text-xs">
-                  No cards yet
-                </p>
-              )}
+              {isDropTarget && !hoveredCardId && !isTailTarget && dropIndicator}
+
+              {/* Tail drop zone — unambiguous "append at bottom of column" */}
+              <div
+                ref={setTailRef}
+                className={`flex min-h-9 items-center justify-center rounded-xl border border-dashed transition-colors duration-100 ${
+                  isTailTarget
+                    ? "border-primary/50 bg-primary/5"
+                    : "border-transparent"
+                }`}
+              >
+                {openCards.length === 0 && !isTailTarget && (
+                  <span className="text-muted-foreground/50 text-xs">
+                    No cards yet
+                  </span>
+                )}
+                {isTailTarget && (
+                  <span className="text-xs font-medium text-primary">
+                    Drop here
+                  </span>
+                )}
+              </div>
             </div>
           </SortableContext>
 
