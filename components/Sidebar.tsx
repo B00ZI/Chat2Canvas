@@ -1,9 +1,8 @@
 'use client'
 
-import { Search, Plus, Check, Monitor, Moon, Sun, SunMoon, Maximize2, MoreVertical } from "lucide-react"
+import { Search, Check, Monitor, Moon, Sun, SunMoon, Maximize2, MoreVertical, Home } from "lucide-react"
 import { useState, useEffect } from "react"
 import { useProjectStore } from "@/store/projectStore"
-import { NewProjectDialog } from "@/components/NewProjectDialog"
 import { EditProjectDialog } from "@/components/EditProjectDialog"
 import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog"
 import { Button } from "@/components/ui/button"
@@ -61,23 +60,16 @@ function FocusModeRow() {
 }
 
 export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
-  const [isModalOpen, setIsModalOpen] = useState(false)
   const [editProjectId, setEditProjectId] = useState<string | null>(null)
   const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null)
 
   const [theme, setTheme] = useTheme()
 
-  // Canvas Tools' "Create manually" hands off to the project dialog here.
-  useEffect(() => {
-    const handler = () => setIsModalOpen(true)
-    window.addEventListener("c2c:new-project", handler)
-    return () => window.removeEventListener("c2c:new-project", handler)
-  }, [])
-
   const projects = useProjectStore((state) => state.projects)
   const activeProjectId = useProjectStore((state) => state.activeProjectId)
   const setActiveProject = useProjectStore((state) => state.setActiveProject)
   const deleteP = useProjectStore((state) => state.deleteProject)
+  const restoreProject = useProjectStore((state) => state.restoreProject)
 
   const editProject = projects.find((p) => p.id === editProjectId)
   const deleteProject = projects.find((p) => p.id === deleteProjectId)
@@ -85,7 +77,12 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   function handleDelete() {
     if (!deleteProjectId || !deleteProject) return
     deleteP(deleteProjectId)
-    toast.success(`"${deleteProject.name}" deleted`)
+    toast(`"${deleteProject.name}" deleted`, {
+      action: {
+        label: "Undo",
+        onClick: () => restoreProject(deleteProject),
+      },
+    })
   }
 
   function selectProject(id: string) {
@@ -116,7 +113,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           <Search className="size-4 shrink-0" />
           <span>Search</span>
           <kbd className="bg-muted text-muted-foreground pointer-events-none ml-auto inline-flex h-5 select-none items-center rounded-sm border border-border px-1.5 font-mono text-[10px] font-medium tracking-wide">
-            ⌘K
+            {typeof navigator !== "undefined" && navigator.userAgent.includes("Mac") ? "⌘K" : "Ctrl+K"}
           </kbd>
         </button>
 
@@ -127,10 +124,13 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground
             focus-visible:ring-sidebar-ring w-full justify-start gap-2
           "
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            setActiveProject(null)
+            onNavigate?.()
+          }}
         >
-          <Plus className="size-4 shrink-0" />
-          New project
+          <Home className="size-4 shrink-0" />
+          Home
         </Button>
       </div>
 
@@ -296,8 +296,6 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           onConfirm={handleDelete}
         />
       )}
-
-      <NewProjectDialog open={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   )
 }

@@ -8,6 +8,7 @@ import {
   DragOverlay,
   rectIntersection,
   PointerSensor,
+  KeyboardSensor,
   useSensor,
   useSensors,
   defaultDropAnimationSideEffects,
@@ -17,6 +18,7 @@ import {
   SortableContext,
   horizontalListSortingStrategy,
   arrayMove,
+  sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable'
 import { useState, useRef, useCallback, useEffect, useMemo } from "react"
 import { useProjectStore, TEST_MODE } from "@/store/projectStore"
@@ -87,6 +89,7 @@ export default function Home() {
       return p?.name ?? null
     })
   )
+  const searchQuery = useProjectStore((s) => s.searchQuery)
   // Full columns from the store — fallback render source when no local
   // drag board is active. Same <Column> type either way, so switching
   // sources never remounts the board.
@@ -131,6 +134,33 @@ export default function Home() {
   const [landedCardId, setLandedCardId] = useState<string | null>(null);
   const landTimerRef = useRef<number>(0);
   useEffect(() => () => clearTimeout(landTimerRef.current), []);
+
+  // Column that just landed at drop — drives the one-shot "column-land" settle.
+  const [landedColumnId, setLandedColumnId] = useState<string | null>(null);
+  const columnLandTimerRef = useRef<number>(0);
+  useEffect(() => () => clearTimeout(columnLandTimerRef.current), []);
+
+  // Screen-reader announcements for drag operations.
+  const [dragAnnounce, setDragAnnounce] = useState<string | null>(null);
+
+  // ── Keyboard shortcuts ─────────────────────────────────────────────
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement).isContentEditable) return;
+
+      // Escape closes the open card drawer
+      if (e.key === "Escape") {
+        const { openCard, setOpenCard } = useProjectStore.getState();
+        if (openCard) {
+          setOpenCard(null);
+          e.preventDefault();
+        }
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   // Single render source for the board: local drag board while dragging,
   // otherwise live store data. Identical <Column> type + keys either way,
@@ -191,6 +221,9 @@ export default function Home() {
       activationConstraint: {
         distance: 5,
       },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
     })
   );
 
@@ -204,8 +237,14 @@ export default function Home() {
     const data = active.data.current;
     if (!data) return;
 
-    if (data.type === "Column") setActiveColumn(data.col);
-    if (data.type === "Card") setActiveCard(data.card);
+    if (data.type === "Column") {
+      setActiveColumn(data.col);
+      setDragAnnounce(`Picked up column ${data.col?.title ?? ""}`);
+    }
+    if (data.type === "Card") {
+      setActiveCard(data.card);
+      setDragAnnounce(`Picked up card ${data.card?.title ?? ""}`);
+    }
 
     // First drag of the session: snapshot store columns into local state.
     if (!boardOvRef.current) {
@@ -309,12 +348,16 @@ export default function Home() {
     if (cols !== cur.columns) {
       setBoard({ projectId: cur.projectId, columns: cols });
 
-      // Settle animation on the card that just moved
-      const movedId = active.data.current?.type === "Card" ? (active.id as string) : null;
-      if (movedId) {
+      // Settle animation on the card or column that just moved
+      if (active.data.current?.type === "Card") {
+        const movedId = active.id as string;
         setLandedCardId(movedId);
         clearTimeout(landTimerRef.current);
         landTimerRef.current = window.setTimeout(() => setLandedCardId(null), 450);
+      } else if (active.data.current?.type === "Column") {
+        setLandedColumnId(active.id as string);
+        clearTimeout(columnLandTimerRef.current);
+        columnLandTimerRef.current = window.setTimeout(() => setLandedColumnId(null), 350);
       }
     }
 
@@ -323,6 +366,11 @@ export default function Home() {
       useProjectStore.getState().replaceProjectColumns(cur.projectId, cols);
       setBoard(null);
     }
+
+    // Announce drop to screen readers
+    const typeName = active.data.current?.type === "Card" ? "card" : "column";
+    setDragAnnounce(`Dropped ${typeName}`);
+    setTimeout(() => setDragAnnounce(null), 1000);
   }, [activeProjectId, setBoard]);
 
   const handleDragCancel = useCallback(() => {
@@ -331,6 +379,7 @@ export default function Home() {
     setActiveColumn(null);
     setHoveredColId(null);
     setHoveredCardId(null);
+    setDragAnnounce("Drag cancelled");
 
 
     pendingMoveRef.current = null;
@@ -352,12 +401,19 @@ export default function Home() {
       isDropTarget={hoveredColId === col.id}
       hoveredCardId={hoveredColId === col.id ? hoveredCardId : null}
       landedCardId={landedCardId}
+      landedColumnId={landedColumnId}
+      searchQuery={searchQuery}
     />
   ));
 
   return (
     <div className="flex-1 bg-background flex flex-col overflow-hidden ">
       <TopBar />
+
+      {/* Screen-reader live region for drag announcements */}
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        {dragAnnounce}
+      </div>
 
       <DndContext
         sensors={sensors}
@@ -375,16 +431,16 @@ export default function Home() {
           droppable: {
             // Re-measure during drag: the collapsed ghost + "Drop here"
             // indicator shift layout after grab, so cached rects go stale.
-            strategy: MeasuringStrategy.Always,
+            strategy: MeasuringStrategy.WhileDragging,
           },
         }}
       >
         <div
           ref={boardRef}
           onMouseDown={handleMouseDown}
-          className="canvas-dots p-6 flex-1 overflow-x-auto overflow-y-hidden select-none scrollbar-slim"
+          className="canvas-dots p-6 flex-1 overflow-x-auto overflow-y-hidden scrollbar-slim"
         >
-          <div className="flex h-full items-start gap-4 pr-1">
+          <div role="list" aria-label="Columns" className="flex h-full items-start gap-4 pr-1">
             <SortableContext
               items={renderColumnIds}
               strategy={horizontalListSortingStrategy}

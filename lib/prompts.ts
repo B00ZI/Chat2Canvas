@@ -27,6 +27,9 @@ oklch(0.62 0.008 60)
 - Do NOT use hex colors
 - Do NOT use color names
 - "tasks" must always be an array (use [] if empty)
+- Cards may include an optional "description" field (string) for extra context
+- Cards may include an optional "isDone" field (boolean, default false) for completed items
+- Cards may include an optional "tags" array of { "name": "...", "color": "..." } for labels (max 4 tags, name max 12 chars)
 
 REQUIRED FORMAT:
 {
@@ -39,6 +42,9 @@ REQUIRED FORMAT:
         {
           "title": "Task Name",
           "color": "oklch(0.70 0.15 145)",
+          "description": "Optional detailed description",
+          "isDone": false,
+          "tags": [{ "name": "urgent", "color": "oklch(0.68 0.17 20)" }],
           "tasks": [
             { "text": "Subtask description", "done": false }
           ]

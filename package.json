@@ -1,5 +1,5 @@
 {
-  "name": "project-planner",
+  "name": "chat2canvas",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -14,7 +14,6 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-slot": "^1.2.4",
-    "@radix-ui/react-tabs": "^1.1.13",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",

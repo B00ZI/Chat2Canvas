@@ -68,11 +68,12 @@ export function NewColumnDialog({
         >
           {/* Title */}
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground">
+            <label htmlFor="new-column-title" className="text-sm font-medium text-foreground">
               Column title
             </label>
 
             <Input
+              id="new-column-title"
               ref={titleInputRef}
               type="text"
               placeholder="e.g. Frontend"

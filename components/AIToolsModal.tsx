@@ -14,14 +14,14 @@ import {
   Check,
   ArrowRight,
   ArrowLeft,
-  Plus,
+  Download,
+  Upload,
 } from "lucide-react"
 import { INSTRUCTIONS_PROMPTS } from "@/lib/prompts"
 import { useMemo, useState } from "react"
 import { useProjectStore } from "@/store/projectStore"
 import { ImportData } from "@/lib/types"
 import { toast } from "sonner"
-import { LogoMark } from "@/components/Logo"
 
 interface AIToolsModalProps {
   open: boolean
@@ -52,9 +52,7 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
   const currentProject = projects.find((p) => p.id === activeProjectId)
 
   // ── Routing: context decides ──────────────────────────────────────────
-  // Open project → straight into Refine. No project → first-run chooser
-  // (Start with AI / Create manually), then the New wizard on demand.
-  const [enteredNew, setEnteredNew] = useState(false)
+  // Open project → Refine. No project → New wizard.
   const [step, setStep] = useState<1 | 2>(1)
   const [copied, setCopied] = useState(false)
   const [justCopied, setJustCopied] = useState(false)
@@ -68,41 +66,14 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
   if (open !== wasOpen) {
     setWasOpen(open)
     if (open) {
-      setEnteredNew(false)
       setStep(1)
       setCopied(false)
       setJustCopied(false)
     }
   }
 
-  // null route = first-run chooser (only reachable without a project)
-  const route: Route | null = currentProject
-    ? "refine"
-    : enteredNew
-      ? "new"
-      : null
-
-  function enterNewWizard() {
-    setEnteredNew(true)
-    setStep(1)
-    setCopied(false)
-    setJustCopied(false)
-  }
-
-  function backToChooser() {
-    setEnteredNew(false)
-    setStep(1)
-    setCopied(false)
-    setJustCopied(false)
-  }
-
-  function createManually() {
-    onClose()
-    window.dispatchEvent(new CustomEvent("c2c:new-project"))
-  }
-
-  const activeRoute: Route = route ?? "new"
-  const steps = STEPS_BY_ROUTE[activeRoute]
+  const route: Route = currentProject ? "refine" : "new"
+  const steps = STEPS_BY_ROUTE[route]
 
   // Export package preview (what gets copied back to the AI chat)
   const exportPreview = useMemo(() => {
@@ -116,6 +87,8 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
           cards: col.cards.map((card) => ({
             title: card.title,
             color: card.color,
+            isDone: card.isDone,
+            ...(card.description ? { description: card.description } : {}),
             tasks: card.tasks,
             ...(card.tags?.length ? { tags: card.tags } : {}),
           })),
@@ -131,17 +104,46 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
     return `Here is my current project "${currentProject.name}". Please improve it and reply with the full updated Canvas Code.\n\n${exportPreview}`
   }, [currentProject, exportPreview])
 
-  const payload = activeRoute === "new" ? INSTRUCTIONS_PROMPTS : exportMessage
+  const payload = route === "new" ? INSTRUCTIONS_PROMPTS : exportMessage
 
-  function handleCopy() {
-    navigator.clipboard.writeText(payload)
-    setCopied(true)
-    setJustCopied(true)
-    window.setTimeout(() => setJustCopied(false), 1600)
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(payload)
+      setCopied(true)
+      setJustCopied(true)
+      window.setTimeout(() => setJustCopied(false), 1600)
+    } catch {
+      toast.error("Failed to copy — try selecting the text manually")
+    }
+  }
+
+  function handleDownload() {
+    const blob = new Blob([payload], { type: "application/json" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = route === "refine"
+      ? `${currentProject?.name ?? "project"}.json`
+      : "creator-prompt.json"
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.success("File downloaded")
+  }
+
+  function handleFileImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      setImportText(reader.result as string)
+      if (importError) setImportError(null)
+    }
+    reader.readAsText(file)
+    e.target.value = ""
   }
 
   const handleImport = () => {
-    if (activeRoute === "refine" && !activeProjectId) return
+    if (route === "refine" && !activeProjectId) return
 
     try {
       setImportError(null)
@@ -151,15 +153,30 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
         return
       }
 
-      const jsonMatch = importText.match(/\{[\s\S]*\}/)
-      if (!jsonMatch) {
+      // Extract the first complete JSON object from the paste (handles
+      // markdown fences, extra chat text, and nested braces).
+      let jsonStr = ""
+      const start = importText.indexOf("{")
+      if (start !== -1) {
+        let depth = 0
+        for (let i = start; i < importText.length; i++) {
+          if (importText[i] === "{") depth++
+          else if (importText[i] === "}") depth--
+          if (depth === 0) {
+            jsonStr = importText.slice(start, i + 1)
+            break
+          }
+        }
+      }
+
+      if (!jsonStr) {
         setImportError(
           "No Canvas Code found in your paste — make sure you copied your AI's full reply."
         )
         return
       }
 
-      const data: ImportData = JSON.parse(jsonMatch[0])
+      const data: ImportData = JSON.parse(jsonStr)
 
       if (!data.name || !Array.isArray(data.columns)) {
         setImportError(
@@ -168,7 +185,7 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
         return
       }
 
-      if (activeRoute === "refine" && currentProject) {
+      if (route === "refine" && currentProject) {
         updateProjectFromImport(currentProject.id, data)
         onClose()
         toast.success(`"${currentProject.name}" updated`)
@@ -202,58 +219,19 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
             </div>
             <div className="flex flex-col gap-1">
               <DialogTitle className="text-xl font-semibold tracking-tight">
-                {route === "refine"
-                  ? "Refine with AI"
-                  : route === "new"
-                    ? "Plan with AI"
-                    : "Canvas Tools"}
+                {route === "refine" ? "Refine with AI" : "Plan with AI"}
               </DialogTitle>
               <DialogDescription className="text-muted-foreground text-sm">
                 {route === "refine"
-                  ? `Share “${currentProject?.name}” with your AI and bring back improvements.`
-                  : route === "new"
-                    ? "Two steps: send the prompt to your AI, bring back its reply."
-                    : "Bring any AI chat into your canvas in two steps."}
+                  ? `Share "${currentProject?.name}" with your AI and bring back improvements.`
+                  : "Two steps: send the prompt to your AI, bring back its reply."}
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
-        {/* ── First-run chooser (no open project) ───────────────────────── */}
-        {!route ? (
-          <div className="flex min-h-[380px] flex-1 flex-col items-center justify-center gap-6 p-8 text-center">
-            <LogoMark className="text-muted-foreground/40 size-14" />
-
-            <div className="space-y-1.5">
-              <h3 className="font-display text-xl font-semibold tracking-tight">
-                Start your first project
-              </h3>
-              <p className="text-muted-foreground mx-auto max-w-sm text-sm leading-relaxed">
-                Plan it together with an AI chat, or set up sections and cards
-                yourself — you can always refine with AI later.
-              </p>
-            </div>
-
-            <div className="flex w-full max-w-xs flex-col gap-2 pt-1">
-              <Button onClick={enterNewWizard} className="h-11 gap-2">
-                <Zap className="size-4" />
-                Start with AI
-              </Button>
-              <Button variant="outline" onClick={createManually} className="h-11 gap-2">
-                <Plus className="size-4" />
-                Create manually
-              </Button>
-            </div>
-
-            <p className="text-muted-foreground/60 max-w-xs text-xs leading-relaxed">
-              Not sure how it works? “Start with AI” walks you through copying a
-              prompt into ChatGPT or Claude.
-            </p>
-          </div>
-        ) : (
-          <>
-            {/* ── Stepper ─────────────────────────────────────────────── */}
-            <nav
+        {/* ── Stepper ─────────────────────────────────────────────────── */}
+        <nav
               aria-label="Wizard progress"
               className="flex shrink-0 items-center gap-2 border-b border-border px-7 py-3.5"
             >
@@ -315,62 +293,51 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
                 <>
                   {/* Zone heading */}
                   <div className="space-y-1">
-                    <h3 className="text-base font-semibold tracking-tight">
-                      {activeRoute === "refine"
-                        ? "Share your progress"
-                        : "Send the Creator Prompt"}
+                    <h3 className="text-lg font-semibold tracking-tight">
+                      {route === "refine"
+                        ? "Copy your project"
+                        : "Copy the Creator Prompt"}
                     </h3>
-                    <p className="text-muted-foreground text-sm">
-                      {activeRoute === "refine"
-                        ? "This snapshot contains your whole board — sections, cards, tags, and progress."
-                        : "Copy this into ChatGPT or Claude, then describe the idea you're planning."}
+                    <p className="text-muted-foreground text-sm leading-relaxed">
+                      {route === "refine"
+                        ? "Paste this into ChatGPT or Claude — tell it what to improve."
+                        : "Paste this into ChatGPT or Claude, then describe the idea you're planning."}
                     </p>
                   </div>
 
-                  {/* Payload block */}
-                  <div className="overflow-hidden rounded-xl border border-border shadow-sm">
-                    <div className="bg-muted/40 flex items-center justify-between gap-3 border-b border-border px-4 py-3">
-                      <span className="min-w-0 truncate text-xs font-semibold uppercase tracking-wider">
-                        {activeRoute === "new" ? (
-                          "Creator Prompt"
-                        ) : (
-                          <>
-                            Export package ·{" "}
-                            <span className="normal-case">
-                              {currentProject?.name}
-                            </span>
-                            {" · "}
-                            <span className="normal-case tabular-nums">
-                              {exportPreview.split("\n").length} lines
-                            </span>
-                          </>
-                        )}
-                      </span>
+                  {/* Prominent copy button */}
+                  <Button
+                    onClick={handleCopy}
+                    variant={copied ? "outline" : "default"}
+                    className={`h-12 w-full gap-2 text-[15px] font-semibold ${
+                      copied ? "border-success/40 text-success" : ""
+                    }`}
+                  >
+                    {justCopied || copied ? (
+                      <>
+                        <Check className="size-5" />
+                        Copied to clipboard
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="size-5" />
+                        {route === "refine"
+                          ? "Copy project JSON"
+                          : "Copy Creator Prompt"}
+                      </>
+                    )}
+                  </Button>
 
-                      <Button
-                        size="sm"
-                        variant={copied ? "outline" : "default"}
-                        onClick={handleCopy}
-                        className={`h-8 shrink-0 gap-1.5 px-3 text-xs ${
-                          copied ? "border-success/40 text-success" : ""
-                        }`}
-                      >
-                        {justCopied || copied ? (
-                          <>
-                            <Check /> Copied
-                          </>
-                        ) : (
-                          <>
-                            <Copy /> Copy
-                          </>
-                        )}
-                      </Button>
-                    </div>
-
-                    <pre className="scrollbar-slim text-muted-foreground max-h-64 overflow-y-auto p-4 font-mono text-xs leading-relaxed whitespace-pre-wrap">
-                      {payload}
-                    </pre>
-                  </div>
+                  {route === "refine" && (
+                    <Button
+                      onClick={handleDownload}
+                      variant="outline"
+                      className="h-10 w-full gap-2 text-sm"
+                    >
+                      <Download className="size-4" />
+                      Download JSON
+                    </Button>
+                  )}
 
                   {/* Coach line */}
                   <div
@@ -385,7 +352,7 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
                       <>
                         <Check className="mt-0.5 size-4 shrink-0" />
                         <span>
-                          Copied! Switch to ChatGPT or Claude, paste it, and send.
+                          Copied! Switch to your AI, paste it, and send.
                           Come back here with the reply.
                         </span>
                       </>
@@ -393,7 +360,7 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
                       <>
                         <Zap className="mt-0.5 size-4 shrink-0" />
                         <span>
-                          {activeRoute === "refine"
+                          {route === "refine"
                             ? "Your AI reads this snapshot and replies with updated Canvas Code for the whole board."
                             : "Tell it about your project — it will reply with structured Canvas Code."}
                         </span>
@@ -401,20 +368,42 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
                     )}
                   </div>
 
+                  {/* Collapsible payload preview */}
+                  <details className="group">
+                    <summary className="text-muted-foreground hover:text-foreground cursor-pointer text-xs font-medium transition-colors">
+                      Preview payload
+                    </summary>
+                    <div className="overflow-hidden rounded-xl border border-border shadow-sm">
+                      <div className="bg-muted/40 flex items-center gap-3 border-b border-border px-4 py-2.5">
+                        <span className="min-w-0 truncate text-xs font-semibold uppercase tracking-wider">
+                          {route === "new" ? (
+                            "Creator Prompt"
+                          ) : (
+                            <>
+                              Export ·{" "}
+                              <span className="normal-case">
+                                {currentProject?.name}
+                              </span>
+                              {" · "}
+                              <span className="normal-case tabular-nums">
+                                {exportPreview.split("\n").length} lines
+                              </span>
+                            </>
+                          )}
+                        </span>
+                      </div>
+                      <pre className="scrollbar-slim text-muted-foreground max-h-56 overflow-y-auto p-4 font-mono text-xs leading-relaxed whitespace-pre-wrap">
+                        {payload}
+                      </pre>
+                    </div>
+                  </details>
+
                   <div className="flex items-center gap-2 pt-1">
-                    {!currentProject && (
-                      <Button variant="ghost" onClick={backToChooser} className="gap-2">
-                        <ArrowLeft />
-                        Start screen
-                      </Button>
-                    )}
                     <Button
                       onClick={() => setStep(2)}
-                      className={`h-10 gap-2 text-sm ${
-                        currentProject ? "w-full" : "ml-auto px-6"
-                      }`}
+                      className="h-10 w-full gap-2 text-sm"
                     >
-                      {copied ? "Next — paste the reply" : "Next"}
+                      Next — paste the reply
                       <ArrowRight />
                     </Button>
                   </div>
@@ -424,18 +413,19 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
                   {/* Zone heading */}
                   <div className="space-y-1">
                     <h3 className="text-base font-semibold tracking-tight">
-                      {activeRoute === "refine"
+                      {route === "refine"
                         ? "Paste the updated Canvas Code"
                         : "Paste your AI's reply"}
                     </h3>
                     <p className="text-muted-foreground text-sm">
-                      {activeRoute === "refine"
+                      {route === "refine"
                         ? `The code replaces “${currentProject?.name}”'s sections and cards — its name and settings stay.`
                         : "Drop the Canvas Code below — code fences and any extra chat around it are fine, we'll find the code."}
                     </p>
                   </div>
 
                   <textarea
+                    aria-label="Paste Canvas Code from your AI"
                     value={importText}
                     onChange={(e) => {
                       setImportText(e.target.value)
@@ -459,6 +449,19 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
                     </p>
                   )}
 
+                  <div className="flex items-center gap-2">
+                    <label className="bg-muted/50 hover:bg-muted flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-border px-3 text-sm text-muted-foreground transition-colors">
+                      <Upload className="size-4" />
+                      Upload .json
+                      <input
+                        type="file"
+                        accept=".json"
+                        onChange={handleFileImport}
+                        className="sr-only"
+                      />
+                    </label>
+                  </div>
+
                   <div className="flex items-center gap-2 pt-1">
                     <Button
                       variant="ghost"
@@ -474,15 +477,13 @@ export default function AIToolsModal({ open, onClose }: AIToolsModalProps) {
                       disabled={!importText.trim()}
                       className="ml-auto h-10 flex-1 gap-2 text-sm disabled:cursor-not-allowed sm:max-w-56"
                     >
-                      {activeRoute === "refine" ? "Update project" : "Import project"}
+                      {route === "refine" ? "Update project" : "Import project"}
                       <ArrowRight />
                     </Button>
                   </div>
                 </>
               )}
             </div>
-          </>
-        )}
       </DialogContent>
     </Dialog>
   )

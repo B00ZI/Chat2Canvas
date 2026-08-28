@@ -54,10 +54,9 @@ Chat2Canvas/
 │   ├── NewColumnDialog.tsx
 │   ├── EditColumnDialog.tsx
 │   ├── NewCardDialog.tsx
-│   ├── EditCardDialog.tsx
 │   ├── ConfirmDeleteDialog.tsx
 │   ├── CardPreview.tsx
-│   └── WorkeSpaceEmpty.tsx # Empty state with "Canvas Tools" / "Create manually"
+│   └── WorkspaceEmpty.tsx # Empty state with "Canvas Tools" / "Create manually"
 ├── store/
 │   └── projectStore.ts     # Zustand store: projects, columns, cards, tasks, actions
 ├── lib/

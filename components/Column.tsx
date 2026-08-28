@@ -30,6 +30,8 @@ interface ColumnProps {
   isDropTarget?: boolean
   hoveredCardId?: string | null
   landedCardId?: string | null
+  landedColumnId?: string | null
+  searchQuery?: string
 }
 
 /** Collapsible zone that keeps finished work out of the active lane. */
@@ -84,12 +86,13 @@ function CompletedGroup({
   )
 }
 
-const Column = memo(function Column({ col, projectId, isDndActive, isDropTarget, hoveredCardId, landedCardId }: ColumnProps) {
+const Column = memo(function Column({ col, projectId, isDndActive, isDropTarget, hoveredCardId, landedCardId, landedColumnId, searchQuery }: ColumnProps) {
   const [isEditColumnDialogOpen, setIsEditColumnDialogOpen] = useState(false)
   const [isNewCardDialogOpen, setisNewCardDialogOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
 
   const deleteColumn = useProjectStore((state) => state.deleteColumn)
+  const restoreColumn = useProjectStore((state) => state.restoreColumn)
 
   const {
     setNodeRef,
@@ -117,6 +120,23 @@ const Column = memo(function Column({ col, projectId, isDndActive, isDropTarget,
   // drag targets; open-card dragging behaves exactly as before.
   const openCards = useMemo(() => col.cards.filter((c) => !c.isDone), [col.cards])
   const doneCards = useMemo(() => col.cards.filter((c) => c.isDone), [col.cards])
+
+  // Search filter — dim cards that don't match the query
+  const matchingCardIds = useMemo(() => {
+    if (!searchQuery?.trim()) return null;
+    const q = searchQuery.toLowerCase();
+    return new Set(
+      col.cards
+        .filter(
+          (c) =>
+            c.title.toLowerCase().includes(q) ||
+            c.description?.toLowerCase().includes(q) ||
+            c.tasks.some((t) => t.text.toLowerCase().includes(q)) ||
+            c.tags?.some((t) => t.name.toLowerCase().includes(q)),
+        )
+        .map((c) => c.id),
+    );
+  }, [col.cards, searchQuery]);
   const cardIds = useMemo(() => openCards.map((card) => card.id), [openCards])
 
   // Stored-order index of each card (drop math works on the full array)
@@ -178,13 +198,19 @@ const Column = memo(function Column({ col, projectId, isDndActive, isDropTarget,
     // Force reflow so the inverted position commits
     void root.offsetHeight
     // Play: glide to natural (current layout) position
-    requestAnimationFrame(() => {
+    let cancelled = false
+    const raf = requestAnimationFrame(() => {
+      if (cancelled) return
       for (const { el } of flips) {
         el.style.transition = "transform 260ms cubic-bezier(0.22,1,0.36,1)"
         el.style.transform = ""
       }
     })
-  })
+    return () => {
+      cancelled = true
+      cancelAnimationFrame(raf)
+    }
+  }, [col.cards.length])
   // ── End FLIP ──────────────────────────────────────────────────────
 
   // ── Height animation ──────────────────────────────────────────────
@@ -231,18 +257,29 @@ const Column = memo(function Column({ col, projectId, isDndActive, isDropTarget,
     el.style.overflow = "hidden"
     el.style.setProperty("transition", "height 200ms cubic-bezier(0.2, 0, 0, 1)", "important")
 
+    let cancelled = false
     requestAnimationFrame(() => {
+      if (cancelled) return
       el.style.height = `${newHeight}px`
     })
 
-    setTimeout(() => {
+    const onEnd = () => {
       el.style.transition = ""
       el.style.height = ""
       el.style.overflow = ""
       el.style.removeProperty("transition")
-    }, 240)
+      el.removeEventListener("transitionend", onEnd)
+    }
+    el.addEventListener("transitionend", onEnd)
+    // Fallback if transitionend doesn't fire (e.g. reduced motion)
+    const fallback = setTimeout(onEnd, 300)
 
     prevHeightRef.current = newHeight
+    return () => {
+      cancelled = true
+      clearTimeout(fallback)
+      el.removeEventListener("transitionend", onEnd)
+    }
   }, [col.cards.length, isDndActive])
   // ── End height animation ──────────────────────────────────────────
 
@@ -253,7 +290,7 @@ const Column = memo(function Column({ col, projectId, isDndActive, isDropTarget,
         style={style}
         data-board-item
         suppressHydrationWarning
-        className="w-80 shrink-0 relative rounded-xl border-2 border-dashed border-border bg-muted/30 min-h-48 flex items-center justify-center opacity-50"
+        className="w-72 md:w-80 shrink-0 relative rounded-xl border-2 border-dashed border-border bg-muted/30 min-h-48 flex items-center justify-center opacity-50"
       />
     )
   }
@@ -261,7 +298,12 @@ const Column = memo(function Column({ col, projectId, isDndActive, isDropTarget,
   function handleDelete() {
     if (!TEST_MODE) {
       deleteColumn(projectId, col.id)
-      toast.success(`"${col.title}" deleted`)
+      toast(`"${col.title}" deleted`, {
+        action: {
+          label: "Undo",
+          onClick: () => restoreColumn(projectId, col),
+        },
+      })
     }
   }
 
@@ -282,9 +324,10 @@ const Column = memo(function Column({ col, projectId, isDndActive, isDropTarget,
         }}
         data-board-item
         suppressHydrationWarning
-        className="w-80 shrink-0 flex flex-col
+        aria-dropeffect={isDropTarget ? "move" : "none"}
+        className={`w-72 md:w-80 shrink-0 flex flex-col
                    rounded-xl border border-border
-                   shadow-xs"
+                   shadow-xs ${landedColumnId === col.id ? "column-land" : ""}`}
       >
         {/* Column header: spine dot + title + count pill */}
         <div className="p-4 pb-0">
@@ -310,7 +353,7 @@ const Column = memo(function Column({ col, projectId, isDndActive, isDropTarget,
               </div>
 
               <span className="bg-muted text-muted-foreground mt-px shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium leading-none tabular-nums">
-                {col.cards.length}
+                {openCards.length}
               </span>
             </div>
 
@@ -374,18 +417,30 @@ const Column = memo(function Column({ col, projectId, isDndActive, isDropTarget,
                      max-h-[calc(80vh-8rem)]"
         >
           <SortableContext items={cardIds} strategy={verticalListSortingStrategy}>
-            {openCards.map((card) => (
-              <Fragment key={card.id}>
-                {isDropTarget && storedIdx.get(card.id) === dropIndex && dropIndicator}
-                <SortableCard
-                  card={card}
-                  projectId={projectId}
-                  colId={col.id}
-                  justLanded={landedCardId === card.id}
-                />
-              </Fragment>
-            ))}
-            {isDropTarget && !hoveredCardId && dropIndicator}
+            <div role="list" aria-label={`${col.title} cards`}>
+              {openCards.map((card) => {
+                const dimmed = matchingCardIds && !matchingCardIds.has(card.id);
+                return (
+                  <Fragment key={card.id}>
+                    {isDropTarget && storedIdx.get(card.id) === dropIndex && dropIndicator}
+                    <div role="listitem" className={dimmed ? "opacity-30 pointer-events-none" : undefined}>
+                      <SortableCard
+                        card={card}
+                        projectId={projectId}
+                        colId={col.id}
+                        justLanded={landedCardId === card.id}
+                      />
+                    </div>
+                  </Fragment>
+                );
+              })}
+              {isDropTarget && !hoveredCardId && dropIndicator}
+              {openCards.length === 0 && !isDropTarget && (
+                <p className="text-muted-foreground/50 py-8 text-center text-xs">
+                  No cards yet
+                </p>
+              )}
+            </div>
           </SortableContext>
 
           {/* Completed zone — sunk below the active lane */}

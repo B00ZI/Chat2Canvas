@@ -32,6 +32,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { TagPill } from "@/components/TagPill"
+import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog"
 import type { Card } from "@/lib/types"
 
 interface CardDetailsProps {
@@ -173,6 +174,7 @@ function CardDetailsBody({
 }) {
   const editCard = useProjectStore((state) => state.editCard)
   const deleteCard = useProjectStore((state) => state.deleteCard)
+  const restoreCard = useProjectStore((state) => state.restoreCard)
   const toggleTask = useProjectStore((state) => state.toggleTask)
   const toggleCardIsDone = useProjectStore((state) => state.toggleCardIsDone)
 
@@ -191,10 +193,23 @@ function CardDetailsBody({
   const [editingTaskIdx, setEditingTaskIdx] = useState<number | null>(null)
   const [editTaskText, setEditTaskText] = useState("")
 
+  // Confirmation state for destructive actions
+  const [isDeleteCardOpen, setIsDeleteCardOpen] = useState(false)
+  const [pendingTaskDeleteIdx, setPendingTaskDeleteIdx] = useState<number | null>(null)
+
   function handleDelete() {
+    setIsDeleteCardOpen(true)
+  }
+
+  function confirmDeleteCard() {
     deleteCard(projectId, colId, card.id)
     onClose()
-    toast.success("Card deleted")
+    toast("Card deleted", {
+      action: {
+        label: "Undo",
+        onClick: () => restoreCard(projectId, colId, card),
+      },
+    })
   }
 
   // --- ACTIONS ---
@@ -286,6 +301,7 @@ function CardDetailsBody({
           <div className="min-w-0 flex-1">
             {isEditingTitle ? (
               <textarea
+                aria-label="Card title"
                 autoFocus
                 value={title}
                 rows={1}
@@ -342,6 +358,7 @@ function CardDetailsBody({
           {isEditingDesc ? (
             <div className="space-y-2">
               <textarea
+                aria-label="Card description"
                 autoFocus
                 value={desc}
                 onChange={(e) => setDesc(e.target.value)}
@@ -522,11 +539,7 @@ function CardDetailsBody({
                       <Pencil className="size-3.5" />
                     </button>
                     <button
-                      onClick={() =>
-                        editCard(projectId, colId, card.id, {
-                          tasks: tasks.filter((_, i) => i !== index),
-                        })
-                      }
+                      onClick={() => setPendingTaskDeleteIdx(index)}
                       aria-label="Remove task"
                       className="text-muted-foreground hover:text-destructive hover:bg-destructive/15 cursor-pointer rounded-md p-1.5 transition-colors"
                     >
@@ -561,6 +574,32 @@ function CardDetailsBody({
           Close
         </Button>
       </div>
+
+      {/* Confirmation dialogs */}
+      <ConfirmDeleteDialog
+        open={isDeleteCardOpen}
+        onClose={() => setIsDeleteCardOpen(false)}
+        title={`Delete "${card.title}"?`}
+        description="This action cannot be undone. This will permanently delete this card and all its tasks."
+        confirmLabel="Delete card"
+        onConfirm={confirmDeleteCard}
+      />
+
+      <ConfirmDeleteDialog
+        open={pendingTaskDeleteIdx !== null}
+        onClose={() => setPendingTaskDeleteIdx(null)}
+        title="Delete this task?"
+        description="This action cannot be undone."
+        confirmLabel="Delete task"
+        onConfirm={() => {
+          if (pendingTaskDeleteIdx !== null) {
+            editCard(projectId, colId, card.id, {
+              tasks: tasks.filter((_, i) => i !== pendingTaskDeleteIdx),
+            })
+            setPendingTaskDeleteIdx(null)
+          }
+        }}
+      />
     </>
   )
 }

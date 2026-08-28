@@ -6,7 +6,7 @@ import CommandPalette from "@/components/CommandPalette";
 import { Toaster } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import { Minimize2 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useProjectStore, TEST_MODE } from "@/store/projectStore";
 import { useFocusMode } from "@/lib/ui-state";
 
@@ -41,16 +41,29 @@ export default function RootLayout({
     return () => window.removeEventListener("keydown", onKey);
   }, [focus, toggleFocus]);
 
+  const [storageWarning, setStorageWarning] = useState(false);
+  useEffect(() => {
+    const handler = () => setStorageWarning(true);
+    window.addEventListener("c2c:storage-warning", handler);
+    return () => window.removeEventListener("c2c:storage-warning", handler);
+  }, []);
+
   return (
     <html
       lang="en"
       suppressHydrationWarning
-      className={`dark ${oxanium.variable} ${instrument.variable} ${firaCode.variable}`}
+      className={`${oxanium.variable} ${instrument.variable} ${firaCode.variable}`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="bg-background text-foreground font-sans antialiased">
+        {storageWarning && (
+          <div role="alert" className="bg-destructive/10 text-destructive flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium">
+            Storage is almost full — export your projects to avoid data loss.
+            <button onClick={() => setStorageWarning(false)} className="ml-2 underline text-xs">Dismiss</button>
+          </div>
+        )}
         <div className="flex min-h-screen">
           <Sidebar />
 

@@ -31,7 +31,7 @@ app/layout.tsx (RootLayout)
 │       └── DragOverlay
 │           ├── Column (when dragging column)
 │           └── CardPreview (when dragging card)
-└── WorkeSpaceEmpty (when no active project)
+└── WorkspaceEmpty (when no active project)
 ```
 
 ### Data Pipeline
@@ -304,7 +304,7 @@ const toggleTask = useProjectStore((state) => state.toggleTask)
 |---------|---------------|
 | Project CRUD | `store/projectStore.ts`, `Sidebar.tsx`, `NewProjectDialog.tsx`, `EditProjectDialog.tsx` |
 | Column CRUD | `Column.tsx`, `NewColumnDialog.tsx`, `EditColumnDialog.tsx` |
-| Card CRUD | `CardPreview.tsx`, `CardDetailsDrawer.tsx`, `NewCardDialog.tsx`, `EditCardDialog.tsx` |
+| Card CRUD | `CardPreview.tsx`, `CardDetailsDrawer.tsx`, `NewCardDialog.tsx` |
 | Task Management | `CardDetailsDrawer.tsx`, `CardPreview.tsx`, `store/projectStore.ts` |
 | Drag & Drop | `app/page.tsx`, `Column.tsx`, `SortableCard.tsx` |
 | AI Import/Export | `AIToolsModal.tsx`, `lib/prompts.ts`, `store/projectStore.ts` |

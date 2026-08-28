@@ -59,7 +59,7 @@ function CardPreview({
             openDrawer()
           }
         }}
-        aria-expanded={isOpen}
+        aria-haspopup="dialog"
         data-done={card.isDone}
         className="
           group relative flex w-full cursor-pointer flex-col gap-2
@@ -91,7 +91,7 @@ function CardPreview({
         </h4>
 
         {card.description && (
-          <p className="text-muted-foreground line-clamp-2 text-sm leading-relaxed">
+          <p title={card.description} className="text-muted-foreground line-clamp-2 text-sm leading-relaxed">
             {card.description}
           </p>
         )}
@@ -144,7 +144,7 @@ function CardPreview({
           aria-label="Drag card"
           onClick={(e) => e.stopPropagation()}
           className="
-            -mx-3.5 -mb-3.5 mt-2 flex cursor-grab items-center justify-center
+            -mx-3.5 -mb-3.5 mt-2 flex cursor-grab select-none items-center justify-center
             rounded-b-xl border-t border-border/60 bg-muted/20 py-2
             select-none touch-none active:cursor-grabbing hover:bg-muted/50
           "

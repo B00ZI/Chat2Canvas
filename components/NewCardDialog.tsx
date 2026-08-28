@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from "react"
+import { useRef, useState, useCallback } from "react"
 import {
     Dialog,
     DialogContent,
@@ -32,6 +32,18 @@ export function NewCardDialog({ open, onClose, projectId, colId }: NewCardDialog
 
     const addCard = useProjectStore((state) => state.addCard)
 
+    const resetForm = useCallback(() => {
+        setTasks([])
+        setSelectedColor(COLUMN_COLORS[0].value)
+        if (titleInputRef.current) titleInputRef.current.value = ""
+        if (taskInputRef.current) taskInputRef.current.value = ""
+    }, [])
+
+    const handleClose = useCallback(() => {
+        resetForm()
+        onClose()
+    }, [resetForm, onClose])
+
     function handleAddTask() {
         const taskText = taskInputRef.current?.value.trim()
         if (taskText && taskInputRef.current) {
@@ -50,12 +62,11 @@ export function NewCardDialog({ open, onClose, projectId, colId }: NewCardDialog
         if (!title || !selectedColor) return
 
         addCard(projectId, colId, { title, description: "", color: selectedColor, isDone: false, tasks })
-        onClose()
-        setTasks([])
+        handleClose()
     }
 
     return (
-        <Dialog open={open} onOpenChange={onClose}>
+        <Dialog open={open} onOpenChange={handleClose}>
             <DialogContent className="bg-card text-card-foreground border border-border shadow-lg rounded-xl">
                 <DialogHeader className="space-y-1">
                     <DialogTitle className="text-base font-semibold tracking-tight">
@@ -155,7 +166,7 @@ export function NewCardDialog({ open, onClose, projectId, colId }: NewCardDialog
 
                     {/* Footer */}
                     <div className="flex justify-end gap-2 pt-1">
-                        <Button variant="outline" type="button" onClick={onClose}>
+                        <Button variant="outline" type="button" onClick={handleClose}>
                             Cancel
                         </Button>
                         <Button type="submit">Create</Button>

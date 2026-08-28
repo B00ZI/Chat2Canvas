@@ -1,3 +1,5 @@
+'use client'
+
 import { useRef } from "react"
 import {
     Dialog,
@@ -52,12 +54,18 @@ export function NewProjectDialog({ open, onClose }: NewProjectDialog) {
       </DialogHeader>
 
       <form className="space-y-4" onSubmit={handleSubmit}>
-        <Input
-          ref={inputRef}
-          type="text"
-          placeholder="e.g., My Awesome App"
-          className="focus-visible:ring-offset-0  focus-visible:ring-2  bg-background"
-        />
+        <div className="space-y-1.5">
+          <label htmlFor="new-project-name" className="text-sm font-medium text-foreground">
+            Project name
+          </label>
+          <Input
+            id="new-project-name"
+            ref={inputRef}
+            type="text"
+            placeholder="e.g., My Awesome App"
+            className="focus-visible:ring-offset-0  focus-visible:ring-2  bg-background"
+          />
+        </div>
 
         <Button type="submit">
           Create

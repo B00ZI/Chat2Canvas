@@ -1,3 +1,5 @@
+'use client'
+
 import { Column } from "@/lib/types"
 
 interface ColumnOverlayProps {
